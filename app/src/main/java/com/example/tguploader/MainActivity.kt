@@ -431,41 +431,72 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
         }
     }
 
+    fun generateVaultSignature(userId: Long): String {
+        return try {
+            val input = "TeleGallery-Secure-Salt-$userId"
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val hash = digest.digest(input.toByteArray(Charsets.UTF_8))
+            hash.joinToString("") { "%02x".format(it) }.take(32).uppercase()
+        } catch (e: Exception) {
+            "FALLBACK-SIG-${userId}"
+        }
+    }
+
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                // Step 0: Check for existing TeleGallery channel
+                // Step 0: Check for existing TeleGallery channel and verify key signature in pinned message
                 withContext(Dispatchers.Main) {
                     progressText = "Searching for existing 'TeleGallery' vault..."
                 }
                 
                 var existingChatId: Long? = null
                 
-                // First, fetch main chats list to populate cache
-                val chatsResult = sendRequest(TdApi.GetChats(TdApi.ChatListMain(), 100))
-                if (chatsResult is TdApi.Chats) {
-                    for (chatId in chatsResult.chatIds) {
-                        val chat = sendRequest(TdApi.GetChat(chatId))
-                        if (chat is TdApi.Chat && chat.title.equals("TeleGallery", ignoreCase = true)) {
-                            existingChatId = chat.id
-                            break
-                        }
-                    }
-                }
-                
-                // If not found in recent chats, perform a local database search
-                if (existingChatId == null) {
-                    val searchRequest = TdApi.SearchChats().apply {
-                        query = "TeleGallery"
-                        limit = 5
-                    }
-                    val searchResult = sendRequest(searchRequest)
-                    if (searchResult is TdApi.Chats) {
-                        for (chatId in searchResult.chatIds) {
+                // Get current user to compute expected signature
+                val meResult = sendRequest(TdApi.GetMe())
+                if (meResult is TdApi.User) {
+                    val userId = meResult.id
+                    val expectedSignature = generateVaultSignature(userId)
+                    
+                    // First, fetch main chats list to populate cache
+                    val chatsResult = sendRequest(TdApi.GetChats(TdApi.ChatListMain(), 100))
+                    if (chatsResult is TdApi.Chats) {
+                        for (chatId in chatsResult.chatIds) {
                             val chat = sendRequest(TdApi.GetChat(chatId))
                             if (chat is TdApi.Chat && chat.title.equals("TeleGallery", ignoreCase = true)) {
-                                existingChatId = chat.id
-                                break
+                                // Fetch and verify pinned message
+                                val pinnedMsg = sendRequest(TdApi.GetChatPinnedMessage(chat.id))
+                                if (pinnedMsg is TdApi.Message) {
+                                    val content = pinnedMsg.content
+                                    if (content is TdApi.MessageText && content.text.text.contains("TG-SIG-$expectedSignature")) {
+                                        existingChatId = chat.id
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // If not found in recent chats, perform a local database search
+                    if (existingChatId == null) {
+                        val searchRequest = TdApi.SearchChats().apply {
+                            query = "TeleGallery"
+                            limit = 5
+                        }
+                        val searchResult = sendRequest(searchRequest)
+                        if (searchResult is TdApi.Chats) {
+                            for (chatId in searchResult.chatIds) {
+                                val chat = sendRequest(TdApi.GetChat(chatId))
+                                if (chat is TdApi.Chat && chat.title.equals("TeleGallery", ignoreCase = true)) {
+                                    val pinnedMsg = sendRequest(TdApi.GetChatPinnedMessage(chat.id))
+                                    if (pinnedMsg is TdApi.Message) {
+                                        val content = pinnedMsg.content
+                                        if (content is TdApi.MessageText && content.text.text.contains("TG-SIG-$expectedSignature")) {
+                                            existingChatId = chat.id
+                                            break
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -473,7 +504,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                 
                 if (existingChatId != null) {
                     withContext(Dispatchers.Main) {
-                        progressText = "Existing 'TeleGallery' vault found! Linking..."
+                        progressText = "Existing 'TeleGallery' vault verified! Linking..."
                     }
                     
                     PreferencesManager.saveChatId(context, existingChatId)
@@ -505,14 +536,21 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                 if (chatResult is TdApi.Chat) {
                     val newChatId = chatResult.id
                     
-                    // Step 2: Generate a secure vault backup key
+                    // Step 2: Generate a secure vault backup key and compute signature
                     withContext(Dispatchers.Main) {
                         progressText = "Generating unique vault encryption key..."
                     }
                     val uniqueKey = "TG-VAULT-${UUID.randomUUID().toString().uppercase().take(8)}"
                     
+                    var signature = ""
+                    val meResult = sendRequest(TdApi.GetMe())
+                    if (meResult is TdApi.User) {
+                        signature = generateVaultSignature(meResult.id)
+                    }
+                    
                     val welcomeText = "🔑 TeleGallery Secure Backup Vault Initialized!\n\n" +
-                            "Vault Key: `$uniqueKey`\n\n" +
+                            "Vault Key: `$uniqueKey`\n" +
+                            "Vault Signature: `TG-SIG-$signature`\n\n" +
                             "This private channel is used exclusively by your TeleGallery app to securely back up your photos. " +
                             "Please do not delete or modify this pinned message, as it stores your sync information."
                     
