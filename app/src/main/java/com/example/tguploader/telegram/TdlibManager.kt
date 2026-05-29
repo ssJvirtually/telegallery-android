@@ -11,6 +11,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import kotlin.coroutines.resume
+import com.example.tguploader.storage.UploadDatabase
+import com.example.tguploader.storage.CloudPhotoEntity
 
 data class ChatInfo(val id: Long, val title: String)
 
@@ -166,5 +168,97 @@ object TdlibManager {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    suspend fun syncCloudHistory(context: Context, chatId: Long) {
+        val database = UploadDatabase.getDatabase(context)
+        val cloudDao = database.cloudDao()
+        
+        var lastMessageId = 0L
+        var crawling = true
+        addLog("Starting server vault synchronization crawl...")
+        
+        suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+            try {
+                getClient().send(request) { result ->
+                    if (continuation.isActive) {
+                        continuation.resume(result)
+                    }
+                }
+            } catch (e: Exception) {
+                if (continuation.isActive) {
+                    continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
+                }
+            }
+        }
+
+        while (crawling) {
+            val getHistory = TdApi.GetChatHistory().apply {
+                this.chatId = chatId
+                this.fromMessageId = lastMessageId
+                this.offset = 0
+                this.limit = 50
+                this.onlyLocal = false
+            }
+            
+            val result = sendRequest(getHistory)
+            if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+                val entities = mutableListOf<CloudPhotoEntity>()
+                for (msg in result.messages) {
+                    val content = msg.content
+                    var fileName = ""
+                    var fileId = 0
+                    var remoteId = ""
+                    var fileSize = 0L
+                    var isDoc = false
+                    
+                    if (content is TdApi.MessagePhoto) {
+                        val sizes = content.photo.sizes
+                        if (sizes.isNotEmpty()) {
+                            val largest = sizes.last()
+                            fileId = largest.photo.id
+                            remoteId = largest.photo.remote.id
+                            fileSize = largest.photo.size.toLong()
+                            val captionText = content.caption.text
+                            fileName = if (captionText.isNotEmpty()) captionText else "photo_${msg.id}.jpg"
+                        }
+                    } else if (content is TdApi.MessageDocument) {
+                        val doc = content.document
+                        fileId = doc.document.id
+                        remoteId = doc.document.remote.id
+                        fileSize = doc.document.size
+                        isDoc = true
+                        fileName = if (doc.fileName.isNotEmpty()) doc.fileName else {
+                            val captionText = content.caption.text
+                            if (captionText.isNotEmpty()) captionText else "doc_${msg.id}"
+                        }
+                    }
+                    
+                    if (fileId != 0 && fileName.isNotEmpty()) {
+                        entities.add(
+                            CloudPhotoEntity(
+                                messageId = msg.id,
+                                telegramFileId = fileId,
+                                uniqueRemoteId = remoteId,
+                                fileName = fileName,
+                                uploadedAt = msg.date.toLong() * 1000L,
+                                fileSize = fileSize,
+                                isDocument = isDoc
+                            )
+                        )
+                    }
+                }
+                
+                if (entities.isNotEmpty()) {
+                    cloudDao.insertBatch(entities)
+                    addLog("Indexed ${entities.size} vault photos from Telegram server.")
+                }
+                
+                lastMessageId = result.messages.last().id
+            } else {
+                crawling = false
+            }
+        }
+        addLog("Vault server synchronization crawl completed.")
     }
 }

@@ -83,6 +83,59 @@ sealed class GalleryItem {
     data class PhotoItem(val photo: LocalPhoto) : GalleryItem()
 }
 
+fun isCloudPhoto(uri: String): Boolean = uri.startsWith("cloud://")
+
+fun parseCloudPhotoUri(uri: String): Triple<Long, Int, String>? {
+    if (!isCloudPhoto(uri)) return null
+    try {
+        val parts = uri.removePrefix("cloud://").split("/", limit = 3)
+        if (parts.size >= 3) {
+            val messageId = parts[0].toLong()
+            val telegramFileId = parts[1].toInt()
+            val fileName = parts[2]
+            return Triple(messageId, telegramFileId, fileName)
+        }
+    } catch (e: Exception) {}
+    return null
+}
+
+@Composable
+fun rememberCloudThumbnailPath(fileId: Int): String? {
+    var localPath by remember(fileId) { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(fileId) {
+        TdlibManager.getClient().send(TdApi.GetFile(fileId)) { result ->
+            if (result is TdApi.File) {
+                if (result.local.isDownloadingCompleted) {
+                    localPath = result.local.path
+                } else if (!result.local.isDownloadingActive) {
+                    TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { downloadResult ->
+                        if (downloadResult is TdApi.File) {
+                            // Download started
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    LaunchedEffect(fileId, localPath) {
+        if (localPath == null) {
+            while (true) {
+                kotlinx.coroutines.delay(1000)
+                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { result ->
+                    if (result is TdApi.File && result.local.isDownloadingCompleted) {
+                        localPath = result.local.path
+                    }
+                }
+                if (localPath != null) break
+            }
+        }
+    }
+    
+    return localPath
+}
+
 class MainActivity : ComponentActivity() {
 
     private var deleteLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
@@ -869,22 +922,69 @@ fun PhotosGridScreen(
     } else {
         // Load Photos and show grid
         var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+        var isScanningLocal by remember { mutableStateOf(true) }
         val db = remember { UploadDatabase.getDatabase(context) }
+        
         val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
+        val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
         val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
 
         val coroutineScope = rememberCoroutineScope()
+        val chatId = remember { PreferencesManager.getChatId(context) }
 
         LaunchedEffect(Unit) {
             coroutineScope.launch(Dispatchers.IO) {
                 val scanned = MediaStoreScanner.scan(context)
                 withContext(Dispatchers.Main) {
                     localPhotos = scanned
+                    isScanningLocal = false
+                }
+                
+                // Trigger background server vault index crawl
+                if (chatId != 0L) {
+                    try {
+                        TdlibManager.syncCloudHistory(context, chatId)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
         }
 
-        if (localPhotos.isEmpty()) {
+        // Merge, deduplicate, and sort Local + Cloud photos
+        val unifiedPhotos = remember(localPhotos, uploadedLogs, cloudLogs) {
+            val localMap = localPhotos.associateBy { it.name }
+            val list = mutableListOf<LocalPhoto>()
+            val syncedCloudFilenames = mutableSetOf<String>()
+            
+            for (cloud in cloudLogs) {
+                val matchingLocal = localMap[cloud.fileName]
+                if (matchingLocal != null) {
+                    list.add(matchingLocal)
+                    syncedCloudFilenames.add(cloud.fileName)
+                } else {
+                    list.add(
+                        LocalPhoto(
+                            id = -cloud.messageId,
+                            uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
+                            name = cloud.fileName,
+                            size = cloud.fileSize,
+                            dateTaken = cloud.uploadedAt
+                        )
+                    )
+                }
+            }
+            
+            for (local in localPhotos) {
+                if (!syncedCloudFilenames.contains(local.name)) {
+                    list.add(local)
+                }
+            }
+            
+            list.sortedByDescending { it.dateTaken }
+        }
+
+        if (isScanningLocal && localPhotos.isEmpty() && cloudLogs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = Color(0xFF4285F4))
@@ -894,8 +994,8 @@ fun PhotosGridScreen(
             }
         } else {
             // Group photos by date header
-            val galleryItems = remember(localPhotos) {
-                val grouped = localPhotos.groupBy { photo ->
+            val galleryItems = remember(unifiedPhotos) {
+                val grouped = unifiedPhotos.groupBy { photo ->
                     val sdf = SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.getDefault())
                     sdf.format(Date(photo.dateTaken))
                 }
@@ -935,7 +1035,7 @@ fun PhotosGridScreen(
                         )
                     }
                     Text(
-                        text = "${uploadedUris.size}/${localPhotos.size} Synced",
+                        text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
                         color = Color(0xFF4285F4),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -978,25 +1078,33 @@ fun PhotosGridScreen(
                             }
                             is GalleryItem.PhotoItem -> {
                                 val photo = item.photo
-                                val isSynced = uploadedUris.contains(photo.uri)
+                                val isCloud = photo.uri.startsWith("cloud://")
+                                val isSynced = if (isCloud) true else uploadedUris.contains(photo.uri)
                                 
-                                // Map LocalPhoto back to its index in localPhotos
-                                val photoIndex = remember(photo, localPhotos) {
-                                    localPhotos.indexOfFirst { it.uri == photo.uri }
+                                // Map LocalPhoto back to its index in unifiedPhotos
+                                val photoIndex = remember(photo, unifiedPhotos) {
+                                    unifiedPhotos.indexOfFirst { it.uri == photo.uri }
                                 }
+
+                                val cloudThumbnailPath = if (isCloud) {
+                                    val triple = parseCloudPhotoUri(photo.uri)
+                                    if (triple != null) {
+                                        rememberCloudThumbnailPath(triple.second)
+                                    } else null
+                                } else null
 
                                 Box(
                                     modifier = Modifier
                                         .aspectRatio(1f)
                                         .clickable {
                                             if (photoIndex != -1) {
-                                                onPhotoSelected(photoIndex, localPhotos)
+                                                onPhotoSelected(photoIndex, unifiedPhotos)
                                             }
                                         }
                                 ) {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
-                                            .data(photo.uri)
+                                            .data(cloudThumbnailPath ?: photo.uri)
                                             .size(256) // Thumbnails only to prevent memory crashes
                                             .crossfade(true)
                                             .build(),
@@ -1023,7 +1131,14 @@ fun PhotosGridScreen(
                                             .align(Alignment.BottomEnd)
                                             .padding(6.dp)
                                     ) {
-                                        if (isSynced) {
+                                        if (isCloud) {
+                                            Icon(
+                                                imageVector = Icons.Default.Cloud,
+                                                contentDescription = "Cloud Only",
+                                                tint = Color(0xFF4285F4), // Premium Google Blue
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        } else if (isSynced) {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = "Synced",
@@ -1418,15 +1533,62 @@ fun PhotoViewerScreen(
         ) { page ->
             val photo = photosList.getOrNull(page)
             if (photo != null) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(photo.uri)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize()
-                )
+                val isCloud = photo.uri.startsWith("cloud://")
+                val cloudFileId = if (isCloud) {
+                    parseCloudPhotoUri(photo.uri)?.second
+                } else null
+
+                var fullResPath by remember(photo.uri) { mutableStateOf<String?>(null) }
+                var isDownloading by remember(photo.uri) { mutableStateOf(false) }
+
+                LaunchedEffect(photo.uri, cloudFileId) {
+                    if (cloudFileId != null) {
+                        isDownloading = true
+                        TdlibManager.getClient().send(TdApi.GetFile(cloudFileId)) { result ->
+                            if (result is TdApi.File) {
+                                if (result.local.isDownloadingCompleted) {
+                                    fullResPath = result.local.path
+                                    isDownloading = false
+                                } else {
+                                    TdlibManager.getClient().send(TdApi.DownloadFile(cloudFileId, 32, 0, 0, false)) { downloadResult ->
+                                        // started
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                LaunchedEffect(photo.uri, cloudFileId, fullResPath) {
+                    if (cloudFileId != null && fullResPath == null) {
+                        while (true) {
+                            kotlinx.coroutines.delay(1000)
+                            TdlibManager.getClient().send(TdApi.GetFile(cloudFileId)) { result ->
+                                if (result is TdApi.File && result.local.isDownloadingCompleted) {
+                                    fullResPath = result.local.path
+                                    isDownloading = false
+                                }
+                            }
+                            if (fullResPath != null) break
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(fullResPath ?: photo.uri)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    if (isCloud && isDownloading && fullResPath == null) {
+                        CircularProgressIndicator(color = Color(0xFF4285F4))
+                    }
+                }
             }
         }
 
@@ -1498,56 +1660,113 @@ fun PhotoViewerScreen(
                 Text("Share", color = Color.White, fontSize = 11.sp)
             }
 
-            // Back up single photo manually
+            // Back up single photo manually OR Download to Device if cloud-only
             if (currentPhoto != null) {
-                val isSynced = uploadedUris.contains(currentPhoto.uri)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable(enabled = !isSynced && !isBackingUpSingle) {
-                        val chatId = PreferencesManager.getChatId(context)
-                        if (chatId == 0L) {
-                            Toast.makeText(context, "Please set a target chat in settings first!", Toast.LENGTH_SHORT).show()
-                            return@clickable
-                        }
-                        
-                        val isHd = PreferencesManager.isHdMode(context)
-                        isBackingUpSingle = true
-                        
-                        coroutineScope.launch(Dispatchers.IO) {
-                            val result = UploadManager.uploadPhoto(context, currentPhoto, chatId, isHd)
-                            withContext(Dispatchers.Main) {
-                                isBackingUpSingle = false
-                                if (result is TdApi.Message) {
-                                    val modeStr = if (isHd) "in HD quality" else "in standard quality"
-                                    Toast.makeText(context, "Backed up successfully $modeStr!", Toast.LENGTH_SHORT).show()
-                                    db.dao().insert(
-                                        UploadEntity(
-                                            path = currentPhoto.uri,
-                                            uploadedAt = System.currentTimeMillis()
-                                        )
-                                    )
-                                } else if (result is TdApi.Error) {
-                                    Toast.makeText(context, "Upload failed: ${result.message}", Toast.LENGTH_LONG).show()
+                val isCloud = currentPhoto.uri.startsWith("cloud://")
+                val isSynced = if (isCloud) true else uploadedUris.contains(currentPhoto.uri)
+                
+                if (isCloud) {
+                    var isDownloadingToDevice by remember(currentPhoto.uri) { mutableStateOf(false) }
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable(enabled = !isDownloadingToDevice) {
+                            val triple = parseCloudPhotoUri(currentPhoto.uri)
+                            if (triple != null) {
+                                isDownloadingToDevice = true
+                                TdlibManager.getClient().send(TdApi.GetFile(triple.second)) { result ->
+                                    if (result is TdApi.File && result.local.isDownloadingCompleted) {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            try {
+                                                val source = java.io.File(result.local.path)
+                                                val dest = java.io.File(
+                                                    android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS),
+                                                    triple.third
+                                                )
+                                                source.copyTo(dest, overwrite = true)
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloadingToDevice = false
+                                                    Toast.makeText(context, "Saved to Downloads: ${dest.name}", Toast.LENGTH_LONG).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                withContext(Dispatchers.Main) {
+                                                    isDownloadingToDevice = false
+                                                    Toast.makeText(context, "Failed to save: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        isDownloadingToDevice = false
+                                        Toast.makeText(context, "Please wait for high-res photo to load first!", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
                         }
-                    }
-                ) {
-                    if (isBackingUpSingle) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color(0xFF4285F4))
-                    } else {
-                        Icon(
-                            imageVector = if (isSynced) Icons.Default.Check else Icons.Default.Cloud,
-                            contentDescription = "Backup",
-                            tint = if (isSynced) Color(0xFF00E676) else Color.White
+                    ) {
+                        if (isDownloadingToDevice) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color(0xFF4285F4))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Cloud,
+                                contentDescription = "Download to Device",
+                                tint = Color(0xFF4285F4)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Save to Device",
+                            color = Color(0xFF4285F4),
+                            fontSize = 11.sp
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = if (isSynced) "Backed Up" else "Back Up Now",
-                        color = if (isSynced) Color(0xFF00E676) else Color.White,
-                        fontSize = 11.sp
-                    )
+                } else {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.clickable(enabled = !isSynced && !isBackingUpSingle) {
+                            val chatId = PreferencesManager.getChatId(context)
+                            if (chatId == 0L) {
+                                Toast.makeText(context, "Please set a target chat in settings first!", Toast.LENGTH_SHORT).show()
+                                return@clickable
+                            }
+                            
+                            val isHd = PreferencesManager.isHdMode(context)
+                            isBackingUpSingle = true
+                            
+                            coroutineScope.launch(Dispatchers.IO) {
+                                val result = UploadManager.uploadPhoto(context, currentPhoto, chatId, isHd)
+                                withContext(Dispatchers.Main) {
+                                    isBackingUpSingle = false
+                                    if (result is TdApi.Message) {
+                                        val modeStr = if (isHd) "in HD quality" else "in standard quality"
+                                        Toast.makeText(context, "Backed up successfully $modeStr!", Toast.LENGTH_SHORT).show()
+                                        db.dao().insert(
+                                            UploadEntity(
+                                                path = currentPhoto.uri,
+                                                uploadedAt = System.currentTimeMillis()
+                                            )
+                                        )
+                                    } else if (result is TdApi.Error) {
+                                        Toast.makeText(context, "Upload failed: ${result.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        if (isBackingUpSingle) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color(0xFF4285F4))
+                        } else {
+                            Icon(
+                                imageVector = if (isSynced) Icons.Default.Check else Icons.Default.Cloud,
+                                contentDescription = "Backup",
+                                tint = if (isSynced) Color(0xFF00E676) else Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (isSynced) "Backed Up" else "Back Up Now",
+                            color = if (isSynced) Color(0xFF00E676) else Color.White,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
             }
 

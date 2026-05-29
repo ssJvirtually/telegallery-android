@@ -4,6 +4,16 @@ This changelog documents the version releases, features, bug fixes, and architec
 
 ---
 
+## 🚀 Release v2.0.0 — Unified Local & Cloud Photos Sync
+* **Features & Technical Updates:**
+  * **Unified Grid Engine:** Combines local MediaStore photos and indexed vault channel logs in a single seamless grid. Deduplicates synchronized photos (showing a green checkmark badge) and handles cloud-only items (showing a premium blue cloud download badge).
+  * **Room Database Integration:** Enhanced `UploadDatabase` to support `CloudPhotoEntity` cache, with a automatic destructive migration protocol.
+  * **History Crawling Engine:** Added synchronous and paginated server sweeps pulling from `GetChatHistory` to scan, resolve, and cache file metadata upon onboarding or startup.
+  * **On-Demand Loading Pipeline:** Features lazy JNI download queries `TdApi.DownloadFile` for thumbnails and full-resolution images, streaming high-res photos on-demand in the detail view with circular spinners.
+  * **Public Device Downloads:** Integrated a "Save to Device" drawer button, allowing users to save files directly into the Android standard public `Downloads` directory.
+
+---
+
 ## 🚀 Release v1.9.0 — Clean Logout Lifecycle
 * **Features & Technical Updates:**
   * Implemented an automated client lifecycle re-initialization routine to prevent logout hang issues.

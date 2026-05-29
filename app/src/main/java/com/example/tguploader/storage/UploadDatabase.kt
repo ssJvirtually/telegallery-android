@@ -37,9 +37,41 @@ interface UploadDao {
     suspend fun delete(path: String)
 }
 
-@Database(entities = [UploadEntity::class], version = 1, exportSchema = false)
+@Entity(tableName = "cloud_photos")
+data class CloudPhotoEntity(
+    @PrimaryKey val messageId: Long,
+    val telegramFileId: Int,
+    val uniqueRemoteId: String,
+    val fileName: String,
+    val uploadedAt: Long,
+    val fileSize: Long,
+    val isDocument: Boolean,
+    val localCachedThumbnailPath: String? = null,
+    val localCachedLargePath: String? = null
+)
+
+@Dao
+interface CloudPhotoDao {
+    @Query("SELECT * FROM cloud_photos ORDER BY uploadedAt DESC")
+    fun getAllFlow(): Flow<List<CloudPhotoEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBatch(photos: List<CloudPhotoEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(photo: CloudPhotoEntity)
+
+    @Query("SELECT * FROM cloud_photos WHERE fileName = :fileName LIMIT 1")
+    suspend fun findByFileName(fileName: String): CloudPhotoEntity?
+
+    @Query("DELETE FROM cloud_photos")
+    suspend fun clearAll()
+}
+
+@Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 2, exportSchema = false)
 abstract class UploadDatabase : RoomDatabase() {
     abstract fun dao(): UploadDao
+    abstract fun cloudDao(): CloudPhotoDao
 
     companion object {
         @Volatile
@@ -51,7 +83,9 @@ abstract class UploadDatabase : RoomDatabase() {
                     context.applicationContext,
                     UploadDatabase::class.java,
                     "upload_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }
