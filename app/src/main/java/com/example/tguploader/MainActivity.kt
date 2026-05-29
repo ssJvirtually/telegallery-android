@@ -147,7 +147,9 @@ class MainActivity : ComponentActivity() {
         if (!isBackupActive) {
             // Cancel background backups instantly
             WorkManager.getInstance(applicationContext).cancelUniqueWork("upload_worker")
-            Toast.makeText(this, "Background backup synchronization disabled/paused.", Toast.LENGTH_SHORT).show()
+            runOnUiThread {
+                Toast.makeText(this, "Background backup synchronization disabled/paused.", Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
@@ -171,7 +173,9 @@ class MainActivity : ComponentActivity() {
             )
         
         val dataMsg = if (wifiOnly) "Wi-Fi Only (Data Saver Active)" else "Wi-Fi + Mobile Data allowed"
-        Toast.makeText(this, "Backup active: $dataMsg", Toast.LENGTH_SHORT).show()
+        runOnUiThread {
+            Toast.makeText(this, "Backup active: $dataMsg", Toast.LENGTH_SHORT).show()
+        }
     }
 }
 
@@ -477,11 +481,11 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                         }
                     }
                     
-                    // If not found in recent chats, perform a local database search
+                    // If not found in recent chats, perform a server-side search
                     if (existingChatId == null) {
-                        val searchRequest = TdApi.SearchChats().apply {
+                        val searchRequest = TdApi.SearchChatsOnServer().apply {
                             query = "TeleGallery"
-                            limit = 5
+                            limit = 10
                         }
                         val searchResult = sendRequest(searchRequest)
                         if (searchResult is TdApi.Chats) {
