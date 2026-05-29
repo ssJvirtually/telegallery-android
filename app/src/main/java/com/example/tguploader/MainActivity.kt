@@ -85,6 +85,23 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+object TelePhotosTheme {
+    val Background = Color(0xFF0E1621)         // Telegram Ultra-Dark
+    val Surface = Color(0xFF17212B)            // Telegram Bubble Dark
+    val SurfaceVariant = Color(0xFF202B36)     // Telegram Bubble Active
+    val AccentBlue = Color(0xFF2481CC)         // Telegram Primary Blue
+    val Primary = Color(0xFF4EA4F6)            // Sleek Light Blue accent
+    
+    // Google multi-colors for micro-accents
+    val GoogleBlue = Color(0xFF4285F4)
+    val GoogleRed = Color(0xFFEA4335)
+    val GoogleYellow = Color(0xFFFBBC05)
+    val GoogleGreen = Color(0xFF34A853)
+    
+    val TextPrimary = Color(0xFFFFFFFF)
+    val TextSecondary = Color(0xFF8E97A1)      // Telegram-style grey text
+}
+
 sealed class GalleryItem {
     data class Header(val date: String) : GalleryItem()
     data class PhotoItem(val photo: LocalPhoto) : GalleryItem()
@@ -355,12 +372,12 @@ fun PhoneLoginScreen() {
     var isLoading by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background),
         contentAlignment = Alignment.Center
     ) {
         Card(
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+            colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(16.dp)
@@ -369,23 +386,52 @@ fun PhoneLoginScreen() {
                 modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Default.Cloud,
-                    contentDescription = null,
-                    tint = Color(0xFF4285F4),
-                    modifier = Modifier.size(56.dp)
-                )
+                // Telegram paper airplane icon styled with a Google Photos color ring!
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            Brush.sweepGradient(
+                                colors = listOf(
+                                    TelePhotosTheme.GoogleBlue,
+                                    TelePhotosTheme.GoogleGreen,
+                                    TelePhotosTheme.GoogleYellow,
+                                    TelePhotosTheme.GoogleRed,
+                                    TelePhotosTheme.GoogleBlue
+                                )
+                             ),
+                             shape = CircleShape
+                        )
+                        .padding(3.dp)
+                        .background(TelePhotosTheme.Surface, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send, // Elegant paper airplane
+                        contentDescription = null,
+                        tint = TelePhotosTheme.AccentBlue,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "TeleGallery Sync",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row {
+                    Text(
+                        text = "Tele",
+                        color = TelePhotosTheme.AccentBlue,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Gallery",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Enter your phone number to authorize storage backup via Telegram",
-                    color = Color(0xFF9E9E9E),
+                    color = TelePhotosTheme.TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
@@ -393,17 +439,17 @@ fun PhoneLoginScreen() {
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Phone Number", color = Color(0xFFBDBDBD)) },
+                    label = { Text("Phone Number", color = TelePhotosTheme.TextSecondary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF4285F4),
-                        unfocusedBorderColor = Color(0xFF424242),
-                        focusedLabelColor = Color(0xFF4285F4),
-                        unfocusedLabelColor = Color(0xFFBDBDBD),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        focusedBorderColor = TelePhotosTheme.AccentBlue,
+                        unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                        focusedLabelColor = TelePhotosTheme.AccentBlue,
+                        unfocusedLabelColor = TelePhotosTheme.TextSecondary,
+                        focusedTextColor = TelePhotosTheme.TextPrimary,
+                        unfocusedTextColor = TelePhotosTheme.TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(28.dp))
@@ -415,7 +461,7 @@ fun PhoneLoginScreen() {
                         }
                     },
                     enabled = phone.isNotBlank() && !isLoading,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(16.dp)
@@ -423,7 +469,7 @@ fun PhoneLoginScreen() {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
                     } else {
-                        Text("Send OTP Code", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Send OTP Code", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -437,12 +483,12 @@ fun OtpVerifyScreen() {
     var isLoading by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background),
         contentAlignment = Alignment.Center
     ) {
         Card(
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+            colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(16.dp)
@@ -451,23 +497,44 @@ fun OtpVerifyScreen() {
                 modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = null,
-                    tint = Color(0xFF4285F4),
-                    modifier = Modifier.size(56.dp)
-                )
+                // Key / lock verification icon styled with a Google Photos color ring!
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(
+                            Brush.sweepGradient(
+                                colors = listOf(
+                                    TelePhotosTheme.GoogleBlue,
+                                    TelePhotosTheme.GoogleGreen,
+                                    TelePhotosTheme.GoogleYellow,
+                                    TelePhotosTheme.GoogleRed,
+                                    TelePhotosTheme.GoogleBlue
+                                )
+                             ),
+                             shape = CircleShape
+                        )
+                        .padding(3.dp)
+                        .background(TelePhotosTheme.Surface, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock, // Elegant key lock
+                        contentDescription = null,
+                        tint = TelePhotosTheme.AccentBlue,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Verify Code",
-                    color = Color.White,
+                    color = TelePhotosTheme.TextPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "An authorization code was sent to your official Telegram client.",
-                    color = Color(0xFF9E9E9E),
+                    color = TelePhotosTheme.TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
@@ -475,17 +542,17 @@ fun OtpVerifyScreen() {
                 OutlinedTextField(
                     value = otp,
                     onValueChange = { otp = it },
-                    label = { Text("Code", color = Color(0xFFBDBDBD)) },
+                    label = { Text("Code", color = TelePhotosTheme.TextSecondary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF4285F4),
-                        unfocusedBorderColor = Color(0xFF424242),
-                        focusedLabelColor = Color(0xFF4285F4),
-                        unfocusedLabelColor = Color(0xFFBDBDBD),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        focusedBorderColor = TelePhotosTheme.AccentBlue,
+                        unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                        focusedLabelColor = TelePhotosTheme.AccentBlue,
+                        unfocusedLabelColor = TelePhotosTheme.TextSecondary,
+                        focusedTextColor = TelePhotosTheme.TextPrimary,
+                        unfocusedTextColor = TelePhotosTheme.TextPrimary
                     )
                 )
                 Spacer(modifier = Modifier.height(28.dp))
@@ -497,7 +564,7 @@ fun OtpVerifyScreen() {
                         }
                     },
                     enabled = otp.isNotBlank() && !isLoading,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
                     contentPadding = PaddingValues(16.dp)
@@ -505,7 +572,7 @@ fun OtpVerifyScreen() {
                     if (isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
                     } else {
-                        Text("Log In", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Log In", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -828,7 +895,7 @@ fun MainAppLayout(
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = Color(0xFF1E1E1E),
+                containerColor = TelePhotosTheme.Surface,
                 tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
@@ -837,11 +904,11 @@ fun MainAppLayout(
                     icon = { Icon(Icons.Default.Home, contentDescription = "Photos") },
                     label = { Text("Photos") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4285F4),
-                        selectedTextColor = Color(0xFF4285F4),
-                        unselectedIconColor = Color(0xFF757575),
-                        unselectedTextColor = Color(0xFF757575),
-                        indicatorColor = Color(0xFF2C2C2C)
+                        selectedIconColor = TelePhotosTheme.AccentBlue,
+                        selectedTextColor = TelePhotosTheme.AccentBlue,
+                        unselectedIconColor = TelePhotosTheme.TextSecondary,
+                        unselectedTextColor = TelePhotosTheme.TextSecondary,
+                        indicatorColor = TelePhotosTheme.SurfaceVariant
                     )
                 )
                 NavigationBarItem(
@@ -850,11 +917,11 @@ fun MainAppLayout(
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                     label = { Text("Settings") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF4285F4),
-                        selectedTextColor = Color(0xFF4285F4),
-                        unselectedIconColor = Color(0xFF757575),
-                        unselectedTextColor = Color(0xFF757575),
-                        indicatorColor = Color(0xFF2C2C2C)
+                        selectedIconColor = TelePhotosTheme.AccentBlue,
+                        selectedTextColor = TelePhotosTheme.AccentBlue,
+                        unselectedIconColor = TelePhotosTheme.TextSecondary,
+                        unselectedTextColor = TelePhotosTheme.TextSecondary,
+                        indicatorColor = TelePhotosTheme.SurfaceVariant
                     )
                 )
             }
@@ -1072,38 +1139,67 @@ fun PhotosGridScreen(
                 items
             }
 
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background)) {
                 // Top App Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF1E1E1E))
+                        .background(TelePhotosTheme.Surface)
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Cloud,
-                            contentDescription = null,
-                            tint = Color(0xFF4285F4),
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "TeleGallery",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        // Telegram paper airplane icon styled with a Google Photos color ring!
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    Brush.sweepGradient(
+                                        colors = listOf(
+                                            TelePhotosTheme.GoogleBlue,
+                                            TelePhotosTheme.GoogleGreen,
+                                            TelePhotosTheme.GoogleYellow,
+                                            TelePhotosTheme.GoogleRed,
+                                            TelePhotosTheme.GoogleBlue
+                                        )
+                                    ),
+                                    shape = CircleShape
+                                )
+                                .padding(2.dp)
+                                .background(TelePhotosTheme.Surface, shape = CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Send, // Elegant paper airplane
+                                contentDescription = null,
+                                tint = TelePhotosTheme.AccentBlue,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Row {
+                            Text(
+                                text = "Tele",
+                                color = TelePhotosTheme.AccentBlue,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Gallery",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                     Text(
                         text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
-                        color = Color(0xFF4285F4),
+                        color = TelePhotosTheme.AccentBlue,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .background(Color(0x1F4285F4), shape = RoundedCornerShape(12.dp))
+                            .background(Color(0x1F2481CC), shape = RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -1132,16 +1228,37 @@ fun PhotosGridScreen(
                     ) { item ->
                         when (item) {
                             is GalleryItem.Header -> {
-                                Text(
-                                    text = item.date,
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color(0xFF0F0F14))
-                                        .padding(horizontal = 14.dp, vertical = 8.dp)
-                                )
+                                        .background(TelePhotosTheme.Background)
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(4.dp)
+                                            .height(16.dp)
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        TelePhotosTheme.AccentBlue,
+                                                        TelePhotosTheme.GoogleGreen,
+                                                        TelePhotosTheme.GoogleYellow,
+                                                        TelePhotosTheme.GoogleRed
+                                                    )
+                                                )
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = item.date,
+                                        color = TelePhotosTheme.TextPrimary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
                             is GalleryItem.PhotoItem -> {
                                 val photo = item.photo
@@ -1390,13 +1507,14 @@ fun SettingsScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(TelePhotosTheme.Background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text(
                 text = "Backup Settings",
-                color = Color.White,
+                color = TelePhotosTheme.TextPrimary,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -1406,13 +1524,13 @@ fun SettingsScreen(
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Backup Target Chat",
-                        color = Color(0xFF9E9E9E),
+                        color = TelePhotosTheme.TextSecondary,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -1423,7 +1541,7 @@ fun SettingsScreen(
                     ) {
                         Text(
                             text = selectedChatTitle,
-                            color = Color(0xFF4285F4),
+                            color = TelePhotosTheme.AccentBlue,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -1434,7 +1552,7 @@ fun SettingsScreen(
                             TdlibManager.loadChats()
                             showChatPickerDialog = true
                         }) {
-                            Text("Change", fontWeight = FontWeight.Bold)
+                            Text("Change", color = TelePhotosTheme.AccentBlue, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -1445,13 +1563,13 @@ fun SettingsScreen(
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Backup Options",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1465,8 +1583,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Active Backup Sync", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Auto-backup your local gallery in background", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                            Text("Active Backup Sync", color = TelePhotosTheme.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Auto-backup your local gallery in background", color = TelePhotosTheme.TextSecondary, fontSize = 11.sp)
                         }
                         Switch(
                             checked = backupActive,
@@ -1475,12 +1593,17 @@ fun SettingsScreen(
                                 PreferencesManager.setBackupActive(context, checked)
                                 context.scheduleSyncWorker()
                             },
-                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = TelePhotosTheme.AccentBlue,
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = Color.DarkGray
+                            )
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFF2C2C35))
+                    HorizontalDivider(color = TelePhotosTheme.SurfaceVariant)
                     Spacer(modifier = Modifier.height(14.dp))
 
                     // Toggle 2: Wifi Only (Mobile Data Saver Toggle)
@@ -1491,8 +1614,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Back Up Over Wi-Fi Only", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Do not use mobile cellular data for backups", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                            Text("Back Up Over Wi-Fi Only", color = TelePhotosTheme.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Do not use mobile cellular data for backups", color = TelePhotosTheme.TextSecondary, fontSize = 11.sp)
                         }
                         Switch(
                             checked = wifiOnly,
@@ -1501,12 +1624,17 @@ fun SettingsScreen(
                                 PreferencesManager.setWifiOnly(context, checked)
                                 context.scheduleSyncWorker()
                             },
-                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = TelePhotosTheme.AccentBlue,
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = Color.DarkGray
+                            )
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = Color(0xFF2C2C35))
+                    HorizontalDivider(color = TelePhotosTheme.SurfaceVariant)
                     Spacer(modifier = Modifier.height(14.dp))
 
                     // Toggle 3: Send Photos in HD Lossless Quality
@@ -1517,8 +1645,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Send Photos in HD Quality", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Upload original lossless files without quality loss", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                            Text("Send Photos in HD Quality", color = TelePhotosTheme.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Upload original lossless files without quality loss", color = TelePhotosTheme.TextSecondary, fontSize = 11.sp)
                         }
                         Switch(
                             checked = hdMode,
@@ -1526,7 +1654,12 @@ fun SettingsScreen(
                                 hdMode = checked
                                 PreferencesManager.setHdMode(context, checked)
                             },
-                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = TelePhotosTheme.AccentBlue,
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
+                                uncheckedThumbColor = Color.Gray,
+                                uncheckedTrackColor = Color.DarkGray
+                            )
                         )
                     }
                 }
@@ -1546,14 +1679,14 @@ fun SettingsScreen(
                     WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
                     Toast.makeText(context, "Force sync started in background!", Toast.LENGTH_SHORT).show()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(14.dp)
             ) {
                 Icon(Icons.Default.Cloud, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Force Synchronize Local Photos Now", fontWeight = FontWeight.Bold)
+                Text("Force Synchronize Local Photos Now", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -1569,8 +1702,8 @@ fun SettingsScreen(
                 },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
-                border = BorderStroke(1.dp, Color(0xFFFF5252)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252))
+                border = BorderStroke(1.dp, TelePhotosTheme.GoogleRed),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TelePhotosTheme.GoogleRed)
             ) {
                 Text("Logout Telegram Session", fontWeight = FontWeight.Bold)
             }
@@ -1580,7 +1713,7 @@ fun SettingsScreen(
         item {
             Text(
                 text = "Active JNI Core Logs",
-                color = Color.White,
+                color = TelePhotosTheme.TextPrimary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -1604,9 +1737,9 @@ fun SettingsScreen(
                         Text(
                             text = log,
                             color = when {
-                                log.contains("fail", ignoreCase = true) || log.contains("error", ignoreCase = true) -> Color(0xFFFF5252)
+                                log.contains("fail", ignoreCase = true) || log.contains("error", ignoreCase = true) -> TelePhotosTheme.GoogleRed
                                 log.contains("success", ignoreCase = true) -> Color(0xFF00E676)
-                                else -> Color(0xFFB0BEC5)
+                                else -> TelePhotosTheme.TextSecondary
                             },
                             fontSize = 10.sp,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -1627,7 +1760,7 @@ fun SettingsScreen(
 
             Card(
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.75f)
@@ -1635,7 +1768,7 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "Change Target Chat",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
@@ -1647,12 +1780,12 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Search chats...", color = Color(0xFF757575)) },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF757575)) },
+                        placeholder = { Text("Search chats...", color = TelePhotosTheme.TextSecondary) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = TelePhotosTheme.TextSecondary) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear search", tint = Color(0xFFBDBDBD))
+                                    Icon(Icons.Default.Close, contentDescription = "Clear search", tint = TelePhotosTheme.TextSecondary)
                                 }
                             }
                         },
@@ -1661,21 +1794,21 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .padding(bottom = 12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4285F4),
-                            unfocusedBorderColor = Color(0xFF424242),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedBorderColor = TelePhotosTheme.AccentBlue,
+                            unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                            focusedTextColor = TelePhotosTheme.TextPrimary,
+                            unfocusedTextColor = TelePhotosTheme.TextPrimary
                         )
                     )
 
                     if (chats.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Color(0xFF4285F4))
+                            CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
                         }
                     } else {
                         if (filteredChats.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("No chats match your search", color = Color(0xFF9E9E9E), fontSize = 14.sp)
+                                Text("No chats match your search", color = TelePhotosTheme.TextSecondary, fontSize = 14.sp)
                             }
                         } else {
                             LazyColumn(
@@ -1685,7 +1818,7 @@ fun SettingsScreen(
                                 items(filteredChats) { chat ->
                                     Card(
                                         shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
+                                        colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.SurfaceVariant),
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
@@ -1697,7 +1830,7 @@ fun SettingsScreen(
                                     ) {
                                         Text(
                                             text = chat.title.ifEmpty { "Saved Messages" },
-                                            color = Color.White,
+                                            color = TelePhotosTheme.TextPrimary,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             modifier = Modifier.padding(16.dp)
