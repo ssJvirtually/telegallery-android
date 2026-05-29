@@ -9,6 +9,7 @@ import com.example.tguploader.storage.UploadDatabase
 import com.example.tguploader.storage.UploadEntity
 import com.example.tguploader.telegram.TdlibManager
 import com.example.tguploader.telegram.UploadManager
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.drinkless.tdlib.TdApi
@@ -93,6 +94,10 @@ class UploadWorker(
                 } else {
                     TdlibManager.addLog("Worker: backup returned unexpected response: ${uploadResult::class.java.simpleName}")
                 }
+
+                // Add 5-second throttle delay between uploads to prevent rate limiting (FLOOD_WAIT) on Telegram's servers
+                TdlibManager.addLog("Worker: waiting 5 seconds before next upload to prevent server flooding...")
+                delay(5000)
             }
         }
 
