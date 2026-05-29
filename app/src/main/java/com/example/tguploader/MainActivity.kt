@@ -434,6 +434,61 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             try {
+                // Step 0: Check for existing TeleGallery channel
+                withContext(Dispatchers.Main) {
+                    progressText = "Searching for existing 'TeleGallery' vault..."
+                }
+                
+                var existingChatId: Long? = null
+                
+                // First, fetch main chats list to populate cache
+                val chatsResult = sendRequest(TdApi.GetChats(TdApi.ChatListMain(), 100))
+                if (chatsResult is TdApi.Chats) {
+                    for (chatId in chatsResult.chatIds) {
+                        val chat = sendRequest(TdApi.GetChat(chatId))
+                        if (chat is TdApi.Chat && chat.title.equals("TeleGallery", ignoreCase = true)) {
+                            existingChatId = chat.id
+                            break
+                        }
+                    }
+                }
+                
+                // If not found in recent chats, perform a local database search
+                if (existingChatId == null) {
+                    val searchRequest = TdApi.SearchChats().apply {
+                        query = "TeleGallery"
+                        limit = 5
+                    }
+                    val searchResult = sendRequest(searchRequest)
+                    if (searchResult is TdApi.Chats) {
+                        for (chatId in searchResult.chatIds) {
+                            val chat = sendRequest(TdApi.GetChat(chatId))
+                            if (chat is TdApi.Chat && chat.title.equals("TeleGallery", ignoreCase = true)) {
+                                existingChatId = chat.id
+                                break
+                            }
+                        }
+                    }
+                }
+                
+                if (existingChatId != null) {
+                    withContext(Dispatchers.Main) {
+                        progressText = "Existing 'TeleGallery' vault found! Linking..."
+                    }
+                    
+                    PreferencesManager.saveChatId(context, existingChatId)
+                    PreferencesManager.saveChatTitle(context, "TeleGallery (Private Vault)")
+                    
+                    context.scheduleSyncWorker()
+                    
+                    withContext(Dispatchers.Main) {
+                        progressText = "Vault linked successfully! Opening gallery..."
+                        kotlinx.coroutines.delay(1000)
+                        onSetupComplete(existingChatId, "TeleGallery (Private Vault)")
+                    }
+                    return@launch
+                }
+                
                 // Step 1: Create a private Telegram channel named TeleGallery
                 withContext(Dispatchers.Main) {
                     progressText = "Creating private backup channel 'TeleGallery' on Telegram..."
