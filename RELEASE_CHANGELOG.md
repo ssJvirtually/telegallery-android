@@ -4,6 +4,16 @@ This changelog documents the version releases, features, bug fixes, and architec
 
 ---
 
+## 🚀 Release v2.1.0 — Premium Light Theme & Smooth Fast Scrollbar
+* **Features & Technical Updates:**
+  * **Premium Light Theme:** Transitioned the entire app to a beautiful, clean light aesthetic blending Telegram Blue (`#2481CC`) and clean Google Photos surfaces. Uses clean off-white background (`#F4F6F9`), pure white surfaces (`#FFFFFF`), light blue-grey variants (`#E8EDF5`), and refined cool-grey typography.
+  * **Continuous Smooth Fast Scrollbar:** Engineered a sub-pixel precision linear fast scrollbar. Replaced discrete integer jumps with a continuous row-based scrolling formula using first-visible-item pixel offset ratio: `smoothIndex = firstVisibleIndex + itemOffsetFraction * columns`.
+  * **Seamless Drag Gestures:** Configured linear finger-grabbing math mapping coordinate ratios directly to item indices and sub-pixel offsets `(gridState.scrollToItem(targetIndex, scrollOffset))`, delivering buttery-smooth scrolling with zero stutter.
+  * **Glassmorphic Floating Date Bubble:** Integrated a floating month/year bubble that slides perfectly in sync next to the scrollbar pill.
+  * **Polished Light Components:** Revamped card shapes, log console, buttons, and switches with a refined, premium light-mode appearance.
+
+---
+
 ## 🚀 Release v2.0.0 — Unified Local & Cloud Photos Sync
 * **Features & Technical Updates:**
   * **Unified Grid Engine:** Combines local MediaStore photos and indexed vault channel logs in a single seamless grid. Deduplicates synchronized photos (showing a green checkmark badge) and handles cloud-only items (showing a premium blue cloud download badge).

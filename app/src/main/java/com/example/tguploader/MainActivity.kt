@@ -49,6 +49,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -86,11 +87,11 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 object TelePhotosTheme {
-    val Background = Color(0xFF0E1621)         // Telegram Ultra-Dark
-    val Surface = Color(0xFF17212B)            // Telegram Bubble Dark
-    val SurfaceVariant = Color(0xFF202B36)     // Telegram Bubble Active
+    val Background = Color(0xFFF4F6F9)         // Telegram Light Off-White
+    val Surface = Color(0xFFFFFFFF)            // Pure White
+    val SurfaceVariant = Color(0xFFE8EDF5)     // Light Blue-Grey
     val AccentBlue = Color(0xFF2481CC)         // Telegram Primary Blue
-    val Primary = Color(0xFF4EA4F6)            // Sleek Light Blue accent
+    val Primary = Color(0xFF0088CC)            // Telegram Standard Blue
     
     // Google multi-colors for micro-accents
     val GoogleBlue = Color(0xFF4285F4)
@@ -98,8 +99,8 @@ object TelePhotosTheme {
     val GoogleYellow = Color(0xFFFBBC05)
     val GoogleGreen = Color(0xFF34A853)
     
-    val TextPrimary = Color(0xFFFFFFFF)
-    val TextSecondary = Color(0xFF8E97A1)      // Telegram-style grey text
+    val TextPrimary = Color(0xFF0E1621)        // Telegram Ultra-Dark Grey/Black text
+    val TextSecondary = Color(0xFF707C8E)      // refined cool-grey secondary labels
 }
 
 sealed class GalleryItem {
@@ -212,15 +213,17 @@ class MainActivity : ComponentActivity() {
         TdlibManager.initialize(applicationContext)
 
         setContent {
-            // Standard dark theme matching high-end photo gallery aesthetics
+            // Premium light theme matching Google Photos & Telegram aesthetics
             MaterialTheme(
-                colorScheme = darkColorScheme(
-                    primary = Color(0xFF4285F4), // Google Blue
-                    background = Color(0xFF121212),
-                    surface = Color(0xFF1E1E1E),
+                colorScheme = lightColorScheme(
+                    primary = TelePhotosTheme.AccentBlue,
+                    background = TelePhotosTheme.Background,
+                    surface = TelePhotosTheme.Surface,
                     onPrimary = Color.White,
-                    onBackground = Color(0xFFE3E3E3),
-                    onSurface = Color(0xFFE3E3E3)
+                    onBackground = TelePhotosTheme.TextPrimary,
+                    onSurface = TelePhotosTheme.TextPrimary,
+                    surfaceVariant = TelePhotosTheme.SurfaceVariant,
+                    onSurfaceVariant = TelePhotosTheme.TextSecondary
                 )
             ) {
                 // Register intent sender launcher for Android 10+ MediaStore deletions
@@ -309,7 +312,7 @@ fun AppNavigation() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F14))
+            .background(TelePhotosTheme.Background)
     ) {
         when (authState) {
             is TdApi.AuthorizationStateWaitPhoneNumber -> {
@@ -356,7 +359,7 @@ fun AppNavigation() {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Connecting to Telegram...",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -423,7 +426,7 @@ fun PhoneLoginScreen() {
                     )
                     Text(
                         text = "Gallery",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -803,12 +806,12 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F14)),
+            .background(TelePhotosTheme.Background),
         contentAlignment = Alignment.Center
     ) {
         Card(
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+            colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .padding(16.dp)
@@ -835,7 +838,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Vault Setup Failed",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -863,7 +866,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Setting Up Secure Vault",
-                        color = Color.White,
+                        color = TelePhotosTheme.TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -871,7 +874,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = progressText,
-                        color = Color(0xFF9E9E9E),
+                        color = TelePhotosTheme.TextSecondary,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
                     )
@@ -1020,14 +1023,14 @@ fun PhotosGridScreen(
             Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = "Storage Access Required",
-                color = Color.White,
+                color = TelePhotosTheme.TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "To show your local device photos and back them up, TeleGallery requires permission to access storage.",
-                color = Color(0xFF9E9E9E),
+                color = TelePhotosTheme.TextSecondary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
@@ -1040,7 +1043,7 @@ fun PhotosGridScreen(
                         launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Grant Permission", fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -1117,9 +1120,9 @@ fun PhotosGridScreen(
         if (isScanningLocal && localPhotos.isEmpty() && cloudLogs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = Color(0xFF4285F4))
+                    CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Scanning local photos...", color = Color.White, fontSize = 14.sp)
+                    Text("Scanning local photos...", color = TelePhotosTheme.TextPrimary, fontSize = 14.sp)
                 }
             }
         } else {
@@ -1187,7 +1190,7 @@ fun PhotosGridScreen(
                             )
                             Text(
                                 text = "Gallery",
-                                color = Color.White,
+                                color = TelePhotosTheme.TextPrimary,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -1375,9 +1378,45 @@ fun PhotosGridScreen(
                         }
                     }
 
-                    val scrollPercent = if (galleryItems.isNotEmpty()) {
-                        gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
-                    } else 0f
+                    val scrollPercent by remember {
+                        derivedStateOf {
+                            val layoutInfo = gridState.layoutInfo
+                            val totalItemsCount = layoutInfo.totalItemsCount
+                            if (totalItemsCount == 0) 0f else {
+                                val visibleItems = layoutInfo.visibleItemsInfo
+                                if (visibleItems.isEmpty()) 0f else {
+                                    val firstItem = visibleItems.first()
+                                    val firstVisibleIndex = firstItem.index
+                                    val firstVisibleItemOffset = firstItem.offset.y.toFloat()
+                                    val firstVisibleItemHeight = firstItem.size.height.toFloat()
+                                    val itemOffsetFraction = if (firstVisibleItemHeight > 0f) {
+                                        -firstVisibleItemOffset / firstVisibleItemHeight
+                                    } else 0f
+                                    
+                                    val columns = 3
+                                    val smoothIndex = firstVisibleIndex.toFloat() + (itemOffsetFraction * columns)
+                                    (smoothIndex / totalItemsCount.toFloat()).coerceIn(0f, 1f)
+                                }
+                            }
+                        }
+                    }
+
+                    fun performScroll(ratio: Float) {
+                        val columns = 3
+                        val totalRows = (galleryItems.size + columns - 1) / columns
+                        val targetFloatRow = ratio * totalRows.toFloat()
+                        val targetRow = targetFloatRow.toInt().coerceIn(0, totalRows - 1)
+                        val fractionalPart = targetFloatRow - targetRow
+
+                        val targetIndex = (targetRow * columns).coerceIn(0, galleryItems.size - 1)
+                        val itemHeightEstimate = 120.dp
+                        val itemHeightPx = with(density) { itemHeightEstimate.toPx() }
+                        val scrollOffset = -(fractionalPart * itemHeightPx).toInt()
+                        
+                        coroutineScope.launch {
+                            gridState.scrollToItem(targetIndex, scrollOffset)
+                        }
+                    }
 
                     Box(
                         modifier = Modifier
@@ -1390,7 +1429,7 @@ fun PhotosGridScreen(
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .width(1.dp)
-                                .background(Color.White.copy(alpha = 0.08f))
+                                .background(TelePhotosTheme.TextSecondary.copy(alpha = 0.15f))
                                 .align(Alignment.CenterEnd)
                                 .padding(end = 12.dp)
                         )
@@ -1406,13 +1445,14 @@ fun PhotosGridScreen(
                                         // Center bubble vertically with the scroll thumb
                                         translationY = (currentY + (thumbHeightPx / 2) - bubbleOffsetPx).coerceIn(0f, size.height - bubbleHeightPx)
                                     }
-                                    .background(Color(0xFF212121).copy(alpha = 0.95f), shape = RoundedCornerShape(16.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp))
+                                    .shadow(6.dp, shape = RoundedCornerShape(16.dp))
+                                    .background(TelePhotosTheme.Surface, shape = RoundedCornerShape(16.dp))
+                                    .border(1.dp, TelePhotosTheme.SurfaceVariant, shape = RoundedCornerShape(16.dp))
                                     .padding(horizontal = 14.dp, vertical = 6.dp)
                             ) {
                                 Text(
                                     text = bubbleText,
-                                    color = Color.White,
+                                    color = TelePhotosTheme.TextPrimary,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1424,31 +1464,28 @@ fun PhotosGridScreen(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(end = 8.dp)
-                                .width(6.dp)
+                                .width(if (isDragging) 8.dp else 6.dp)
                                 .height(thumbHeight)
                                 .graphicsLayer {
                                     val currentY = dragOffsetY ?: (scrollPercent * (size.height - thumbHeightPx))
                                     translationY = currentY.coerceIn(0f, size.height - thumbHeightPx)
                                 }
                                 .background(
-                                    color = if (isDragging) Color(0xFF4285F4) else Color.White.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(3.dp)
+                                    color = if (isDragging) TelePhotosTheme.AccentBlue else TelePhotosTheme.TextSecondary.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(4.dp)
                                 )
                         )
 
-                        // Gesture detector covering the rightmost 30.dp for easy grabbing
+                        // Gesture detector covering the rightmost 36.dp for easy grabbing
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .width(30.dp)
+                                .width(36.dp)
                                 .align(Alignment.CenterEnd)
                                 .pointerInput(galleryItems.size) {
                                     detectTapGestures { offset ->
                                         val ratio = (offset.y / size.height).coerceIn(0f, 1f)
-                                        val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
-                                        coroutineScope.launch {
-                                            gridState.scrollToItem(targetIndex)
-                                        }
+                                        performScroll(ratio)
                                     }
                                 }
                                 .pointerInput(galleryItems.size) {
@@ -1456,10 +1493,7 @@ fun PhotosGridScreen(
                                         onDragStart = { _ ->
                                             isDragging = true
                                             val maxTravel = size.height - thumbHeightPx
-                                            val currentPercent = if (galleryItems.isNotEmpty()) {
-                                                gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
-                                            } else 0f
-                                            dragOffsetY = currentPercent * maxTravel
+                                            dragOffsetY = scrollPercent * maxTravel
                                         },
                                         onDragEnd = {
                                             isDragging = false
@@ -1477,10 +1511,7 @@ fun PhotosGridScreen(
                                         dragOffsetY = nextY
                                         
                                         val ratio = nextY / maxTravel
-                                        val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
-                                        coroutineScope.launch {
-                                            gridState.scrollToItem(targetIndex)
-                                        }
+                                        performScroll(ratio)
                                     }
                                 }
                         )
@@ -1595,9 +1626,9 @@ fun SettingsScreen(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = TelePhotosTheme.AccentBlue,
-                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
-                                uncheckedThumbColor = Color.Gray,
-                                uncheckedTrackColor = Color.DarkGray
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.3f),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFD1D1D6)
                             )
                         )
                     }
@@ -1626,9 +1657,9 @@ fun SettingsScreen(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = TelePhotosTheme.AccentBlue,
-                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
-                                uncheckedThumbColor = Color.Gray,
-                                uncheckedTrackColor = Color.DarkGray
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.3f),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFD1D1D6)
                             )
                         )
                     }
@@ -1656,9 +1687,9 @@ fun SettingsScreen(
                             },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = TelePhotosTheme.AccentBlue,
-                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.5f),
-                                uncheckedThumbColor = Color.Gray,
-                                uncheckedTrackColor = Color.DarkGray
+                                checkedTrackColor = TelePhotosTheme.AccentBlue.copy(alpha = 0.3f),
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color(0xFFD1D1D6)
                             )
                         )
                     }
