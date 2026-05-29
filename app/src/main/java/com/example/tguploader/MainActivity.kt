@@ -141,21 +141,35 @@ class MainActivity : ComponentActivity() {
     }
 
     fun scheduleSyncWorker() {
+        val isBackupActive = PreferencesManager.isBackupActive(applicationContext)
+        if (!isBackupActive) {
+            // Cancel background backups instantly
+            WorkManager.getInstance(applicationContext).cancelUniqueWork("upload_worker")
+            Toast.makeText(this, "Background backup synchronization disabled/paused.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val wifiOnly = PreferencesManager.isWifiOnly(applicationContext)
+        val networkType = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
+
         val request = PeriodicWorkRequestBuilder<UploadWorker>(
             15, TimeUnit.MINUTES
         ).setConstraints(
             Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiredNetworkType(networkType)
                 .build()
         ).build()
 
         WorkManager.getInstance(applicationContext)
             .enqueueUniquePeriodicWork(
                 "upload_worker",
-                ExistingPeriodicWorkPolicy.KEEP,
+                // REPLACE will instantly apply new network constraints (e.g. Wi-Fi toggle changes)
+                ExistingPeriodicWorkPolicy.REPLACE,
                 request
             )
-        Toast.makeText(this, "Automatic background backup scheduled!", Toast.LENGTH_SHORT).show()
+        
+        val dataMsg = if (wifiOnly) "Wi-Fi Only (Data Saver Active)" else "Wi-Fi + Mobile Data allowed"
+        Toast.makeText(this, "Backup active: $dataMsg", Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -448,7 +462,6 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Always include Saved Messages option (ID corresponds to active user ID, but can let them select existing chat)
                         items(chats) { chat ->
                             Card(
                                 shape = RoundedCornerShape(14.dp),
@@ -836,126 +849,231 @@ fun SettingsScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Backup Settings",
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        item {
+            Text(
+                text = "Backup Settings",
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         // Selected Chat Display card
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Backup Target Chat",
-                    color = Color(0xFF9E9E9E),
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = selectedChatTitle,
-                        color = Color(0xFF4285F4),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Backup Target Chat",
+                        color = Color(0xFF9E9E9E),
+                        fontSize = 12.sp
                     )
-                    TextButton(onClick = {
-                        TdlibManager.loadChats()
-                        showChatPickerDialog = true
-                    }) {
-                        Text("Change", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = selectedChatTitle,
+                            color = Color(0xFF4285F4),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = {
+                            TdlibManager.loadChats()
+                            showChatPickerDialog = true
+                        }) {
+                            Text("Change", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Core Backup Preferences Toggle Card
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Backup Options",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-        // Trigger manual WorkManager scan & sync trigger
-        Button(
-            onClick = {
-                val oneTimeWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>().build()
-                WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
-                Toast.makeText(context, "Backup sequence started in background!", Toast.LENGTH_SHORT).show()
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(14.dp)
-        ) {
-            Icon(Icons.Default.Cloud, contentDescription = null, tint = Color.White)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Back Up All Local Photos Now", fontWeight = FontWeight.Bold)
-        }
+                    // Toggle 1: Start or Stop Backup Engine
+                    var backupActive by remember { mutableStateOf(PreferencesManager.isBackupActive(context)) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Active Backup Sync", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Auto-backup your local gallery in background", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = backupActive,
+                            onCheckedChange = { checked ->
+                                backupActive = checked
+                                PreferencesManager.setBackupActive(context, checked)
+                                context.scheduleSyncWorker()
+                            },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                        )
+                    }
 
-        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = Color(0xFF2C2C35))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-        // Log out button
-        OutlinedButton(
-            onClick = {
-                AuthManager.logOut {
-                    coroutineScope.launch(Dispatchers.Main) {
-                        Toast.makeText(context, "Logged out of Telegram successfully", Toast.LENGTH_LONG).show()
-                        onResetChat()
+                    // Toggle 2: Wifi Only (Mobile Data Saver Toggle)
+                    var wifiOnly by remember { mutableStateOf(PreferencesManager.isWifiOnly(context)) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Back Up Over Wi-Fi Only", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Do not use mobile cellular data for backups", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = wifiOnly,
+                            onCheckedChange = { checked ->
+                                wifiOnly = checked
+                                PreferencesManager.setWifiOnly(context, checked)
+                                context.scheduleSyncWorker()
+                            },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = Color(0xFF2C2C35))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Toggle 3: Send Photos in HD Lossless Quality
+                    var hdMode by remember { mutableStateOf(PreferencesManager.isHdMode(context)) }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Send Photos in HD Quality", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Upload original lossless files without quality loss", color = Color(0xFF9E9E9E), fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = hdMode,
+                            onCheckedChange = { checked ->
+                                hdMode = checked
+                                PreferencesManager.setHdMode(context, checked)
+                            },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF4285F4))
+                        )
                     }
                 }
-            },
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth(),
-            border = BorderStroke(1.dp, Color(0xFFFF5252)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252))
-        ) {
-            Text("Logout Telegram Session", fontWeight = FontWeight.Bold)
+            }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Dynamic System Logs Console
-        Text(
-            text = "Active JNI Core Logs",
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF09090C)),
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+        // Action Buttons
+        item {
+            Button(
+                onClick = {
+                    val isBackupActive = PreferencesManager.isBackupActive(context)
+                    if (!isBackupActive) {
+                        Toast.makeText(context, "Please enable 'Active Backup Sync' first!", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    val oneTimeWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>().build()
+                    WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
+                    Toast.makeText(context, "Force sync started in background!", Toast.LENGTH_SHORT).show()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4285F4)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(14.dp)
             ) {
-                items(systemLogs) { log ->
-                    Text(
-                        text = log,
-                        color = when {
-                            log.contains("fail", ignoreCase = true) || log.contains("error", ignoreCase = true) -> Color(0xFFFF5252)
-                            log.contains("success", ignoreCase = true) -> Color(0xFF00E676)
-                            else -> Color(0xFFB0BEC5)
-                        },
-                        fontSize = 10.sp,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
+                Icon(Icons.Default.Cloud, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Force Synchronize Local Photos Now", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        item {
+            OutlinedButton(
+                onClick = {
+                    AuthManager.logOut {
+                        coroutineScope.launch(Dispatchers.Main) {
+                            Toast.makeText(context, "Logged out of Telegram successfully", Toast.LENGTH_LONG).show()
+                            onResetChat()
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                border = BorderStroke(1.dp, Color(0xFFFF5252)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252))
+            ) {
+                Text("Logout Telegram Session", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // System JNI Core Logs Console
+        item {
+            Text(
+                text = "Active JNI Core Logs",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF09090C)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(systemLogs) { log ->
+                        Text(
+                            text = log,
+                            color = when {
+                                log.contains("fail", ignoreCase = true) || log.contains("error", ignoreCase = true) -> Color(0xFFFF5252)
+                                log.contains("success", ignoreCase = true) -> Color(0xFF00E676)
+                                else -> Color(0xFFB0BEC5)
+                            },
+                            fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
                 }
             }
         }
@@ -1144,13 +1262,16 @@ fun PhotoViewerScreen(
                             return@clickable
                         }
                         
+                        val isHd = PreferencesManager.isHdMode(context)
                         isBackingUpSingle = true
+                        
                         coroutineScope.launch(Dispatchers.IO) {
-                            val result = UploadManager.uploadPhoto(context, currentPhoto, chatId)
+                            val result = UploadManager.uploadPhoto(context, currentPhoto, chatId, isHd)
                             withContext(Dispatchers.Main) {
                                 isBackingUpSingle = false
                                 if (result is TdApi.Message) {
-                                    Toast.makeText(context, "Photo backed up successfully!", Toast.LENGTH_SHORT).show()
+                                    val modeStr = if (isHd) "in HD quality" else "in standard quality"
+                                    Toast.makeText(context, "Backed up successfully $modeStr!", Toast.LENGTH_SHORT).show()
                                     db.dao().insert(
                                         UploadEntity(
                                             path = currentPhoto.uri,

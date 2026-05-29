@@ -13,7 +13,8 @@ object UploadManager {
     suspend fun uploadPhoto(
         context: Context,
         photo: LocalPhoto,
-        chatId: Long
+        chatId: Long,
+        isHd: Boolean
     ): TdApi.Object {
         val fileName = photo.name
         val tempFile = File(context.cacheDir, fileName)
@@ -35,21 +36,32 @@ object UploadManager {
 
                     val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
                     
-                    val inputPhoto = TdApi.InputMessagePhoto().apply {
-                        this.photo = inputFile
-                        caption = TdApi.FormattedText(fileName, emptyArray())
+                    // Standard Telegram HD sending:
+                    // If isHd is true, we send the photo as an uncompressed Document (lossless original HD quality).
+                    // If isHd is false, we send it as a standard compressed Photo.
+                    val inputMessageContent = if (isHd) {
+                        TdApi.InputMessageDocument().apply {
+                            this.document = inputFile
+                            caption = TdApi.FormattedText(fileName, emptyArray())
+                        }
+                    } else {
+                        TdApi.InputMessagePhoto().apply {
+                            this.photo = inputFile
+                            caption = TdApi.FormattedText(fileName, emptyArray())
+                        }
                     }
 
                     val request = TdApi.SendMessage().apply {
                         this.chatId = chatId
-                        inputMessageContent = inputPhoto
+                        this.inputMessageContent = inputMessageContent
                     }
 
                     TdlibManager.getClient().send(request) { result ->
                         if (result is TdApi.Message) {
                             // Register continuation to resume when UpdateMessageSendSucceeded fires
                             TdlibManager.pendingUploads[result.id] = continuation
-                            TdlibManager.addLog("Upload queued for '${fileName}' (Msg ID: ${result.id}). Sending to Telegram...")
+                            val modeStr = if (isHd) "HD Lossless" else "Compressed"
+                            TdlibManager.addLog("Upload queued for '${fileName}' ($modeStr) (Msg ID: ${result.id}). Sending to Telegram...")
                         } else if (result is TdApi.Error) {
                             continuation.resume(result)
                         } else {
