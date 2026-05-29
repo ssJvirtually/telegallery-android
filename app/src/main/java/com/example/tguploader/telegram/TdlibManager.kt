@@ -3,6 +3,11 @@ package com.example.tguploader.telegram
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import kotlin.coroutines.resume
@@ -81,6 +86,14 @@ object TdlibManager {
                 
                 if (state is TdApi.AuthorizationStateWaitTdlibParameters) {
                     setParameters(context)
+                } else if (state is TdApi.AuthorizationStateClosed) {
+                    addLog("Session closed. Restarting TDLib client...")
+                    client = null
+                    @OptIn(DelicateCoroutinesApi::class)
+                    GlobalScope.launch(Dispatchers.Default) {
+                        delay(500)
+                        initialize(context)
+                    }
                 }
             }
             is TdApi.UpdateMessageSendSucceeded -> {
