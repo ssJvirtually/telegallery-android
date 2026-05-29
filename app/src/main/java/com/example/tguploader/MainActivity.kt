@@ -1227,56 +1227,145 @@ fun PhotosGridScreen(
                     }
                 }
 
-                // Fast scrollbar at the right edge
+                // Telegram-style Media Fast Scrollbar at the right edge
                 if (galleryItems.size > 10) {
                     var isDragging by remember { mutableStateOf(false) }
+                    var dragOffsetY by remember { mutableStateOf<Float?>(null) }
+                    val density = LocalDensity.current
+                    val thumbHeight = 60.dp
+                    val thumbHeightPx = remember(density) { with(density) { thumbHeight.toPx() } }
+                    val bubbleOffsetPx = remember(density) { with(density) { 25.dp.toPx() } }
+                    val bubbleHeightPx = remember(density) { with(density) { 50.dp.toPx() } }
+
+                    val bubbleText by remember(galleryItems) {
+                        derivedStateOf {
+                            val visibleIndex = gridState.firstVisibleItemIndex
+                            val item = galleryItems.getOrNull(visibleIndex)
+                            if (item != null) {
+                                val dateMs = when (item) {
+                                    is GalleryItem.Header -> {
+                                        try {
+                                            val sdf = SimpleDateFormat("EEEE, MMMM dd, yyyy", Locale.getDefault())
+                                            sdf.parse(item.date)?.time
+                                        } catch (e: Exception) { null }
+                                    }
+                                    is GalleryItem.PhotoItem -> item.photo.dateTaken
+                                }
+                                if (dateMs != null) {
+                                    SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date(dateMs))
+                                } else ""
+                            } else ""
+                        }
+                    }
+
+                    val scrollPercent = if (galleryItems.isNotEmpty()) {
+                        gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
+                    } else 0f
+
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .width(30.dp)
+                            .width(180.dp) // wide enough to hold the floating date bubble + thumb
                             .align(Alignment.CenterEnd)
-                            .pointerInput(galleryItems.size) {
-                                detectTapGestures { offset ->
-                                    val ratio = (offset.y / size.height).coerceIn(0f, 1f)
-                                    val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
-                                    coroutineScope.launch {
-                                        gridState.scrollToItem(targetIndex)
-                                    }
-                                }
-                            }
-                            .pointerInput(galleryItems.size) {
-                                detectDragGestures(
-                                    onDragStart = { isDragging = true },
-                                    onDragEnd = { isDragging = false },
-                                    onDragCancel = { isDragging = false }
-                                ) { change, dragAmount ->
-                                    change.consume()
-                                    val y = change.position.y
-                                    val ratio = (y / size.height).coerceIn(0f, 1f)
-                                    val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
-                                    coroutineScope.launch {
-                                        gridState.scrollToItem(targetIndex)
-                                    }
-                                }
-                            }
                     ) {
-                        // Draggable scrollbar thumb
-                        val thumbHeight = 60.dp
+                        // Thin vertical scrollbar track line
                         Box(
                             modifier = Modifier
-                                .padding(horizontal = 11.dp)
-                                .width(8.dp)
+                                .fillMaxHeight()
+                                .width(1.dp)
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 12.dp)
+                        )
+
+                        // Floating Date Bubble (Telegram style)
+                        if (isDragging && bubbleText.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(end = 36.dp)
+                                    .graphicsLayer {
+                                        val currentY = dragOffsetY ?: (scrollPercent * (size.height - thumbHeightPx))
+                                        // Center bubble vertically with the scroll thumb
+                                        translationY = (currentY + (thumbHeightPx / 2) - bubbleOffsetPx).coerceIn(0f, size.height - bubbleHeightPx)
+                                    }
+                                    .background(Color(0xFF212121).copy(alpha = 0.95f), shape = RoundedCornerShape(16.dp))
+                                    .border(1.dp, Color.White.copy(alpha = 0.15f), shape = RoundedCornerShape(16.dp))
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = bubbleText,
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Draggable scrollbar thumb capsule (Sleek Telegram style)
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(end = 8.dp)
+                                .width(6.dp)
                                 .height(thumbHeight)
                                 .graphicsLayer {
-                                    val scrollPercent = if (galleryItems.isNotEmpty()) {
-                                        gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
-                                    } else 0f
-                                    translationY = scrollPercent * (size.height - thumbHeight.toPx())
+                                    val currentY = dragOffsetY ?: (scrollPercent * (size.height - thumbHeightPx))
+                                    translationY = currentY.coerceIn(0f, size.height - thumbHeightPx)
                                 }
                                 .background(
-                                    color = if (isDragging) Color(0xFF4285F4) else Color.White.copy(alpha = 0.4f),
-                                    shape = RoundedCornerShape(4.dp)
+                                    color = if (isDragging) Color(0xFF4285F4) else Color.White.copy(alpha = 0.25f),
+                                    shape = RoundedCornerShape(3.dp)
                                 )
+                        )
+
+                        // Gesture detector covering the rightmost 30.dp for easy grabbing
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(30.dp)
+                                .align(Alignment.CenterEnd)
+                                .pointerInput(galleryItems.size) {
+                                    detectTapGestures { offset ->
+                                        val ratio = (offset.y / size.height).coerceIn(0f, 1f)
+                                        val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
+                                        coroutineScope.launch {
+                                            gridState.scrollToItem(targetIndex)
+                                        }
+                                    }
+                                }
+                                .pointerInput(galleryItems.size) {
+                                    detectDragGestures(
+                                        onDragStart = { _ ->
+                                            isDragging = true
+                                            val maxTravel = size.height - thumbHeightPx
+                                            val currentPercent = if (galleryItems.isNotEmpty()) {
+                                                gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
+                                            } else 0f
+                                            dragOffsetY = currentPercent * maxTravel
+                                        },
+                                        onDragEnd = {
+                                            isDragging = false
+                                            dragOffsetY = null
+                                        },
+                                        onDragCancel = {
+                                            isDragging = false
+                                            dragOffsetY = null
+                                        }
+                                    ) { change, dragAmount ->
+                                        change.consume()
+                                        val maxTravel = size.height - thumbHeightPx
+                                        val currentY = dragOffsetY ?: (scrollPercent * maxTravel)
+                                        val nextY = (currentY + dragAmount.y).coerceIn(0f, maxTravel)
+                                        dragOffsetY = nextY
+                                        
+                                        val ratio = nextY / maxTravel
+                                        val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
+                                        coroutineScope.launch {
+                                            gridState.scrollToItem(targetIndex)
+                                        }
+                                    }
+                                }
                         )
                     }
                 }
