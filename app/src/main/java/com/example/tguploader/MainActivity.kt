@@ -413,6 +413,11 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
         TdlibManager.loadChats()
     }
 
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredChats = remember(chats, searchQuery) {
+        chats.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -422,7 +427,7 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f)
+                .fillMaxHeight(0.85f)
                 .padding(16.dp)
         ) {
             Column(
@@ -444,7 +449,32 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Search Bar Input
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search chats...", color = Color(0xFF757575)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF757575)) },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear search", tint = Color(0xFFBDBDBD))
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF4285F4),
+                        unfocusedBorderColor = Color(0xFF424242),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    )
+                )
 
                 if (chats.isEmpty()) {
                     Box(
@@ -458,39 +488,48 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
                         }
                     }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(chats) { chat ->
-                            Card(
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelect(chat) }
-                            ) {
-                                Row(
+                    if (filteredChats.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No chats match your search", color = Color(0xFF9E9E9E), fontSize = 14.sp)
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(filteredChats) { chat ->
+                                Card(
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
                                     modifier = Modifier
-                                        .padding(16.dp)
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .fillMaxWidth()
+                                        .clickable { onSelect(chat) }
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Home,
-                                        contentDescription = null,
-                                        tint = Color(0xFF4285F4),
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(16.dp))
-                                    Text(
-                                        text = chat.title.ifEmpty { "Saved Messages (Me)" },
-                                        color = Color.White,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(16.dp)
+                                            .fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Home,
+                                            contentDescription = null,
+                                            tint = Color(0xFF4285F4),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Text(
+                                            text = chat.title.ifEmpty { "Saved Messages (Me)" },
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1082,12 +1121,17 @@ fun SettingsScreen(
     // Modal popup to select active chat
     if (showChatPickerDialog) {
         Dialog(onDismissRequest = { showChatPickerDialog = false }) {
+            var searchQuery by remember { mutableStateOf("") }
+            val filteredChats = remember(chats, searchQuery) {
+                chats.filter { it.title.contains(searchQuery, ignoreCase = true) }
+            }
+
             Card(
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.7f)
+                    .fillMaxHeight(0.75f)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -1098,37 +1142,68 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Dialog Search Bar Input
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search chats...", color = Color(0xFF757575)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF757575)) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear search", tint = Color(0xFFBDBDBD))
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF4285F4),
+                            unfocusedBorderColor = Color(0xFF424242),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
 
                     if (chats.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = Color(0xFF4285F4))
                         }
                     } else {
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(chats) { chat ->
-                                Card(
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            PreferencesManager.saveChatId(context, chat.id)
-                                            PreferencesManager.saveChatTitle(context, chat.title)
-                                            onResetChat() // Triggers UI redraw in parent
-                                            showChatPickerDialog = false
-                                        }
-                                ) {
-                                    Text(
-                                        text = chat.title.ifEmpty { "Saved Messages" },
-                                        color = Color.White,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
+                        if (filteredChats.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("No chats match your search", color = Color(0xFF9E9E9E), fontSize = 14.sp)
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(filteredChats) { chat ->
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                PreferencesManager.saveChatId(context, chat.id)
+                                                PreferencesManager.saveChatTitle(context, chat.title)
+                                                onResetChat() // Triggers UI redraw in parent
+                                                showChatPickerDialog = false
+                                            }
+                                    ) {
+                                        Text(
+                                            text = chat.title.ifEmpty { "Saved Messages" },
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
