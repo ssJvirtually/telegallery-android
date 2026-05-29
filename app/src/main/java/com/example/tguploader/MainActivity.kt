@@ -435,6 +435,28 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
         }
     }
 
+    suspend fun sendMessageAndWait(chatId: Long, welcomeText: String): TdApi.Object = suspendCancellableCoroutine<TdApi.Object> { continuation ->
+        try {
+            val messageRequest = TdApi.SendMessage().apply {
+                this.chatId = chatId
+                this.inputMessageContent = TdApi.InputMessageText().apply {
+                    text = TdApi.FormattedText(welcomeText, emptyArray())
+                }
+            }
+            
+            TdlibManager.getClient().send(messageRequest) { result ->
+                if (result is TdApi.Message) {
+                    // Register continuation to resume when UpdateMessageSendSucceeded fires
+                    TdlibManager.pendingUploads[result.id] = continuation
+                } else {
+                    continuation.resume(result)
+                }
+            }
+        } catch (e: Exception) {
+            continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendMessageAndWait"))
+        }
+    }
+
     fun generateVaultSignature(userId: Long): String {
         return try {
             val input = "TeleGallery-Secure-Salt-$userId"
@@ -558,20 +580,14 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                             "This private channel is used exclusively by your TeleGallery app to securely back up your photos. " +
                             "Please do not delete or modify this pinned message, as it stores your sync information."
                     
-                    // Step 3: Send welcome message containing the key
+                    // Step 3: Send welcome message containing the key (and wait for server delivery)
                     withContext(Dispatchers.Main) {
                         progressText = "Saving configuration keys to the channel..."
                     }
-                    val messageRequest = TdApi.SendMessage().apply {
-                        chatId = newChatId
-                        inputMessageContent = TdApi.InputMessageText().apply {
-                            text = TdApi.FormattedText(welcomeText, emptyArray())
-                        }
-                    }
-                    val messageResult = sendRequest(messageRequest)
+                    val messageResult = sendMessageAndWait(newChatId, welcomeText)
                     
                     if (messageResult is TdApi.Message) {
-                        // Step 4: Pin the welcome message in the channel
+                        // Step 4: Pin the welcome message in the channel (now using positive server message ID!)
                         withContext(Dispatchers.Main) {
                             progressText = "Pinning configurations inside your private vault..."
                         }
