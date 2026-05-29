@@ -75,6 +75,20 @@ class UploadWorker(
             val existing = dao.find(fileKey)
 
             if (existing == null) {
+                // Prevent duplicate upload if already in cloud database from another device
+                val existingInCloud = db.cloudDao().findByFileName(photo.name)
+                if (existingInCloud != null) {
+                    // Mark as uploaded locally since it already resides on the cloud
+                    dao.insert(
+                        UploadEntity(
+                            path = fileKey,
+                            uploadedAt = existingInCloud.uploadedAt
+                        )
+                    )
+                    TdlibManager.addLog("Worker: '${photo.name}' already exists in cloud history. Skipping and marking as synced.")
+                    continue
+                }
+
                 val modeStr = if (isHd) "HD" else "standard quality"
                 TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
                 

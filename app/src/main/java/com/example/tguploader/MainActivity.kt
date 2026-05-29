@@ -10,9 +10,16 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.ui.platform.LocalDensity
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -94,6 +101,47 @@ fun parseCloudPhotoUri(uri: String): Triple<Long, Int, String>? {
             val telegramFileId = parts[1].toInt()
             val fileName = parts[2]
             return Triple(messageId, telegramFileId, fileName)
+        }
+    } catch (e: Exception) {}
+    return null
+}
+
+fun parseDateFromFilename(fileName: String): Long? {
+    try {
+        // Pattern 1: YYYY-MM-DD_HH-MM-SS (e.g. photo_2026-05-29_16-09-11.jpg)
+        val pattern1 = java.util.regex.Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})_(\\d{2})-(\\d{2})-(\\d{2})")
+        val matcher1 = pattern1.matcher(fileName)
+        if (matcher1.find()) {
+            val dateStr = "${matcher1.group(1)}-${matcher1.group(2)}-${matcher1.group(3)} ${matcher1.group(4)}:${matcher1.group(5)}:${matcher1.group(6)}"
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+            return sdf.parse(dateStr)?.time
+        }
+
+        // Pattern 2: YYYYMMDD_HHMMSS (e.g. IMG_20260529_204420.jpg)
+        val pattern2 = java.util.regex.Pattern.compile("(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})(\\d{2})")
+        val matcher2 = pattern2.matcher(fileName)
+        if (matcher2.find()) {
+            val dateStr = "${matcher2.group(1)}-${matcher2.group(2)}-${matcher2.group(3)} ${matcher2.group(4)}:${matcher2.group(5)}:${matcher2.group(6)}"
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+            return sdf.parse(dateStr)?.time
+        }
+
+        // Pattern 3: YYYY-MM-DD (e.g. 2026-05-29.jpg)
+        val pattern3 = java.util.regex.Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})")
+        val matcher3 = pattern3.matcher(fileName)
+        if (matcher3.find()) {
+            val dateStr = "${matcher3.group(1)}-${matcher3.group(2)}-${matcher3.group(3)}"
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            return sdf.parse(dateStr)?.time
+        }
+
+        // Pattern 4: YYYYMMDD (e.g. 20260529.jpg)
+        val pattern4 = java.util.regex.Pattern.compile("(\\d{4})(\\d{2})(\\d{2})")
+        val matcher4 = pattern4.matcher(fileName)
+        if (matcher4.find()) {
+            val dateStr = "${matcher4.group(1)}-${matcher4.group(2)}-${matcher4.group(3)}"
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+            return sdf.parse(dateStr)?.time
         }
     } catch (e: Exception) {}
     return null
@@ -817,6 +865,18 @@ fun MainAppLayout(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Android System Back Button Handlers
+            if (fullScreenPhotoIndex != null && devicePhotosList.isNotEmpty()) {
+                BackHandler {
+                    fullScreenPhotoIndex = null
+                    devicePhotosList = emptyList()
+                }
+            } else if (activeTab == "Settings") {
+                BackHandler {
+                    activeTab = "Photos"
+                }
+            }
+
             when (activeTab) {
                 "Photos" -> {
                     PhotosGridScreen(
@@ -928,6 +988,7 @@ fun PhotosGridScreen(
         val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
         val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
         val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
+        val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
         val coroutineScope = rememberCoroutineScope()
         val chatId = remember { PreferencesManager.getChatId(context) }
@@ -955,28 +1016,30 @@ fun PhotosGridScreen(
         val unifiedPhotos = remember(localPhotos, uploadedLogs, cloudLogs) {
             val localMap = localPhotos.associateBy { it.name }
             val list = mutableListOf<LocalPhoto>()
-            val syncedCloudFilenames = mutableSetOf<String>()
+            val tempSyncedCloudFilenames = mutableSetOf<String>()
             
             for (cloud in cloudLogs) {
                 val matchingLocal = localMap[cloud.fileName]
                 if (matchingLocal != null) {
                     list.add(matchingLocal)
-                    syncedCloudFilenames.add(cloud.fileName)
+                    tempSyncedCloudFilenames.add(cloud.fileName)
                 } else {
+                    val parsedDate = parseDateFromFilename(cloud.fileName)
+                    val displayDate = parsedDate ?: cloud.uploadedAt
                     list.add(
                         LocalPhoto(
                             id = -cloud.messageId,
                             uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
                             name = cloud.fileName,
                             size = cloud.fileSize,
-                            dateTaken = cloud.uploadedAt
+                            dateTaken = displayDate
                         )
                     )
                 }
             }
             
             for (local in localPhotos) {
-                if (!syncedCloudFilenames.contains(local.name)) {
+                if (!tempSyncedCloudFilenames.contains(local.name)) {
                     list.add(local)
                 }
             }
@@ -1046,13 +1109,17 @@ fun PhotosGridScreen(
                 }
 
                 // Grid
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
+                // Grid wrapper with fast scrollbar
+                val gridState = rememberLazyGridState()
+                Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                    LazyVerticalGrid(
+                        state = gridState,
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
                     items(
                         items = galleryItems,
                         span = { item ->
@@ -1079,7 +1146,7 @@ fun PhotosGridScreen(
                             is GalleryItem.PhotoItem -> {
                                 val photo = item.photo
                                 val isCloud = photo.uri.startsWith("cloud://")
-                                val isSynced = if (isCloud) true else uploadedUris.contains(photo.uri)
+                                val isSynced = if (isCloud) true else (uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
                                 
                                 // Map LocalPhoto back to its index in unifiedPhotos
                                 val photoIndex = remember(photo, unifiedPhotos) {
@@ -1159,7 +1226,62 @@ fun PhotosGridScreen(
                         }
                     }
                 }
+
+                // Fast scrollbar at the right edge
+                if (galleryItems.size > 10) {
+                    var isDragging by remember { mutableStateOf(false) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(30.dp)
+                            .align(Alignment.CenterEnd)
+                            .pointerInput(galleryItems.size) {
+                                detectTapGestures { offset ->
+                                    val ratio = (offset.y / size.height).coerceIn(0f, 1f)
+                                    val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
+                                    coroutineScope.launch {
+                                        gridState.scrollToItem(targetIndex)
+                                    }
+                                }
+                            }
+                            .pointerInput(galleryItems.size) {
+                                detectDragGestures(
+                                    onDragStart = { isDragging = true },
+                                    onDragEnd = { isDragging = false },
+                                    onDragCancel = { isDragging = false }
+                                ) { change, dragAmount ->
+                                    change.consume()
+                                    val y = change.position.y
+                                    val ratio = (y / size.height).coerceIn(0f, 1f)
+                                    val targetIndex = (ratio * galleryItems.size).toInt().coerceIn(0, galleryItems.size - 1)
+                                    coroutineScope.launch {
+                                        gridState.scrollToItem(targetIndex)
+                                    }
+                                }
+                            }
+                    ) {
+                        // Draggable scrollbar thumb
+                        val thumbHeight = 60.dp
+                        Box(
+                            modifier = Modifier
+                                .padding(horizontal = 11.dp)
+                                .width(8.dp)
+                                .height(thumbHeight)
+                                .graphicsLayer {
+                                    val scrollPercent = if (galleryItems.isNotEmpty()) {
+                                        gridState.firstVisibleItemIndex.toFloat() / galleryItems.size.toFloat()
+                                    } else 0f
+                                    translationY = scrollPercent * (size.height - thumbHeight.toPx())
+                                }
+                                .background(
+                                    color = if (isDragging) Color(0xFF4285F4) else Color.White.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        )
+                    }
+                }
             }
+        }
         }
     }
 }
@@ -1516,6 +1638,8 @@ fun PhotoViewerScreen(
     val db = remember { UploadDatabase.getDatabase(context) }
     val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
     val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
+    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+    val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -1663,7 +1787,7 @@ fun PhotoViewerScreen(
             // Back up single photo manually OR Download to Device if cloud-only
             if (currentPhoto != null) {
                 val isCloud = currentPhoto.uri.startsWith("cloud://")
-                val isSynced = if (isCloud) true else uploadedUris.contains(currentPhoto.uri)
+                val isSynced = if (isCloud) true else (uploadedUris.contains(currentPhoto.uri) || syncedCloudFilenames.contains(currentPhoto.name))
                 
                 if (isCloud) {
                     var isDownloadingToDevice by remember(currentPhoto.uri) { mutableStateOf(false) }
