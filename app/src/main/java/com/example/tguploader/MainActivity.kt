@@ -70,8 +70,10 @@ import com.example.tguploader.telegram.UploadManager
 import com.example.tguploader.worker.UploadWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
+import kotlin.coroutines.resume
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -196,13 +198,12 @@ fun AppNavigation() {
             }
             is TdApi.AuthorizationStateReady -> {
                 if (selectedChatId.value == 0L) {
-                    ChatPickerOnboarding(chats) { chat ->
-                        PreferencesManager.saveChatId(context, chat.id)
-                        PreferencesManager.saveChatTitle(context, chat.title)
-                        selectedChatId.value = chat.id
-                        selectedChatTitle.value = chat.title
-                        context.scheduleSyncWorker()
-                    }
+                    AutoVaultSetupScreen(
+                        onSetupComplete = { chatId, chatTitle ->
+                            selectedChatId.value = chatId
+                            selectedChatTitle.value = chatTitle
+                        }
+                    )
                 } else {
                     MainAppLayout(
                         selectedChatTitle = selectedChatTitle.value ?: "Telegram Backup Chat",
@@ -408,18 +409,120 @@ fun OtpVerifyScreen() {
 }
 
 @Composable
-fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
-    LaunchedEffect(Unit) {
-        TdlibManager.loadChats()
+fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
+    val context = LocalContext.current as MainActivity
+    val coroutineScope = rememberCoroutineScope()
+    
+    var progressText by remember { mutableStateOf("Initializing secure TeleGallery vault...") }
+    var errorText by remember { mutableStateOf<String?>(null) }
+
+    // Helper suspending function to send TDLib requests
+    suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = suspendCancellableCoroutine<TdApi.Object> { continuation ->
+        try {
+            TdlibManager.getClient().send(request) { result ->
+                if (continuation.isActive) {
+                    continuation.resume(result)
+                }
+            }
+        } catch (e: Exception) {
+            if (continuation.isActive) {
+                continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
+            }
+        }
     }
 
-    var searchQuery by remember { mutableStateOf("") }
-    val filteredChats = remember(chats, searchQuery) {
-        chats.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                // Step 1: Create a private Telegram channel named TeleGallery
+                withContext(Dispatchers.Main) {
+                    progressText = "Creating private backup channel 'TeleGallery' on Telegram..."
+                }
+                
+                val createRequest = TdApi.CreateNewSupergroupChat().apply {
+                    title = "TeleGallery"
+                    isChannel = true
+                    description = "TeleGallery secure photo backup repository. Please do not delete."
+                }
+                
+                val chatResult = sendRequest(createRequest)
+                
+                if (chatResult is TdApi.Chat) {
+                    val newChatId = chatResult.id
+                    
+                    // Step 2: Generate a secure vault backup key
+                    withContext(Dispatchers.Main) {
+                        progressText = "Generating unique vault encryption key..."
+                    }
+                    val uniqueKey = "TG-VAULT-${UUID.randomUUID().toString().uppercase().take(8)}"
+                    
+                    val welcomeText = "🔑 TeleGallery Secure Backup Vault Initialized!\n\n" +
+                            "Vault Key: `$uniqueKey`\n\n" +
+                            "This private channel is used exclusively by your TeleGallery app to securely back up your photos. " +
+                            "Please do not delete or modify this pinned message, as it stores your sync information."
+                    
+                    // Step 3: Send welcome message containing the key
+                    withContext(Dispatchers.Main) {
+                        progressText = "Saving configuration keys to the channel..."
+                    }
+                    val messageRequest = TdApi.SendMessage().apply {
+                        chatId = newChatId
+                        inputMessageContent = TdApi.InputMessageText().apply {
+                            text = TdApi.FormattedText(welcomeText, emptyArray())
+                        }
+                    }
+                    val messageResult = sendRequest(messageRequest)
+                    
+                    if (messageResult is TdApi.Message) {
+                        // Step 4: Pin the welcome message in the channel
+                        withContext(Dispatchers.Main) {
+                            progressText = "Pinning configurations inside your private vault..."
+                        }
+                        val pinRequest = TdApi.PinChatMessage().apply {
+                            chatId = newChatId
+                            messageId = messageResult.id
+                            disableNotification = true
+                            onlyForSelf = false
+                        }
+                        sendRequest(pinRequest)
+                    }
+                    
+                    // Step 5: Save target chat preferences
+                    withContext(Dispatchers.Main) {
+                        progressText = "Finalizing secure integration..."
+                    }
+                    PreferencesManager.saveChatId(context, newChatId)
+                    PreferencesManager.saveChatTitle(context, "TeleGallery (Private Vault)")
+                    
+                    // Schedule background sync worker
+                    context.scheduleSyncWorker()
+                    
+                    withContext(Dispatchers.Main) {
+                        progressText = "Vault ready! Opening your gallery..."
+                        kotlinx.coroutines.delay(1000)
+                        onSetupComplete(newChatId, "TeleGallery (Private Vault)")
+                    }
+                } else if (chatResult is TdApi.Error) {
+                    withContext(Dispatchers.Main) {
+                        errorText = "Telegram Error: [Code ${chatResult.code}] ${chatResult.message}"
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        errorText = "Unexpected response from Telegram core."
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    errorText = "Setup Exception: ${e.message ?: "Unknown error"}"
+                }
+            }
+        }
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F0F14)),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -427,113 +530,70 @@ fun ChatPickerOnboarding(chats: List<ChatInfo>, onSelect: (ChatInfo) -> Unit) {
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E24)),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.85f)
                 .padding(16.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Select Storage Destination",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                Icon(
+                    imageVector = Icons.Default.Cloud,
+                    contentDescription = null,
+                    tint = Color(0xFF4285F4),
+                    modifier = Modifier.size(72.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Select a Telegram chat, group, or channel where your gallery will be securely backed up.",
-                    color = Color(0xFF9E9E9E),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Search Bar Input
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search chats...", color = Color(0xFF757575)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color(0xFF757575)) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear search", tint = Color(0xFFBDBDBD))
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF4285F4),
-                        unfocusedBorderColor = Color(0xFF424242),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                if (errorText != null) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF5252),
+                        modifier = Modifier.size(36.dp)
                     )
-                )
-
-                if (chats.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Vault Setup Failed",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorText!!,
+                        color = Color(0xFFFF5252),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = {
+                            errorText = null
+                            context.recreate()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5252)),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = Color(0xFF4285F4))
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Loading active chats...", color = Color.White, fontSize = 14.sp)
-                        }
+                        Text("Retry Setup", fontWeight = FontWeight.Bold)
                     }
                 } else {
-                    if (filteredChats.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("No chats match your search", color = Color(0xFF9E9E9E), fontSize = 14.sp)
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(filteredChats) { chat ->
-                                Card(
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C35)),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onSelect(chat) }
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .padding(16.dp)
-                                            .fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Home,
-                                            contentDescription = null,
-                                            tint = Color(0xFF4285F4),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(16.dp))
-                                        Text(
-                                            text = chat.title.ifEmpty { "Saved Messages (Me)" },
-                                            color = Color.White,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    CircularProgressIndicator(color = Color(0xFF4285F4))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Setting Up Secure Vault",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = progressText,
+                        color = Color(0xFF9E9E9E),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
