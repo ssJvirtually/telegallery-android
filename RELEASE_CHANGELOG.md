@@ -4,6 +4,14 @@ This changelog documents the version releases, features, bug fixes, and architec
 
 ---
 
+## 🚀 Release v2.2.0 — Custom Premium Launcher Icon & Density Mipmaps
+* **Features & Technical Updates:**
+  * **Custom Premium Icon:** Replaced the default application launcher icon with a custom-designed, gorgeous premium branding asset blending Telegram's paper airplane and Google Photos pinwheel colors.
+  * **Density Mipmaps Generation:** Used advanced Lanczos downsampling to generate and register standard density launcher icons across all standard Android device directories (`mipmap-mdpi` [48x48], `mipmap-hdpi` [72x72], `mipmap-xhdpi` [96x96], `mipmap-xxhdpi` [144x144], `mipmap-xxxhdpi` [192x192]).
+  * **Manifest Icon Mapping:** Updated `AndroidManifest.xml` launcher icon and round icon attributes to point cleanly to `@mipmap/ic_launcher` instead of legacy single-density drawables, enabling standard scaling on modern home screens.
+
+---
+
 ## 🚀 Release v2.1.0 — Premium Light Theme & Smooth Fast Scrollbar
 * **Features & Technical Updates:**
   * **Premium Light Theme:** Transitioned the entire app to a beautiful, clean light aesthetic blending Telegram Blue (`#2481CC`) and clean Google Photos surfaces. Uses clean off-white background (`#F4F6F9`), pure white surfaces (`#FFFFFF`), light blue-grey variants (`#E8EDF5`), and refined cool-grey typography.
