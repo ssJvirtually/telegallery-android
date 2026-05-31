@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.MediaStore
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -23,13 +24,17 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -77,6 +82,7 @@ import com.example.tguploader.telegram.TdlibManager
 import com.example.tguploader.telegram.UploadManager
 import com.example.tguploader.worker.UploadWorker
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -205,6 +211,7 @@ fun rememberCloudThumbnailPath(fileId: Int): String? {
 class MainActivity : ComponentActivity() {
 
     private var deleteLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
+    private var deleteMultipleLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -235,6 +242,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Register intent sender launcher for batch deletions
+                deleteMultipleLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.StartIntentSenderForResult()
+                ) { result ->
+                    if (result.resultCode == RESULT_OK) {
+                        Toast.makeText(this, "Selected photos deleted successfully!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -259,6 +275,49 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 Toast.makeText(this, "Delete failed: ${securityException.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    fun triggerBatchDelete(photos: List<LocalPhoto>) {
+        val localPhotos = photos.filter { !it.uri.startsWith("cloud://") }
+        val cloudCount = photos.size - localPhotos.size
+        
+        if (localPhotos.isEmpty()) {
+            if (cloudCount > 0) {
+                Toast.makeText(this, "Skipped cloud-only photos. No local photos to delete.", Toast.LENGTH_LONG).show()
+            }
+            return
+        }
+        
+        if (cloudCount > 0) {
+            Toast.makeText(this, "Skipped $cloudCount cloud-only photos.", Toast.LENGTH_SHORT).show()
+        }
+        
+        val uris = localPhotos.map { Uri.parse(it.uri) }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val pendingIntent = MediaStore.createDeleteRequest(contentResolver, uris)
+                deleteMultipleLauncher?.launch(IntentSenderRequest.Builder(pendingIntent.intentSender).build())
+            } else {
+                var successCount = 0
+                for (photo in localPhotos) {
+                    try {
+                        contentResolver.delete(Uri.parse(photo.uri), null, null)
+                        successCount++
+                    } catch (e: Exception) {}
+                }
+                Toast.makeText(this, "Deleted $successCount photos successfully!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (securityException: SecurityException) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val recoverableSecurityException = securityException as? RecoverableSecurityException
+                val intentSender = recoverableSecurityException?.userAction?.actionIntent?.intentSender
+                if (intentSender != null) {
+                    deleteMultipleLauncher?.launch(IntentSenderRequest.Builder(intentSender).build())
+                }
+            } else {
+                Toast.makeText(this, "Batch delete failed: ${securityException.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -985,6 +1044,7 @@ fun MainAppLayout(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotosGridScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
@@ -1053,6 +1113,15 @@ fun PhotosGridScreen(
         // Load Photos and show grid
         var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
         var isScanningLocal by remember { mutableStateOf(true) }
+        var isSelectionMode by remember { mutableStateOf(false) }
+        val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+
+        if (isSelectionMode) {
+            BackHandler {
+                selectedPhotos.clear()
+                isSelectionMode = false
+            }
+        }
         val db = remember { UploadDatabase.getDatabase(context) }
         
         val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
@@ -1143,68 +1212,209 @@ fun PhotosGridScreen(
             }
 
             Column(modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background)) {
-                // Top App Bar
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(TelePhotosTheme.Surface)
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Telegram paper airplane icon styled with a Google Photos color ring!
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .background(
-                                    Brush.sweepGradient(
-                                        colors = listOf(
-                                            TelePhotosTheme.GoogleBlue,
-                                            TelePhotosTheme.GoogleGreen,
-                                            TelePhotosTheme.GoogleYellow,
-                                            TelePhotosTheme.GoogleRed,
-                                            TelePhotosTheme.GoogleBlue
-                                        )
-                                    ),
-                                    shape = CircleShape
+                if (isSelectionMode) {
+                    // Selection Mode Top Action Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(TelePhotosTheme.Surface)
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = {
+                                selectedPhotos.clear()
+                                isSelectionMode = false
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close selection",
+                                    tint = TelePhotosTheme.TextPrimary
                                 )
-                                .padding(2.dp)
-                                .background(TelePhotosTheme.Surface, shape = CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Send, // Elegant paper airplane
-                                contentDescription = null,
-                                tint = TelePhotosTheme.AccentBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Row {
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Tele",
-                                color = TelePhotosTheme.AccentBlue,
-                                fontSize = 20.sp,
+                                text = "${selectedPhotos.size} selected",
+                                color = TelePhotosTheme.TextPrimary,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text(
-                                text = "Gallery",
-                                color = TelePhotosTheme.TextPrimary,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                        }
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Batch Share Action
+                            IconButton(onClick = {
+                                if (selectedPhotos.isNotEmpty()) {
+                                    try {
+                                        val shareUris = ArrayList<Uri>().apply {
+                                            addAll(selectedPhotos.map { Uri.parse(it.uri) })
+                                        }
+                                        val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                                            type = "image/*"
+                                            putParcelableArrayListExtra(Intent.EXTRA_STREAM, shareUris)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(Intent.createChooser(shareIntent, "Share Photos"))
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Sharing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share selected",
+                                    tint = TelePhotosTheme.AccentBlue
+                                )
+                            }
+                            
+                            // Batch Backup Action
+                            var isBackingUpMultiple by remember { mutableStateOf(false) }
+                            IconButton(
+                                onClick = {
+                                    if (selectedPhotos.isNotEmpty()) {
+                                        if (chatId == 0L) {
+                                            Toast.makeText(context, "Please set a target chat in settings first!", Toast.LENGTH_SHORT).show()
+                                            return@IconButton
+                                        }
+                                        isBackingUpMultiple = true
+                                        val isHd = PreferencesManager.isHdMode(context)
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val unsyncedSelected = selectedPhotos.filter { photo ->
+                                                val isCloud = photo.uri.startsWith("cloud://")
+                                                !(isCloud || uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
+                                            }
+                                            val totalToSync = unsyncedSelected.size
+                                            
+                                            if (totalToSync == 0) {
+                                                withContext(Dispatchers.Main) {
+                                                    isBackingUpMultiple = false
+                                                    Toast.makeText(context, "All selected photos are already synced!", Toast.LENGTH_SHORT).show()
+                                                    selectedPhotos.clear()
+                                                    isSelectionMode = false
+                                                }
+                                                return@launch
+                                            }
+                                            
+                                            var successCount = 0
+                                            for (photo in unsyncedSelected) {
+                                                val res = UploadManager.uploadPhoto(context, photo, chatId, isHd)
+                                                if (res is TdApi.Message) {
+                                                    db.dao().insert(
+                                                        UploadEntity(
+                                                            path = photo.uri,
+                                                            uploadedAt = System.currentTimeMillis()
+                                                        )
+                                                    )
+                                                    successCount++
+                                                    withContext(Dispatchers.Main) {
+                                                        Toast.makeText(context, "Synced $successCount of $totalToSync photos...", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                    delay(5000)
+                                                }
+                                            }
+                                            withContext(Dispatchers.Main) {
+                                                isBackingUpMultiple = false
+                                                Toast.makeText(context, "Batch backup complete: Synced $successCount of $totalToSync photos!", Toast.LENGTH_LONG).show()
+                                                selectedPhotos.clear()
+                                                isSelectionMode = false
+                                            }
+                                        }
+                                    }
+                                },
+                                enabled = !isBackingUpMultiple
+                            ) {
+                                if (isBackingUpMultiple) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = TelePhotosTheme.AccentBlue)
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Cloud,
+                                        contentDescription = "Backup selected",
+                                        tint = TelePhotosTheme.AccentBlue
+                                    )
+                                }
+                            }
+                            
+                            // Batch Delete Action
+                            IconButton(onClick = {
+                                if (selectedPhotos.isNotEmpty()) {
+                                    (context as MainActivity).triggerBatchDelete(selectedPhotos.toList())
+                                    selectedPhotos.clear()
+                                    isSelectionMode = false
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete selected from device",
+                                    tint = TelePhotosTheme.GoogleRed
+                                )
+                            }
                         }
                     }
-                    Text(
-                        text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
-                        color = TelePhotosTheme.AccentBlue,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
+                } else {
+                    // Top App Bar
+                    Row(
                         modifier = Modifier
-                            .background(Color(0x1F2481CC), shape = RoundedCornerShape(12.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                            .fillMaxWidth()
+                            .background(TelePhotosTheme.Surface)
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Telegram paper airplane icon styled with a Google Photos color ring!
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .background(
+                                        Brush.sweepGradient(
+                                            colors = listOf(
+                                                TelePhotosTheme.GoogleBlue,
+                                                TelePhotosTheme.GoogleGreen,
+                                                TelePhotosTheme.GoogleYellow,
+                                                TelePhotosTheme.GoogleRed,
+                                                TelePhotosTheme.GoogleBlue
+                                            )
+                                        ),
+                                        shape = CircleShape
+                                    )
+                                    .padding(2.dp)
+                                    .background(TelePhotosTheme.Surface, shape = CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send, // Elegant paper airplane
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.AccentBlue,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Row {
+                                Text(
+                                    text = "Tele",
+                                    color = TelePhotosTheme.AccentBlue,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Gallery",
+                                    color = TelePhotosTheme.TextPrimary,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                        Text(
+                            text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
+                            color = TelePhotosTheme.AccentBlue,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .background(Color(0x1F2481CC), shape = RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
                 }
 
                 // Grid
@@ -1280,65 +1490,150 @@ fun PhotosGridScreen(
                                     } else null
                                 } else null
 
+                                val isSelected = selectedPhotos.any { it.uri == photo.uri }
+                                val haptic = LocalHapticFeedback.current
+                                val animatedPadding by animateDpAsState(
+                                    targetValue = if (isSelected) 8.dp else 0.dp,
+                                    label = "padding"
+                                )
+
                                 Box(
                                     modifier = Modifier
                                         .aspectRatio(1f)
-                                        .clickable {
-                                            if (photoIndex != -1) {
-                                                onPhotoSelected(photoIndex, unifiedPhotos)
+                                        .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
+                                        .combinedClickable(
+                                            onLongClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                if (!isSelectionMode) {
+                                                    isSelectionMode = true
+                                                    selectedPhotos.add(photo)
+                                                } else {
+                                                    if (selectedPhotos.any { it.uri == photo.uri }) {
+                                                        selectedPhotos.removeAll { it.uri == photo.uri }
+                                                        if (selectedPhotos.isEmpty()) {
+                                                            isSelectionMode = false
+                                                        }
+                                                    } else {
+                                                        selectedPhotos.add(photo)
+                                                    }
+                                                }
+                                                Unit
+                                            },
+                                            onClick = {
+                                                if (isSelectionMode) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    if (selectedPhotos.any { it.uri == photo.uri }) {
+                                                        selectedPhotos.removeAll { it.uri == photo.uri }
+                                                        if (selectedPhotos.isEmpty()) {
+                                                            isSelectionMode = false
+                                                        }
+                                                    } else {
+                                                        selectedPhotos.add(photo)
+                                                    }
+                                                } else {
+                                                    if (photoIndex != -1) {
+                                                        onPhotoSelected(photoIndex, unifiedPhotos)
+                                                    }
+                                                }
+                                                Unit
+                                            }
+                                        )
+                                ) {
+                                    // Content container that shrinks when selected
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(animatedPadding)
+                                            .clip(RoundedCornerShape(if (isSelected) 8.dp else 0.dp))
+                                    ) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(cloudThumbnailPath ?: photo.uri)
+                                                .size(256) // Thumbnails only to prevent memory crashes
+                                                .crossfade(true)
+                                                .build(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                        
+                                        if (isSelected) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(TelePhotosTheme.AccentBlue.copy(alpha = 0.2f))
+                                            )
+                                        }
+                                        
+                                        // Subtle gradient at bottom-right for badge legibility
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .size(36.dp)
+                                                .background(
+                                                    Brush.radialGradient(
+                                                        colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
+                                                    )
+                                                )
+                                        )
+
+                                        // Cloud Backup state icon overlay
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(6.dp)
+                                        ) {
+                                            if (isCloud) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Cloud,
+                                                    contentDescription = "Cloud Only",
+                                                    tint = Color(0xFF4285F4), // Premium Google Blue
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            } else if (isSynced) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Synced",
+                                                    tint = Color(0xFF00E676), // Bright Green
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = Icons.Default.Cloud,
+                                                    contentDescription = "Pending Sync",
+                                                    tint = Color.White.copy(alpha = 0.5f), // Dim cloud outline
+                                                    modifier = Modifier.size(16.dp)
+                                                )
                                             }
                                         }
-                                ) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(cloudThumbnailPath ?: photo.uri)
-                                            .size(256) // Thumbnails only to prevent memory crashes
-                                            .crossfade(true)
-                                            .build(),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                                    }
                                     
-                                    // Subtle gradient at bottom-right for badge legibility
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .size(36.dp)
-                                            .background(
-                                                Brush.radialGradient(
-                                                    colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
+                                    // Selection checkbox overlay
+                                    if (isSelectionMode) {
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopStart)
+                                                .padding(8.dp)
+                                                .size(24.dp)
+                                                .background(
+                                                    color = if (isSelected) TelePhotosTheme.AccentBlue else Color.Black.copy(alpha = 0.3f),
+                                                    shape = CircleShape
                                                 )
-                                            )
-                                    )
-
-                                    // Cloud Backup state icon overlay
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(6.dp)
-                                    ) {
-                                        if (isCloud) {
-                                            Icon(
-                                                imageVector = Icons.Default.Cloud,
-                                                contentDescription = "Cloud Only",
-                                                tint = Color(0xFF4285F4), // Premium Google Blue
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        } else if (isSynced) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = "Synced",
-                                                tint = Color(0xFF00E676), // Bright Green
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = Icons.Default.Cloud,
-                                                contentDescription = "Pending Sync",
-                                                tint = Color.White.copy(alpha = 0.5f), // Dim cloud outline
-                                                modifier = Modifier.size(16.dp)
-                                            )
+                                                .border(
+                                                    width = 1.5.dp,
+                                                    color = Color.White,
+                                                    shape = CircleShape
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (isSelected) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Selected",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
