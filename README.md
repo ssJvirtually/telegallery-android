@@ -23,12 +23,15 @@
 
 ---
 
-## 📱 App Screenshots
+## 📱 Application Screens
 
-### Home Grid & Smooth Scrolling Timeline
-Here is a preview of the main application layout featuring the light theme, 3-column timeline grid, and standard status overlay badges:
+| 🔐 1. OTP Phone Login | 📅 2. Timeline Grid View |
+|:---:|:---:|
+| ![Login Screen](screenshots/login_screen.png) | ![Gallery Timeline](screenshots/gallery_timeline.png) |
 
-![TeleGallery App Screen](screenshots/app_screenshot.jpg)
+| 🖼️ 3. Immersive Detail View | ⚙️ 4. Settings Dashboard |
+|:---:|:---:|
+| ![Photo Viewer](screenshots/photo_viewer.png) | ![Settings Screen](screenshots/settings_screen.png) |
 
 ---
 
