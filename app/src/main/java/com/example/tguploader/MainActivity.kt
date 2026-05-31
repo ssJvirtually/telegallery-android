@@ -1134,6 +1134,15 @@ fun PhotosGridScreen(
 
         LaunchedEffect(Unit) {
             coroutineScope.launch(Dispatchers.IO) {
+                // 1. Attempt to restore local database from remote Telegram backup if cache is empty
+                if (chatId != 0L) {
+                    try {
+                        com.example.tguploader.storage.BackupManager.restoreDatabase(context, chatId)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 val scanned = MediaStoreScanner.scan(context)
                 withContext(Dispatchers.Main) {
                     localPhotos = scanned
@@ -1147,6 +1156,18 @@ fun PhotosGridScreen(
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                }
+            }
+        }
+
+        // 2. Event-driven debounced backup synchronization (checks every 5 minutes after last idle state change)
+        val totalRecords = cloudLogs.size + uploadedLogs.size
+        LaunchedEffect(totalRecords) {
+            if (chatId != 0L && totalRecords > 0) {
+                val lastBackupCount = PreferencesManager.getLastBackupRecordCount(context)
+                if (totalRecords != lastBackupCount) {
+                    delay(300_000) // Debounce 5 minutes of idle time
+                    com.example.tguploader.storage.BackupManager.backupDatabase(context, chatId)
                 }
             }
         }

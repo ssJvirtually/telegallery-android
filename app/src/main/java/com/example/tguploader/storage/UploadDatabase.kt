@@ -66,6 +66,9 @@ interface CloudPhotoDao {
 
     @Query("DELETE FROM cloud_photos")
     suspend fun clearAll()
+
+    @Query("SELECT COUNT(*) FROM cloud_photos")
+    suspend fun getRecordCountDirect(): Int
 }
 
 @Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 2, exportSchema = false)

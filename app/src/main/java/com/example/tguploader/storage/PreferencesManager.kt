@@ -100,4 +100,31 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_HD_MODE, true) // Default is true (upload in HD)
     }
+
+    private const val KEY_LAST_BACKUP_MSG_ID = "last_backup_msg_id"
+    private const val KEY_LAST_BACKUP_RECORD_COUNT = "last_backup_record_count"
+
+    fun setLastBackupMessageId(context: Context, messageId: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_LAST_BACKUP_MSG_ID, messageId)
+            .apply()
+    }
+
+    fun getLastBackupMessageId(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_LAST_BACKUP_MSG_ID, 0L)
+    }
+
+    fun setLastBackupRecordCount(context: Context, count: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(KEY_LAST_BACKUP_RECORD_COUNT, count)
+            .apply()
+    }
+
+    fun getLastBackupRecordCount(context: Context): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_LAST_BACKUP_RECORD_COUNT, 0)
+    }
 }
