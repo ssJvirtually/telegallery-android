@@ -18,6 +18,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -1148,6 +1154,19 @@ fun PhotosGridScreen(
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
 
+        val configuration = LocalConfiguration.current
+        val screenWidthDp = configuration.screenWidthDp
+        val isTablet = screenWidthDp >= 600
+        val minColumns = if (isTablet) 3 else 2
+        val maxColumns = if (isTablet) 8 else 5
+
+        var gridColumns by remember {
+            mutableStateOf(PreferencesManager.getGridColumns(context, 3).coerceIn(minColumns, maxColumns))
+        }
+        val zoomScale = remember { Animatable(1f) }
+        var transformOrigin by remember { mutableStateOf(TransformOrigin.Center) }
+        var isZooming by remember { mutableStateOf(false) }
+
         if (isSelectionMode) {
             BackHandler {
                 selectedPhotos.clear()
@@ -1473,11 +1492,64 @@ fun PhotosGridScreen(
                 // Grid
                 // Grid wrapper with fast scrollbar
                 val gridState = rememberLazyGridState()
-                Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                val haptic = LocalHapticFeedback.current
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .pointerInput(gridColumns, minColumns, maxColumns) {
+                            var zoomAccumulator = 1f
+                            detectTransformGestures(panZoomLock = true) { centroid, _, zoom, _ ->
+                                if (zoom != 1f) {
+                                    isZooming = true
+                                    
+                                    val pivotX = centroid.x / size.width
+                                    val pivotY = centroid.y / size.height
+                                    transformOrigin = TransformOrigin(pivotX, pivotY)
+                                    
+                                    zoomAccumulator *= zoom
+                                    val targetScale = zoomAccumulator.coerceIn(0.5f, 2.0f)
+                                    coroutineScope.launch {
+                                        zoomScale.snapTo(targetScale)
+                                    }
+                                    
+                                    if (zoomAccumulator > 1.35f && gridColumns > minColumns) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        gridColumns -= 1
+                                        PreferencesManager.saveGridColumns(context, gridColumns)
+                                        zoomAccumulator = 1f
+                                    } else if (zoomAccumulator < 0.70f && gridColumns < maxColumns) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        gridColumns += 1
+                                        PreferencesManager.saveGridColumns(context, gridColumns)
+                                        zoomAccumulator = 1f
+                                    }
+                                }
+                            }
+                            
+                            // Once gesture completes (fingers released)
+                            isZooming = false
+                            coroutineScope.launch {
+                                zoomScale.animateTo(
+                                    targetValue = 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = 0.7f,
+                                        stiffness = 300f
+                                    )
+                                )
+                            }
+                        }
+                ) {
                     LazyVerticalGrid(
                         state = gridState,
-                        columns = GridCells.Fixed(3),
-                        modifier = Modifier.fillMaxSize(),
+                        columns = GridCells.Fixed(gridColumns),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = zoomScale.value,
+                                scaleY = zoomScale.value,
+                                transformOrigin = transformOrigin
+                            ),
                         contentPadding = PaddingValues(2.dp),
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -1544,7 +1616,7 @@ fun PhotosGridScreen(
                                 } else null
 
                                 val isSelected = selectedPhotos.any { it.uri == photo.uri }
-                                val haptic = LocalHapticFeedback.current
+                                val cellHaptic = LocalHapticFeedback.current
                                 val animatedPadding by animateDpAsState(
                                     targetValue = if (isSelected) 8.dp else 0.dp,
                                     label = "padding"
@@ -1555,8 +1627,9 @@ fun PhotosGridScreen(
                                         .aspectRatio(1f)
                                         .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
                                         .combinedClickable(
+                                            enabled = !isZooming,
                                             onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                cellHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 if (!isSelectionMode) {
                                                     isSelectionMode = true
                                                     selectedPhotos.add(photo)
@@ -1574,7 +1647,7 @@ fun PhotosGridScreen(
                                             },
                                             onClick = {
                                                 if (isSelectionMode) {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    cellHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                     if (selectedPhotos.any { it.uri == photo.uri }) {
                                                         selectedPhotos.removeAll { it.uri == photo.uri }
                                                         if (selectedPhotos.isEmpty()) {

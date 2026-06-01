@@ -127,4 +127,18 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getInt(KEY_LAST_BACKUP_RECORD_COUNT, 0)
     }
+
+    private const val KEY_GRID_COLUMNS = "grid_columns"
+
+    fun saveGridColumns(context: Context, columns: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(KEY_GRID_COLUMNS, columns)
+            .apply()
+    }
+
+    fun getGridColumns(context: Context, defaultColumns: Int): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_GRID_COLUMNS, defaultColumns)
+    }
 }
