@@ -64,6 +64,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -969,6 +970,78 @@ fun MainAppLayout(
     var fullScreenPhotoIndex by remember { mutableStateOf<Int?>(null) }
     var devicePhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
 
+    var telegramProfilePhotoPath by remember { mutableStateOf<String?>(null) }
+    val authState by TdlibManager.authState.collectAsState()
+    
+    LaunchedEffect(authState) {
+        if (authState is TdApi.AuthorizationStateReady) {
+            try {
+                // Get active user data from TDLib thread-safely via suspend coroutine
+                val user = withContext(Dispatchers.IO) {
+                    suspendCancellableCoroutine<TdApi.User?> { continuation ->
+                        try {
+                            TdlibManager.getClient().send(TdApi.GetMe()) { result ->
+                                continuation.resume(result as? TdApi.User)
+                            }
+                        } catch (e: Exception) {
+                            continuation.resume(null)
+                        }
+                    }
+                }
+
+                if (user != null) {
+                    val photo = user.profilePhoto
+                    if (photo != null) {
+                        val fileId = photo.small.id
+                        withContext(Dispatchers.IO) {
+                            // Check initial local status of the small profile picture file
+                            val initialFile = suspendCancellableCoroutine<TdApi.File?> { continuation ->
+                                try {
+                                    TdlibManager.getClient().send(TdApi.GetFile(fileId)) { fileRes ->
+                                        continuation.resume(fileRes as? TdApi.File)
+                                    }
+                                } catch (e: Exception) {
+                                    continuation.resume(null)
+                                }
+                            }
+
+                            if (initialFile != null) {
+                                if (initialFile.local.isDownloadingCompleted) {
+                                    // Already downloaded! Publish the path to state.
+                                    telegramProfilePhotoPath = initialFile.local.path
+                                } else {
+                                    // Start downloading exactly ONCE.
+                                    TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { }
+                                    
+                                    // Poll the download status every 1.5 seconds until download completes
+                                    var downloaded = false
+                                    while (!downloaded) {
+                                        delay(1500)
+                                        val currentFile = suspendCancellableCoroutine<TdApi.File?> { continuation ->
+                                            try {
+                                                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { fileRes ->
+                                                    continuation.resume(fileRes as? TdApi.File)
+                                                }
+                                            } catch (e: Exception) {
+                                                continuation.resume(null)
+                                            }
+                                        }
+                                        if (currentFile != null && currentFile.local.isDownloadingCompleted) {
+                                            telegramProfilePhotoPath = currentFile.local.path
+                                            downloaded = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBar(
@@ -993,19 +1066,6 @@ fun MainAppLayout(
                     onClick = { activeTab = "Search" },
                     icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     label = { Text("Search") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = TelePhotosTheme.AccentBlue,
-                        selectedTextColor = TelePhotosTheme.AccentBlue,
-                        unselectedIconColor = TelePhotosTheme.TextSecondary,
-                        unselectedTextColor = TelePhotosTheme.TextSecondary,
-                        indicatorColor = TelePhotosTheme.SurfaceVariant
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == "Settings",
-                    onClick = { activeTab = "Settings" },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = TelePhotosTheme.AccentBlue,
                         selectedTextColor = TelePhotosTheme.AccentBlue,
@@ -1044,6 +1104,10 @@ fun MainAppLayout(
                         onPhotoSelected = { index, photos ->
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
+                        },
+                        profilePhotoPath = telegramProfilePhotoPath,
+                        onSettingsClick = {
+                            activeTab = "Settings"
                         }
                     )
                 }
@@ -1058,7 +1122,8 @@ fun MainAppLayout(
                 "Settings" -> {
                     SettingsScreen(
                         selectedChatTitle = selectedChatTitle,
-                        onResetChat = onResetChat
+                        onResetChat = onResetChat,
+                        onBack = { activeTab = "Photos" }
                     )
                 }
             }
@@ -1087,7 +1152,9 @@ fun MainAppLayout(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotosGridScreen(
-    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
+    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
+    profilePhotoPath: String?,
+    onSettingsClick: () -> Unit
 ) {
     val context = LocalContext.current
     var hasPermission by remember {
@@ -1479,15 +1546,47 @@ fun PhotosGridScreen(
                                 )
                             }
                         }
-                        Text(
-                            text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
-                            color = TelePhotosTheme.AccentBlue,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .background(Color(0x1F2481CC), shape = RoundedCornerShape(12.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (localPhotos.isNotEmpty()) "${uploadedUris.size}/${localPhotos.size} Synced" else "${cloudLogs.size} Cloud Photos",
+                                color = TelePhotosTheme.AccentBlue,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .background(Color(0x1F2481CC), shape = RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            // Telegram Profile Photo Circle (Google Photos Settings Style)
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0x1F2481CC))
+                                    .border(1.5.dp, TelePhotosTheme.AccentBlue, CircleShape)
+                                    .clickable { onSettingsClick() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (profilePhotoPath != null) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(profilePhotoPath)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Settings",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Settings",
+                                        tint = TelePhotosTheme.AccentBlue,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1955,7 +2054,8 @@ fun PhotosGridScreen(
 @Composable
 fun SettingsScreen(
     selectedChatTitle: String,
-    onResetChat: () -> Unit
+    onResetChat: () -> Unit,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current as MainActivity
     val chats by TdlibManager.chats.collectAsState()
@@ -1964,21 +2064,42 @@ fun SettingsScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(TelePhotosTheme.Background)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
+        // Premium Google Photos-style settings top bar with back navigation
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(TelePhotosTheme.Surface)
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = TelePhotosTheme.TextPrimary
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Backup Settings",
+                text = "Settings",
                 color = TelePhotosTheme.TextPrimary,
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
         }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
 
         // Selected Chat Display card
         item {
@@ -2208,6 +2329,8 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
     }
 
     // Modal popup to select active chat
