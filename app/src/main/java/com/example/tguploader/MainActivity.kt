@@ -1163,7 +1163,7 @@ fun PhotosGridScreen(
         var gridColumns by remember {
             mutableStateOf(PreferencesManager.getGridColumns(context, 3).coerceIn(minColumns, maxColumns))
         }
-        val zoomScale = remember { Animatable(1f) }
+        var activeScale by remember { mutableStateOf(1f) }
         var transformOrigin by remember { mutableStateOf(TransformOrigin.Center) }
         var isZooming by remember { mutableStateOf(false) }
 
@@ -1497,46 +1497,50 @@ fun PhotosGridScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f)
-                        .pointerInput(gridColumns, minColumns, maxColumns) {
+                        .pointerInput(Unit) { // Static key: NEVER cancels mid-gesture when columns change!
                             var zoomAccumulator = 1f
-                            detectTransformGestures(panZoomLock = true) { centroid, _, zoom, _ ->
-                                if (zoom != 1f) {
-                                    isZooming = true
-                                    
-                                    val pivotX = centroid.x / size.width
-                                    val pivotY = centroid.y / size.height
-                                    transformOrigin = TransformOrigin(pivotX, pivotY)
-                                    
-                                    zoomAccumulator *= zoom
-                                    val targetScale = zoomAccumulator.coerceIn(0.5f, 2.0f)
-                                    coroutineScope.launch {
-                                        zoomScale.snapTo(targetScale)
-                                    }
-                                    
-                                    if (zoomAccumulator > 1.35f && gridColumns > minColumns) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        gridColumns -= 1
-                                        PreferencesManager.saveGridColumns(context, gridColumns)
-                                        zoomAccumulator = 1f
-                                    } else if (zoomAccumulator < 0.70f && gridColumns < maxColumns) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        gridColumns += 1
-                                        PreferencesManager.saveGridColumns(context, gridColumns)
-                                        zoomAccumulator = 1f
+                            try {
+                                detectTransformGestures(panZoomLock = true) { centroid, _, zoom, _ ->
+                                    if (zoom != 1f) {
+                                        isZooming = true
+                                        
+                                        val pivotX = centroid.x / size.width
+                                        val pivotY = centroid.y / size.height
+                                        transformOrigin = TransformOrigin(pivotX, pivotY)
+                                        
+                                        zoomAccumulator *= zoom
+                                        activeScale = zoomAccumulator.coerceIn(0.5f, 2.0f)
+                                        
+                                        // Dynamically query changing mutable values
+                                        if (zoomAccumulator > 1.35f && gridColumns > minColumns) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            gridColumns -= 1
+                                            PreferencesManager.saveGridColumns(context, gridColumns)
+                                            zoomAccumulator = 1f
+                                            activeScale = 1f
+                                        } else if (zoomAccumulator < 0.70f && gridColumns < maxColumns) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            gridColumns += 1
+                                            PreferencesManager.saveGridColumns(context, gridColumns)
+                                            zoomAccumulator = 1f
+                                            activeScale = 1f
+                                        }
                                     }
                                 }
-                            }
-                            
-                            // Once gesture completes (fingers released)
-                            isZooming = false
-                            coroutineScope.launch {
-                                zoomScale.animateTo(
-                                    targetValue = 1f,
-                                    animationSpec = spring(
-                                        dampingRatio = 0.7f,
-                                        stiffness = 300f
-                                    )
-                                )
+                            } finally {
+                                // Guaranteed to run when fingers are lifted or gesture is cancelled
+                                isZooming = false
+                                coroutineScope.launch {
+                                    Animatable(activeScale).animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.7f,
+                                            stiffness = 300f
+                                        )
+                                    ) {
+                                        activeScale = this.value
+                                    }
+                                }
                             }
                         }
                 ) {
@@ -1546,8 +1550,8 @@ fun PhotosGridScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .graphicsLayer(
-                                scaleX = zoomScale.value,
-                                scaleY = zoomScale.value,
+                                scaleX = activeScale,
+                                scaleY = activeScale,
                                 transformOrigin = transformOrigin
                             ),
                         contentPadding = PaddingValues(2.dp),
