@@ -20,6 +20,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -2323,9 +2325,11 @@ fun PhotoViewerScreen(
 
     var isBackingUpSingle by remember { mutableStateOf(false) }
     var showDetails by remember { mutableStateOf(false) }
+    var isCurrentPhotoZoomed by remember { mutableStateOf(false) }
 
     LaunchedEffect(pagerState.currentPage) {
         showDetails = false
+        isCurrentPhotoZoomed = false
     }
 
     Box(
@@ -2336,6 +2340,7 @@ fun PhotoViewerScreen(
         // High resolution Horizontal Pager
         HorizontalPager(
             state = pagerState,
+            userScrollEnabled = !isCurrentPhotoZoomed,
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val photo = photosList.getOrNull(page)
@@ -2381,21 +2386,116 @@ fun PhotoViewerScreen(
                     }
                 }
 
+                var scale by remember(photo.uri) { mutableStateOf(1f) }
+                var offset by remember(photo.uri) { mutableStateOf(Offset.Zero) }
+
+                val isCurrentPage = pagerState.currentPage == page
+                LaunchedEffect(scale, isCurrentPage) {
+                    if (isCurrentPage) {
+                        isCurrentPhotoZoomed = scale > 1f
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .pointerInput(photo.uri, scale) {
+                            if (scale <= 1f) {
+                                detectVerticalDragGestures(
+                                    onVerticalDrag = { change, dragAmount ->
+                                        change.consume()
+                                        if (dragAmount < -15f) {
+                                            showDetails = true
+                                        } else if (dragAmount > 15f) {
+                                            showDetails = false
+                                        }
+                                    }
+                                )
+                            }
+                        }
                         .pointerInput(photo.uri) {
-                            detectVerticalDragGestures(
-                                onVerticalDrag = { change, dragAmount ->
-                                    change.consume()
-                                    if (dragAmount < -15f) {
-                                        showDetails = true
-                                    } else if (dragAmount > 15f) {
-                                        showDetails = false
+                            detectTapGestures(
+                                onDoubleTap = { tapOffset ->
+                                    coroutineScope.launch {
+                                        if (scale > 1f) {
+                                            launch {
+                                                Animatable(scale).animateTo(1f, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    scale = value
+                                                }
+                                            }
+                                            launch {
+                                                Animatable(offset.x).animateTo(0f, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    offset = offset.copy(x = value)
+                                                }
+                                            }
+                                            launch {
+                                                Animatable(offset.y).animateTo(0f, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    offset = offset.copy(y = value)
+                                                }
+                                            }
+                                        } else {
+                                            val targetScale = 3f
+                                            val targetX = (size.width / 2f - tapOffset.x) * 2f
+                                            val targetY = (size.height / 2f - tapOffset.y) * 2f
+                                            launch {
+                                                Animatable(scale).animateTo(targetScale, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    scale = value
+                                                }
+                                            }
+                                            launch {
+                                                Animatable(offset.x).animateTo(targetX, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    offset = offset.copy(x = value)
+                                                }
+                                            }
+                                            launch {
+                                                Animatable(offset.y).animateTo(targetY, spring(stiffness = Spring.StiffnessMedium)) {
+                                                    offset = offset.copy(y = value)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             )
-                        },
+                        }
+                        .pointerInput(photo.uri) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                scale = (scale * zoom).coerceIn(0.8f, 8.0f)
+                                
+                                if (scale > 1f) {
+                                    val maxX = (size.width * (scale - 1f)) / 2f
+                                    val maxY = (size.height * (scale - 1f)) / 2f
+                                    offset = Offset(
+                                        x = (offset.x + pan.x * scale).coerceIn(-maxX, maxX),
+                                        y = (offset.y + pan.y * scale).coerceIn(-maxY, maxY)
+                                    )
+                                } else {
+                                    offset = Offset.Zero
+                                }
+                            }
+                        }
+                        .pointerInput(photo.uri) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    val activeChanges = event.changes.filter { it.pressed }
+                                    if (activeChanges.isEmpty()) {
+                                        if (scale < 1.0f) {
+                                            coroutineScope.launch {
+                                                Animatable(scale).animateTo(1f, spring(dampingRatio = 0.7f, stiffness = 300f)) {
+                                                    scale = value
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offset.x,
+                            translationY = offset.y
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -2811,11 +2911,25 @@ fun SearchScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
     var typedQuery by remember { mutableStateOf("") }
     
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isTablet = screenWidthDp >= 600
+    val minColumns = if (isTablet) 3 else 2
+    val maxColumns = if (isTablet) 8 else 5
+
+    var gridColumns by remember {
+        mutableStateOf(PreferencesManager.getGridColumns(context, 3).coerceIn(minColumns, maxColumns))
+    }
+    var activeScale by remember { mutableStateOf(1f) }
+    var transformOrigin by remember { mutableStateOf(TransformOrigin.Center) }
+    var isZooming by remember { mutableStateOf(false) }
 
     if (isSelectionMode) {
         BackHandler {
@@ -3136,72 +3250,132 @@ fun SearchScreen(
                 }
             } else {
                 // Results Grid
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    items(filteredPhotos.size) { index ->
-                        val photo = filteredPhotos[index]
-                        val isCloud = photo.uri.startsWith("cloud://")
-                        val isSynced = if (isCloud) true else (uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
-
-                        val cloudThumbnailPath = if (isCloud) {
-                            val triple = parseCloudPhotoUri(photo.uri)
-                            if (triple != null) {
-                                rememberCloudThumbnailPath(triple.second)
-                            } else null
-                        } else null
-
-                        val isSelected = selectedPhotos.any { it.uri == photo.uri }
-                        val haptic = LocalHapticFeedback.current
-                        val animatedPadding by animateDpAsState(
-                            targetValue = if (isSelected) 8.dp else 0.dp,
-                            label = "padding"
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
-                                .combinedClickable(
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        if (!isSelectionMode) {
-                                            isSelectionMode = true
-                                            selectedPhotos.add(photo)
-                                        } else {
-                                            if (selectedPhotos.any { it.uri == photo.uri }) {
-                                                selectedPhotos.removeAll { it.uri == photo.uri }
-                                                if (selectedPhotos.isEmpty()) {
-                                                    isSelectionMode = false
-                                                }
-                                            } else {
-                                                selectedPhotos.add(photo)
-                                            }
+                val searchGridState = rememberLazyGridState()
+                val searchHaptic = LocalHapticFeedback.current
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) { // Static key: NEVER cancels mid-gesture when columns change!
+                            var zoomAccumulator = 1f
+                            try {
+                                detectTransformGestures(panZoomLock = true) { centroid, _, zoom, _ ->
+                                    if (zoom != 1f) {
+                                        isZooming = true
+                                        
+                                        val pivotX = centroid.x / size.width
+                                        val pivotY = centroid.y / size.height
+                                        transformOrigin = TransformOrigin(pivotX, pivotY)
+                                        
+                                        zoomAccumulator *= zoom
+                                        activeScale = zoomAccumulator.coerceIn(0.5f, 2.0f)
+                                        
+                                        // Dynamically query changing mutable values
+                                        if (zoomAccumulator > 1.35f && gridColumns > minColumns) {
+                                            searchHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            gridColumns -= 1
+                                            PreferencesManager.saveGridColumns(context, gridColumns)
+                                            zoomAccumulator = 1f
+                                            activeScale = 1f
+                                        } else if (zoomAccumulator < 0.70f && gridColumns < maxColumns) {
+                                            searchHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            gridColumns += 1
+                                            PreferencesManager.saveGridColumns(context, gridColumns)
+                                            zoomAccumulator = 1f
+                                            activeScale = 1f
                                         }
-                                        Unit
-                                    },
-                                    onClick = {
-                                        if (isSelectionMode) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            if (selectedPhotos.any { it.uri == photo.uri }) {
-                                                selectedPhotos.removeAll { it.uri == photo.uri }
-                                                if (selectedPhotos.isEmpty()) {
-                                                    isSelectionMode = false
-                                                }
-                                            } else {
-                                                selectedPhotos.add(photo)
-                                            }
-                                        } else {
-                                            onPhotoSelected(index, filteredPhotos)
-                                        }
-                                        Unit
                                     }
-                                )
-                        ) {
+                                }
+                            } finally {
+                                // Guaranteed to run when fingers are lifted or gesture is cancelled
+                                isZooming = false
+                                coroutineScope.launch {
+                                    Animatable(activeScale).animateTo(
+                                        targetValue = 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = 0.7f,
+                                            stiffness = 300f
+                                        )
+                                    ) {
+                                        activeScale = this.value
+                                    }
+                                }
+                            }
+                        }
+                ) {
+                    LazyVerticalGrid(
+                        state = searchGridState,
+                        columns = GridCells.Fixed(gridColumns),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = activeScale,
+                                scaleY = activeScale,
+                                transformOrigin = transformOrigin
+                            ),
+                        contentPadding = PaddingValues(2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(filteredPhotos.size) { index ->
+                            val photo = filteredPhotos[index]
+                            val isCloud = photo.uri.startsWith("cloud://")
+                            val isSynced = if (isCloud) true else (uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
+    
+                            val cloudThumbnailPath = if (isCloud) {
+                                val triple = parseCloudPhotoUri(photo.uri)
+                                if (triple != null) {
+                                    rememberCloudThumbnailPath(triple.second)
+                                } else null
+                            } else null
+    
+                            val isSelected = selectedPhotos.any { it.uri == photo.uri }
+                            val cellHaptic = LocalHapticFeedback.current
+                            val animatedPadding by animateDpAsState(
+                                targetValue = if (isSelected) 8.dp else 0.dp,
+                                label = "padding"
+                            )
+    
+                            Box(
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
+                                    .combinedClickable(
+                                        enabled = !isZooming,
+                                        onLongClick = {
+                                            cellHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            if (!isSelectionMode) {
+                                                isSelectionMode = true
+                                                selectedPhotos.add(photo)
+                                            } else {
+                                                if (selectedPhotos.any { it.uri == photo.uri }) {
+                                                    selectedPhotos.removeAll { it.uri == photo.uri }
+                                                    if (selectedPhotos.isEmpty()) {
+                                                        isSelectionMode = false
+                                                    }
+                                                } else {
+                                                    selectedPhotos.add(photo)
+                                                }
+                                            }
+                                            Unit
+                                        },
+                                        onClick = {
+                                            if (isSelectionMode) {
+                                                cellHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                if (selectedPhotos.any { it.uri == photo.uri }) {
+                                                    selectedPhotos.removeAll { it.uri == photo.uri }
+                                                    if (selectedPhotos.isEmpty()) {
+                                                        isSelectionMode = false
+                                                    }
+                                                } else {
+                                                    selectedPhotos.add(photo)
+                                                }
+                                            } else {
+                                                onPhotoSelected(index, filteredPhotos)
+                                            }
+                                            Unit
+                                        }
+                                    )
+                            ) {
                             // Content container that shrinks when selected
                             Box(
                                 modifier = Modifier
@@ -3301,6 +3475,7 @@ fun SearchScreen(
                             }
                         }
                     }
+                }
                 }
             }
         }
