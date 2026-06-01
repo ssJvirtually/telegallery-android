@@ -17,6 +17,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -27,6 +28,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -35,6 +40,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -2213,6 +2220,11 @@ fun PhotoViewerScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isBackingUpSingle by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pagerState.currentPage) {
+        showDetails = false
+    }
 
     Box(
         modifier = Modifier
@@ -2267,7 +2279,23 @@ fun PhotoViewerScreen(
                     }
                 }
 
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(photo.uri) {
+                            detectVerticalDragGestures(
+                                onVerticalDrag = { change, dragAmount ->
+                                    change.consume()
+                                    if (dragAmount < -15f) {
+                                        showDetails = true
+                                    } else if (dragAmount > 15f) {
+                                        showDetails = false
+                                    }
+                                }
+                            )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(fullResPath ?: photo.uri)
@@ -2302,20 +2330,31 @@ fun PhotoViewerScreen(
                 )
             }
 
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = currentPhoto?.name ?: "Photo",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${pagerState.currentPage + 1} of ${photosList.size}",
-                    color = Color(0xFFBDBDBD),
-                    fontSize = 11.sp
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = currentPhoto?.name ?: "Photo",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = 180.dp)
+                    )
+                    Text(
+                        text = "${pagerState.currentPage + 1} of ${photosList.size}",
+                        color = Color(0xFFBDBDBD),
+                        fontSize = 11.sp
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = { showDetails = !showDetails }) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Details",
+                        tint = if (showDetails) TelePhotosTheme.AccentBlue else Color.White
+                    )
+                }
             }
         }
 
@@ -2475,6 +2514,188 @@ fun PhotoViewerScreen(
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFFF5252))
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("Delete", color = Color(0xFFFF5252), fontSize = 11.sp)
+            }
+        }
+
+        // Photo details sheet
+        AnimatedVisibility(
+            visible = showDetails && currentPhoto != null,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing)
+            ) + fadeIn(),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+            ) + fadeOut(),
+            modifier = Modifier.align(Alignment.BottomCenter)
+        ) {
+            val photo = currentPhoto!!
+            val isCloud = photo.uri.startsWith("cloud://")
+            val isSynced = if (isCloud) true else (uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
+
+            // File size formatted
+            val kb = photo.size / 1024.0
+            val mb = kb / 1024.0
+            val formattedSize = if (mb >= 1.0) {
+                String.format(java.util.Locale.US, "%.2f MB", mb)
+            } else {
+                String.format(java.util.Locale.US, "%.1f KB", kb)
+            }
+
+            // Date taken formatted
+            val formattedDate = try {
+                java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy 'at' h:mm a", java.util.Locale.getDefault()).format(java.util.Date(photo.dateTaken))
+            } catch (e: Exception) {
+                "Unknown Date"
+            }
+
+            Card(
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(16.dp, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 8.dp, bottom = 28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Small drag handle
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(4.dp)
+                            .background(Color.LightGray, shape = RoundedCornerShape(2.dp))
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Title + Close
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Details",
+                            color = TelePhotosTheme.TextPrimary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = { showDetails = false }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close details",
+                                tint = TelePhotosTheme.TextSecondary
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Vertical scrollable list of detail elements
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        // Date element
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = TelePhotosTheme.AccentBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = formattedDate,
+                                    color = TelePhotosTheme.TextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "Date Taken",
+                                    color = TelePhotosTheme.TextSecondary,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        // File info element
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = TelePhotosTheme.AccentBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "${photo.name} ($formattedSize)",
+                                    color = TelePhotosTheme.TextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = if (isCloud) "Telegram Cloud Only" else if (isSynced) "Synced Local Photo" else "Local Device Storage",
+                                    color = TelePhotosTheme.TextSecondary,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        // Storage / cloud sync element (if synced or cloud-only)
+                        if (isSynced || isCloud) {
+                            val cloudMsgId = if (photo.id < 0) -photo.id else photo.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CloudQueue,
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.GoogleBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        text = "Message ID: $cloudMsgId",
+                                        color = TelePhotosTheme.TextPrimary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = "Telegram Server Vault",
+                                        color = TelePhotosTheme.TextSecondary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
