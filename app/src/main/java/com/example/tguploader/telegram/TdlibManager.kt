@@ -215,6 +215,7 @@ object TdlibManager {
                     var remoteId = ""
                     var fileSize = 0L
                     var isDoc = false
+                    var uploadedAt = msg.date.toLong() * 1000L
                     
                     if (content is TdApi.MessagePhoto) {
                         val sizes = content.photo.sizes
@@ -223,14 +224,26 @@ object TdlibManager {
                             fileId = largest.photo.id
                             remoteId = largest.photo.remote.id
                             fileSize = largest.photo.size.toLong()
+                            
                             val captionText = content.caption.text
-                            fileName = if (captionText.isNotEmpty()) captionText else "photo_${msg.id}.jpg"
+                            val metadata = parseMetadataFromCaption(captionText)
+                            if (metadata != null) {
+                                fileName = metadata.name
+                                uploadedAt = metadata.dateTaken
+                                fileSize = metadata.size
+                            } else {
+                                fileName = if (captionText.isNotEmpty()) {
+                                    captionText.substringBefore("\n").trim()
+                                } else {
+                                    "photo_${msg.id}.jpg"
+                                }
+                            }
                         }
                     } else if (content is TdApi.MessageDocument) {
                         val doc = content.document
                         val docName = if (doc.fileName.isNotEmpty()) doc.fileName else {
                             val captionText = content.caption.text
-                            if (captionText.isNotEmpty()) captionText else "doc_${msg.id}"
+                            if (captionText.isNotEmpty()) captionText.substringBefore("\n").trim() else "doc_${msg.id}"
                         }
                         
                         // Filter to only catalog document attachments that are valid image formats
@@ -243,7 +256,16 @@ object TdlibManager {
                             remoteId = doc.document.remote.id
                             fileSize = doc.document.size
                             isDoc = true
-                            fileName = docName
+                            
+                            val captionText = content.caption.text
+                            val metadata = parseMetadataFromCaption(captionText)
+                            if (metadata != null) {
+                                fileName = metadata.name
+                                uploadedAt = metadata.dateTaken
+                                fileSize = metadata.size
+                            } else {
+                                fileName = docName
+                            }
                         }
                     }
                     
@@ -254,7 +276,7 @@ object TdlibManager {
                                 telegramFileId = fileId,
                                 uniqueRemoteId = remoteId,
                                 fileName = fileName,
-                                uploadedAt = msg.date.toLong() * 1000L,
+                                uploadedAt = uploadedAt,
                                 fileSize = fileSize,
                                 isDocument = isDoc
                             )
@@ -273,5 +295,29 @@ object TdlibManager {
             }
         }
         addLog("Vault server synchronization crawl completed.")
+    }
+
+    private data class ParsedMetadata(
+        val id: Long,
+        val name: String,
+        val size: Long,
+        val dateTaken: Long
+    )
+
+    private fun parseMetadataFromCaption(caption: String): ParsedMetadata? {
+        if (!caption.contains("#telegallery_metadata")) return null
+        try {
+            val jsonStr = caption.substringAfter("#telegallery_metadata").trim()
+            val jsonObj = org.json.JSONObject(jsonStr)
+            return ParsedMetadata(
+                id = jsonObj.optLong("id", 0L),
+                name = jsonObj.optString("name", ""),
+                size = jsonObj.optLong("size", 0L),
+                dateTaken = jsonObj.optLong("dateTaken", 0L)
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 }

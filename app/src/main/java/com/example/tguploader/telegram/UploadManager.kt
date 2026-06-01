@@ -36,18 +36,128 @@ object UploadManager {
 
                     val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
                     
-                    // Standard Telegram HD sending:
-                    // If isHd is true, we send the photo as an uncompressed Document (lossless original HD quality).
-                    // If isHd is false, we send it as a standard compressed Photo.
+                    // Extract EXIF metadata using androidx.exifinterface
+                    var width = 0
+                    var height = 0
+                    var make = "Unknown"
+                    var model = "Unknown"
+                    var lens = "Unknown"
+                    var aperture = "Unknown"
+                    var shutter = "Unknown"
+                    var iso = "Unknown"
+                    var focal = "Unknown"
+                    var flashStr = "Unknown"
+                    var flashFired = false
+                    
+                    try {
+                        val exif = androidx.exifinterface.media.ExifInterface(tempFile.absolutePath)
+                        width = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH, 0)
+                        height = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH, 0)
+                        
+                        make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE)?.trim() ?: "Unknown"
+                        model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL)?.trim() ?: "Unknown"
+                        lens = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL)?.trim() ?: "Unknown"
+                        
+                        val apertureVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER, 0.0)
+                        aperture = if (apertureVal > 0.0) "f/$apertureVal" else "Unknown"
+                        
+                        val shutterVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME, 0.0)
+                        shutter = if (shutterVal > 0.0) {
+                            if (shutterVal < 1.0) {
+                                val inverse = Math.round(1.0 / shutterVal)
+                                "1/$inverse sec ($shutterVal)"
+                            } else {
+                                "$shutterVal sec"
+                            }
+                        } else {
+                            "Unknown"
+                        }
+                        
+                        val isoVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0)
+                        iso = if (isoVal > 0) "$isoVal" else "Unknown"
+                        
+                        val focalVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH, 0.0)
+                        focal = if (focalVal > 0.0) "${focalVal}mm" else "Unknown"
+                        
+                        val flashVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_FLASH, -1)
+                        if (flashVal >= 0) {
+                            flashFired = (flashVal and 1) == 1
+                            flashStr = if (flashFired) "Flash fired ($flashVal)" else "Flash did not fire ($flashVal)"
+                        }
+                    } catch (exifEx: Exception) {
+                        exifEx.printStackTrace()
+                    }
+
+                    // Dynamically generate search hashtags
+                    val tags = mutableListOf<String>()
+                    if (make != "Unknown" && make.isNotEmpty()) {
+                        val makeTag = "#" + make.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
+                        tags.add(makeTag)
+                    }
+                    if (model != "Unknown" && model.isNotEmpty()) {
+                        val modelTag = "#" + model.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
+                        tags.add(modelTag)
+                    }
+                    val ext = photo.name.substringAfterLast('.', "").lowercase()
+                    if (ext.isNotEmpty()) {
+                        tags.add("#$ext")
+                    }
+                    try {
+                        val takenCal = java.util.Calendar.getInstance()
+                        takenCal.timeInMillis = photo.dateTaken
+                        val yr = takenCal.get(java.util.Calendar.YEAR)
+                        val mth = takenCal.get(java.util.Calendar.MONTH) + 1
+                        tags.add("#year_$yr")
+                        tags.add("#month_${yr}_$mth")
+                    } catch (e: Exception) {}
+                    if (flashFired) {
+                        tags.add("#flash_used")
+                    }
+                    val tagsLine = tags.distinct().joinToString(" ")
+
+                    val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(photo.dateTaken))
+                    val addedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())
+                    val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
+                    val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
+                    val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
+                    val metadataJson = """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken}}"""
+
+                    val captionText = """
+                        📷 **Photo Metadata**
+                        📁 File: ${photo.name}
+                        📏 Size: $formattedSize
+                        📐 Dimensions: $dimensions
+                        📅 Taken: $formattedDate
+                        📅 Added: $addedDate
+
+                        📸 **Camera Info**
+                        🏭 Make: $make
+                        📱 Model: $model
+                        🔍 Lens: $lens
+
+                        ⚙️ **Technical**
+                        🕳️ Aperture: $aperture
+                        ⚡ Shutter: $shutter
+                        🎛️ ISO: $iso
+                        🔭 Focal: $focal
+                        💡 Flash: $flashStr
+
+                        🏷️ **Tags**
+                        $tagsLine
+                        
+                        ---
+                        #telegallery_metadata $metadataJson
+                    """.trimIndent()
+
                     val inputMessageContent = if (isHd) {
                         TdApi.InputMessageDocument().apply {
                             this.document = inputFile
-                            caption = TdApi.FormattedText(fileName, emptyArray())
+                            caption = TdApi.FormattedText(captionText, emptyArray())
                         }
                     } else {
                         TdApi.InputMessagePhoto().apply {
                             this.photo = inputFile
-                            caption = TdApi.FormattedText(fileName, emptyArray())
+                            caption = TdApi.FormattedText(captionText, emptyArray())
                         }
                     }
 
