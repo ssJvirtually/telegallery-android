@@ -98,4 +98,7 @@ dependencies {
 
     // ExifInterface for robust metadata extraction
     implementation 'androidx.exifinterface:exifinterface:1.3.7'
+
+    // Google ML Kit on-device image labeling (Play Services version)
+    implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
 }
