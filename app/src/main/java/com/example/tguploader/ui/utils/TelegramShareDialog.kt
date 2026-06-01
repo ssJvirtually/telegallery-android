@@ -187,24 +187,35 @@ fun TelegramShareDialog(
                                     .fillMaxWidth()
                                     .weight(1f)
                             ) {
-                                items(filteredChats) { chat ->
+                                 items(filteredChats) { chat ->
                                     ChatRow(chat = chat) {
-                                        // Start sharing photos to this chat
-                                        isSharing = true
-                                        sharingProgress = "Preparing to share..."
-                                        coroutineScope.launch(Dispatchers.Main) {
-                                            sharingProgress = "Sharing ${photosToShare.size} items..."
-                                            val success = UploadManager.sharePhotosToTelegramChat(context, photosToShare, chat.id)
-                                            if (success) {
-                                                Toast.makeText(context, "Successfully shared to ${chat.title}!", Toast.LENGTH_SHORT).show()
-                                                onShareComplete()
-                                            } else {
-                                                Toast.makeText(context, "Failed to share some items to ${chat.title}", Toast.LENGTH_SHORT).show()
-                                                onShareComplete()
-                                            }
-                                        }
+                                        // Enqueue background ShareWorker Foreground Service
+                                        val photoUris = photosToShare.map { it.uri }.toTypedArray()
+                                        val inputData = androidx.work.Data.Builder()
+                                            .putLong("chat_id", chat.id)
+                                            .putStringArray("photo_uris", photoUris)
+                                            .build()
+                                            
+                                        val shareRequest = androidx.work.OneTimeWorkRequestBuilder<com.example.tguploader.worker.ShareWorker>()
+                                            .setInputData(inputData)
+                                            .addTag("share_work")
+                                            .build()
+                                            
+                                        androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
+                                            "share_work_" + System.currentTimeMillis(),
+                                            androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE,
+                                            shareRequest
+                                        )
+                                        
+                                        Toast.makeText(
+                                            context, 
+                                            "Sharing ${photosToShare.size} items to ${chat.title} in the background...", 
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        
+                                        onShareComplete()
                                     }
-                                }
+                                 }
                             }
                         }
                     }
