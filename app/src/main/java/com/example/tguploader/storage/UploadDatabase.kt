@@ -80,19 +80,73 @@ interface CloudPhotoDao {
     suspend fun deleteBackupDbFiles()
 }
 
-@Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 3, exportSchema = false)
+@Entity(tableName = "albums")
+data class AlbumEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val name: String,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "album_photos", primaryKeys = ["albumId", "photoUri"])
+data class AlbumPhotoEntity(
+    val albumId: Long,
+    val photoUri: String
+)
+
+@Dao
+interface AlbumDao {
+    @Query("SELECT * FROM albums ORDER BY createdAt DESC")
+    fun getAllAlbumsFlow(): Flow<List<AlbumEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlbum(album: AlbumEntity): Long
+
+    @Query("DELETE FROM albums WHERE id = :albumId")
+    suspend fun deleteAlbum(albumId: Long)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAlbumPhotos(photos: List<AlbumPhotoEntity>)
+
+    @Query("DELETE FROM album_photos WHERE albumId = :albumId AND photoUri = :photoUri")
+    suspend fun removePhotoFromAlbum(albumId: Long, photoUri: String)
+
+    @Query("SELECT photoUri FROM album_photos WHERE albumId = :albumId")
+    fun getPhotoUrisForAlbumFlow(albumId: Long): Flow<List<String>>
+
+    @Query("SELECT * FROM album_photos WHERE albumId = :albumId")
+    suspend fun getAlbumPhotosDirect(albumId: Long): List<AlbumPhotoEntity>
+}
+
+@Database(
+    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
+    version = 4,
+    exportSchema = false
+)
 abstract class UploadDatabase : RoomDatabase() {
     abstract fun dao(): UploadDao
     abstract fun cloudDao(): CloudPhotoDao
+    abstract fun albumDao(): AlbumDao
 
     companion object {
         @Volatile
         private var INSTANCE: UploadDatabase? = null
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "ALTER TABLE cloud_photos ADD COLUMN contentFingerprint TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `albums` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `album_photos` (`albumId` INTEGER NOT NULL, `photoUri` TEXT NOT NULL, PRIMARY KEY(`albumId`, `photoUri`))"
                 )
             }
         }
@@ -104,7 +158,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                 .build()
                 INSTANCE = instance
                 instance

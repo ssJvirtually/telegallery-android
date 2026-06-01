@@ -1,8 +1,10 @@
 package com.example.tguploader.ui.screens
 
+import android.content.Context
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.compose.foundation.lazy.items
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
@@ -63,6 +65,10 @@ import com.example.tguploader.storage.MediaStoreScanner
 import com.example.tguploader.storage.PreferencesManager
 import com.example.tguploader.storage.UploadDatabase
 import com.example.tguploader.storage.UploadEntity
+import com.example.tguploader.storage.AlbumEntity
+import com.example.tguploader.storage.AlbumPhotoEntity
+import android.app.AlertDialog
+import android.widget.EditText
 import com.example.tguploader.telegram.TdlibManager
 import com.example.tguploader.telegram.UploadManager
 import com.example.tguploader.ui.theme.TelePhotosTheme
@@ -146,6 +152,7 @@ fun PhotosGridScreen(
         var isScanningLocal by remember { mutableStateOf(true) }
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+        var showAddToAlbumDialog by remember { mutableStateOf(false) }
 
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp
@@ -170,6 +177,7 @@ fun PhotosGridScreen(
         
         val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
         val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+        val albumsList by db.albumDao().getAllAlbumsFlow().collectAsState(initial = emptyList())
         val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
         val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
@@ -322,6 +330,19 @@ fun PhotosGridScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 0. Add to Album Multi Action
+                        IconButton(onClick = {
+                            if (selectedPhotos.isNotEmpty()) {
+                                showAddToAlbumDialog = true
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add to Album",
+                                tint = TelePhotosTheme.AccentBlue
+                            )
+                        }
+
                         // 1. Share Multi Action
                         IconButton(onClick = {
                             if (selectedPhotos.isNotEmpty()) {
@@ -1012,5 +1033,132 @@ fun PhotosGridScreen(
                 }
             }
         }
+        
+        // Render custom Add to Album dialog
+        if (showAddToAlbumDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddToAlbumDialog = false },
+                title = { Text("Add to Album", fontWeight = FontWeight.Bold, color = TelePhotosTheme.TextPrimary) },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 300.dp)
+                    ) {
+                        // "Create New Album" row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAddToAlbumDialog = false
+                                    showCreateAlbumDialog(context) { name ->
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val newAlbumId = db.albumDao().insertAlbum(AlbumEntity(name = name))
+                                            val albumPhotos = selectedPhotos.map { photo ->
+                                                AlbumPhotoEntity(albumId = newAlbumId, photoUri = photo.uri)
+                                            }
+                                            db.albumDao().insertAlbumPhotos(albumPhotos)
+                                            
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "Added to new album '$name'!", Toast.LENGTH_SHORT).show()
+                                                selectedPhotos.clear()
+                                                isSelectionMode = false
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CreateNewFolder,
+                                contentDescription = null,
+                                tint = TelePhotosTheme.AccentBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = "New Album",
+                                color = TelePhotosTheme.AccentBlue,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        HorizontalDivider(color = TelePhotosTheme.TextSecondary.copy(alpha = 0.2f))
+                        
+                        // Existing albums list
+                        androidx.compose.foundation.lazy.LazyColumn(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            items(albumsList) { album ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            showAddToAlbumDialog = false
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                val albumPhotos = selectedPhotos.map { photo ->
+                                                    AlbumPhotoEntity(albumId = album.id, photoUri = photo.uri)
+                                                }
+                                                db.albumDao().insertAlbumPhotos(albumPhotos)
+                                                
+                                                withContext(Dispatchers.Main) {
+                                                    Toast.makeText(context, "Added to '${album.name}'!", Toast.LENGTH_SHORT).show()
+                                                    selectedPhotos.clear()
+                                                    isSelectionMode = false
+                                                }
+                                            }
+                                        }
+                                        .padding(vertical = 12.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Collections,
+                                        contentDescription = null,
+                                        tint = TelePhotosTheme.TextSecondary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text(
+                                        text = album.name,
+                                        color = TelePhotosTheme.TextPrimary,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showAddToAlbumDialog = false }) {
+                        Text("Cancel", color = TelePhotosTheme.AccentBlue)
+                    }
+                },
+                containerColor = TelePhotosTheme.Surface,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
     }
+}
+
+private fun showCreateAlbumDialog(context: Context, onConfirm: (String) -> Unit) {
+    val input = EditText(context).apply {
+        hint = "Album Name"
+        setSingleLine()
+    }
+    AlertDialog.Builder(context)
+        .setTitle("New Album")
+        .setMessage("Enter a name for your collection:")
+        .setView(input)
+        .setPositiveButton("Create") { _, _ ->
+            val name = input.text.toString().trim()
+            if (name.isNotEmpty()) {
+                onConfirm(name)
+            } else {
+                Toast.makeText(context, "Album name cannot be empty", Toast.LENGTH_SHORT).show()
+            }
+        }
+        .setNegativeButton("Cancel", null)
+        .show()
 }

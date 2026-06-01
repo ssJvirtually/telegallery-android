@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -216,6 +217,19 @@ fun MainAppLayout(
                         indicatorColor = TelePhotosTheme.SurfaceVariant
                     )
                 )
+                NavigationBarItem(
+                    selected = activeTab == "Albums",
+                    onClick = { activeTab = "Albums" },
+                    icon = { Icon(Icons.Default.Collections, contentDescription = "Albums") },
+                    label = { Text("Albums") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = TelePhotosTheme.AccentBlue,
+                        selectedTextColor = TelePhotosTheme.AccentBlue,
+                        unselectedIconColor = TelePhotosTheme.TextSecondary,
+                        unselectedTextColor = TelePhotosTheme.TextSecondary,
+                        indicatorColor = TelePhotosTheme.SurfaceVariant
+                    )
+                )
             }
         }
     ) { paddingValues ->
@@ -231,6 +245,10 @@ fun MainAppLayout(
                     devicePhotosList = emptyList()
                 }
             } else if (activeTab == "Search") {
+                BackHandler {
+                    activeTab = "Photos"
+                }
+            } else if (activeTab == "Albums") {
                 BackHandler {
                     activeTab = "Photos"
                 }
@@ -255,6 +273,14 @@ fun MainAppLayout(
                 }
                 "Search" -> {
                     SearchScreen(
+                        onPhotoSelected = { index, photos ->
+                            fullScreenPhotoIndex = index
+                            devicePhotosList = photos
+                        }
+                    )
+                }
+                "Albums" -> {
+                    AlbumsScreen(
                         onPhotoSelected = { index, photos ->
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
