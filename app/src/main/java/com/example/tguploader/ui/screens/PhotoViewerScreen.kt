@@ -15,10 +15,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.*
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -133,8 +131,8 @@ fun PhotoViewerScreen(
                                 }
                             )
                         }
-                        .pointerInput(Unit) {
-                            detectTransformGestures { _, pan, zoom, _ ->
+                        .pointerInput(scale) {
+                            detectTransformGesturesCustom(panZoomLock = true, scale = scale) { _, pan, zoom ->
                                 scale = (scale * zoom).coerceIn(1f, 4f)
                                 if (scale > 1f) {
                                     offset += pan
@@ -508,5 +506,63 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
                 }
             }
         }
+    }
+}
+
+// Premium custom pinch-to-zoom and pan gesture detector that avoids consuming horizontal drag/swipes when scale is 1f,
+// allowing the parent HorizontalPager to execute butter-smooth left/right swiping navigation natively.
+suspend fun PointerInputScope.detectTransformGesturesCustom(
+    panZoomLock: Boolean = false,
+    scale: Float,
+    onGesture: (centroid: Offset, pan: Offset, zoom: Float) -> Unit
+) {
+    awaitEachGesture {
+        var zoom = 1f
+        var pan = Offset.Zero
+        var pastTouchSlop = false
+        val touchSlop = viewConfiguration.touchSlop
+
+        awaitFirstDown(requireUnconsumed = false)
+        do {
+            val event = awaitPointerEvent()
+            val canceled = event.changes.any { it.isConsumed }
+            if (!canceled) {
+                val activePointers = event.changes.filter { it.pressed }
+                
+                // If only 1 finger is down and scale is 1f, let's completely ignore and bubble up unconsumed
+                // so that the parent swiper horizontal pager receives the drag gesture cleanly.
+                val shouldIgnore = activePointers.size <= 1 && scale <= 1f
+                
+                if (!shouldIgnore) {
+                    val zoomChange = event.calculateZoom()
+                    val panChange = event.calculatePan()
+
+                    if (!pastTouchSlop) {
+                        zoom *= zoomChange
+                        pan += panChange
+
+                        val centroid = event.calculateCentroid(useCurrent = false)
+                        val zoomMotion = Math.abs(1 - zoom) * centroid.getDistance()
+                        val panMotion = pan.getDistance()
+
+                        if (zoomMotion > touchSlop || panMotion > touchSlop) {
+                            pastTouchSlop = true
+                        }
+                    }
+
+                    if (pastTouchSlop) {
+                        val centroid = event.calculateCentroid(useCurrent = false)
+                        if (zoomChange != 1f || panChange != Offset.Zero) {
+                            onGesture(centroid, panChange, zoomChange)
+                        }
+                        event.changes.forEach {
+                            if (it.positionChanged()) {
+                                it.consume()
+                            }
+                        }
+                    }
+                }
+            }
+        } while (!canceled && event.changes.any { it.pressed })
     }
 }

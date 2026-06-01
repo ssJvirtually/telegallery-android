@@ -174,6 +174,11 @@ object TdlibManager {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
         
+        // Staging: Clear any stale Room DB cache items referencing DB backups
+        try {
+            cloudDao.deleteBackupDbFiles()
+        } catch (e: Exception) {}
+        
         var lastMessageId = 0L
         var crawling = true
         addLog("Starting server vault synchronization crawl...")
@@ -224,13 +229,22 @@ object TdlibManager {
                         }
                     } else if (content is TdApi.MessageDocument) {
                         val doc = content.document
-                        fileId = doc.document.id
-                        remoteId = doc.document.remote.id
-                        fileSize = doc.document.size
-                        isDoc = true
-                        fileName = if (doc.fileName.isNotEmpty()) doc.fileName else {
+                        val docName = if (doc.fileName.isNotEmpty()) doc.fileName else {
                             val captionText = content.caption.text
                             if (captionText.isNotEmpty()) captionText else "doc_${msg.id}"
+                        }
+                        
+                        // Filter to only catalog document attachments that are valid image formats
+                        val imageExtensions = setOf("jpg", "jpeg", "png", "webp", "heic", "heif", "gif")
+                        val extension = docName.substringAfterLast('.', "").lowercase()
+                        val isImage = imageExtensions.contains(extension)
+                        
+                        if (isImage && !docName.startsWith("telegallery_backup", ignoreCase = true)) {
+                            fileId = doc.document.id
+                            remoteId = doc.document.remote.id
+                            fileSize = doc.document.size
+                            isDoc = true
+                            fileName = docName
                         }
                     }
                     

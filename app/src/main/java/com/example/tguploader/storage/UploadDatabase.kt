@@ -69,6 +69,9 @@ interface CloudPhotoDao {
 
     @Query("SELECT COUNT(*) FROM cloud_photos")
     suspend fun getRecordCountDirect(): Int
+
+    @Query("DELETE FROM cloud_photos WHERE fileName LIKE '%.db' OR fileName LIKE 'telegallery_backup%'")
+    suspend fun deleteBackupDbFiles()
 }
 
 @Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 2, exportSchema = false)
