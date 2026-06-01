@@ -2726,12 +2726,21 @@ fun PhotoViewerScreen(
     }
 }
 
+data class SearchItem(val photo: LocalPhoto, val keywords: String)
+
 @Composable
 fun SearchScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
 ) {
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+    var typedQuery by remember { mutableStateOf("") }
+    
+    // 200ms keyboard input debounce to keep typing butter-smooth
+    LaunchedEffect(typedQuery) {
+        delay(200)
+        searchQuery = typedQuery
+    }
     
     var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     var isScanning by remember { mutableStateOf(true) }
@@ -2786,19 +2795,25 @@ fun SearchScreen(
         list.sortedByDescending { it.dateTaken }
     }
 
-    // Filter photos based on search query
-    val filteredPhotos = remember(unifiedPhotos, searchQuery) {
-        if (searchQuery.isBlank()) {
+    // Pre-computed lowercase search keywords for zero-allocation performance in typing loops
+    val sdf = remember { java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault()) }
+    val indexedPhotos = remember(unifiedPhotos) {
+        unifiedPhotos.map { photo ->
+            val formattedDate = try {
+                sdf.format(java.util.Date(photo.dateTaken)).lowercase()
+            } catch (e: Exception) { "" }
+            val keywords = "${photo.name.lowercase()} $formattedDate"
+            SearchItem(photo, keywords)
+        }
+    }
+
+    // Filter photos based on search query using sub-millisecond pre-computed string matching
+    val filteredPhotos = remember(indexedPhotos, searchQuery) {
+        val query = searchQuery.trim().lowercase()
+        if (query.isEmpty()) {
             emptyList()
         } else {
-            unifiedPhotos.filter { photo ->
-                val matchesName = photo.name.contains(searchQuery, ignoreCase = true)
-                val formattedDate = try {
-                    java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault()).format(java.util.Date(photo.dateTaken))
-                } catch (e: Exception) { "" }
-                val matchesDate = formattedDate.contains(searchQuery, ignoreCase = true)
-                matchesName || matchesDate
-            }
+            indexedPhotos.filter { it.keywords.contains(query) }.map { it.photo }
         }
     }
 
@@ -2810,13 +2825,16 @@ fun SearchScreen(
     ) {
         // Search Input Bar
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
+            value = typedQuery,
+            onValueChange = { typedQuery = it },
             placeholder = { Text("Search by file name or date...", color = TelePhotosTheme.TextSecondary) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = TelePhotosTheme.AccentBlue) },
             trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
+                if (typedQuery.isNotEmpty()) {
+                    IconButton(onClick = { 
+                        typedQuery = "" 
+                        searchQuery = "" 
+                    }) {
                         Icon(Icons.Default.Close, contentDescription = "Clear", tint = TelePhotosTheme.TextSecondary)
                     }
                 }
@@ -2841,7 +2859,7 @@ fun SearchScreen(
                 CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
             }
         } else {
-            if (searchQuery.isBlank()) {
+            if (typedQuery.isBlank()) {
                 // Empty state search illustration
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2877,7 +2895,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "No results found for \"$searchQuery\"",
+                            text = "No results found for \"$typedQuery\"",
                             color = TelePhotosTheme.TextSecondary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
