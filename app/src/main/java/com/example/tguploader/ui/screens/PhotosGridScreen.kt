@@ -38,6 +38,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -834,14 +835,13 @@ fun PhotosGridScreen(
                                 val paddingPx = with(density) { 32.dp.toPx() }
                                 val trackHeightPx = containerHeightPx - (paddingPx * 2)
 
-                                val thumbHeightDp = 48.dp
+                                val thumbHeightDp = 36.dp
                                 val thumbHeightPx = with(density) { thumbHeightDp.toPx() }
                                 val scrollableRangePx = trackHeightPx - thumbHeightPx
 
                                 val activeFraction = if (isDragging) dragOffsetFraction else scrollFraction
                                 val thumbYPx = paddingPx + (activeFraction * scrollableRangePx)
 
-                                val thumbHeight = with(density) { thumbHeightPx.toDp() }
                                 val thumbY = with(density) { thumbYPx.toDp() }
 
                                 // Drag & Touch Area Overlay
@@ -896,20 +896,35 @@ fun PhotosGridScreen(
                                             )
                                     )
                                     
-                                    // Handle Thumb (Google Photos style pill shape)
+                                    // Handle Thumb (Google Photos style elevated circular bubble matching the reference photo)
                                     Box(
                                         modifier = Modifier
                                             .offset(y = thumbY)
                                             .align(Alignment.TopEnd)
-                                            .padding(end = 6.dp)
-                                            .width(8.dp)
-                                            .height(thumbHeight)
-                                            .background(
-                                                color = if (isDragging) TelePhotosTheme.AccentBlue
-                                                else TelePhotosTheme.TextSecondary.copy(alpha = 0.6f),
-                                                shape = RoundedCornerShape(4.dp)
+                                            .padding(end = 4.dp)
+                                            .size(36.dp)
+                                            .shadow(
+                                                elevation = if (isDragging) 8.dp else 4.dp,
+                                                shape = CircleShape
                                             )
-                                    )
+                                            .background(
+                                                color = Color.White,
+                                                shape = CircleShape
+                                            )
+                                            .border(
+                                                width = 0.5.dp,
+                                                color = Color.LightGray.copy(alpha = 0.5f),
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.UnfoldMore,
+                                            contentDescription = "Scroll handle",
+                                            tint = Color.DarkGray,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
 
                                 // Floating Date Bubble (Google Photos style month bubble)
@@ -938,7 +953,7 @@ fun PhotosGridScreen(
                                         modifier = Modifier
                                             .offset(y = thumbY - 8.dp)
                                             .align(Alignment.TopEnd)
-                                            .padding(end = 40.dp)
+                                            .padding(end = 48.dp) // Offset left to clear the elevated circle handle
                                             .background(
                                                 color = TelePhotosTheme.AccentBlue,
                                                 shape = RoundedCornerShape(16.dp)
