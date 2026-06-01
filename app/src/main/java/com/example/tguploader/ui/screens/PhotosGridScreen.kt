@@ -223,16 +223,20 @@ fun PhotosGridScreen(
         // Merge local photos and cloud-only photos
         val mergedPhotosList = remember(localPhotos, cloudLogs) {
             val list = mutableListOf<LocalPhoto>()
-            val localMap = localPhotos.associateBy { it.name }
-            val tempSyncedCloudFilenames = mutableSetOf<String>()
+            // Build fingerprint-based map for more accurate matching (prevents filename collisions)
+            val localByFingerprint = localPhotos.associateBy { "${it.name}_${it.size}_${it.dateTaken}" }
+            val localByName = localPhotos.associateBy { it.name }
+            val matchedLocalKeys = mutableSetOf<String>()
 
             // 1. Process cloud vault files
             for (cloud in cloudLogs) {
-                val matchingLocal = localMap[cloud.fileName]
+                val cloudFingerprint = "${cloud.fileName}_${cloud.fileSize}_${cloud.uploadedAt}"
+                val matchingLocal = localByFingerprint[cloudFingerprint]
+                    ?: localByName[cloud.fileName] // Fallback for legacy entries without fingerprint
                 if (matchingLocal != null) {
                     // Match found: Sync verified
                     list.add(matchingLocal)
-                    tempSyncedCloudFilenames.add(cloud.fileName)
+                    matchedLocalKeys.add(matchingLocal.name)
                 } else {
                     // Cloud only asset
                     val parsedDate = parseDateFromFilename(cloud.fileName)
@@ -251,7 +255,7 @@ fun PhotosGridScreen(
 
             // 2. Inject unsynced local device photos
             for (local in localPhotos) {
-                if (!tempSyncedCloudFilenames.contains(local.name)) {
+                if (!matchedLocalKeys.contains(local.name)) {
                     list.add(local)
                 }
             }

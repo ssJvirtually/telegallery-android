@@ -10,6 +10,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "uploads")
@@ -47,7 +49,8 @@ data class CloudPhotoEntity(
     val fileSize: Long,
     val isDocument: Boolean,
     val localCachedThumbnailPath: String? = null,
-    val localCachedLargePath: String? = null
+    val localCachedLargePath: String? = null,
+    val contentFingerprint: String = ""
 )
 
 @Dao
@@ -64,6 +67,9 @@ interface CloudPhotoDao {
     @Query("SELECT * FROM cloud_photos WHERE fileName = :fileName LIMIT 1")
     suspend fun findByFileName(fileName: String): CloudPhotoEntity?
 
+    @Query("SELECT * FROM cloud_photos WHERE contentFingerprint = :fingerprint LIMIT 1")
+    suspend fun findByFingerprint(fingerprint: String): CloudPhotoEntity?
+
     @Query("DELETE FROM cloud_photos")
     suspend fun clearAll()
 
@@ -74,7 +80,7 @@ interface CloudPhotoDao {
     suspend fun deleteBackupDbFiles()
 }
 
-@Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 2, exportSchema = false)
+@Database(entities = [UploadEntity::class, CloudPhotoEntity::class], version = 3, exportSchema = false)
 abstract class UploadDatabase : RoomDatabase() {
     abstract fun dao(): UploadDao
     abstract fun cloudDao(): CloudPhotoDao
@@ -83,6 +89,14 @@ abstract class UploadDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: UploadDatabase? = null
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE cloud_photos ADD COLUMN contentFingerprint TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -90,7 +104,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_2_3)
                 .build()
                 INSTANCE = instance
                 instance

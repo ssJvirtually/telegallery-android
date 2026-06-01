@@ -119,15 +119,19 @@ fun SearchScreen(
 
     // Merge, deduplicate and sort
     val unifiedPhotos = remember(localPhotos, uploadedLogs, cloudLogs) {
-        val localMap = localPhotos.associateBy { it.name }
+        // Build fingerprint-based map for more accurate matching (prevents filename collisions)
+        val localByFingerprint = localPhotos.associateBy { "${it.name}_${it.size}_${it.dateTaken}" }
+        val localByName = localPhotos.associateBy { it.name }
         val list = mutableListOf<LocalPhoto>()
-        val tempSyncedCloudFilenames = mutableSetOf<String>()
+        val matchedLocalKeys = mutableSetOf<String>()
         
         for (cloud in cloudLogs) {
-            val matchingLocal = localMap[cloud.fileName]
+            val cloudFingerprint = "${cloud.fileName}_${cloud.fileSize}_${cloud.uploadedAt}"
+            val matchingLocal = localByFingerprint[cloudFingerprint]
+                ?: localByName[cloud.fileName] // Fallback for legacy entries without fingerprint
             if (matchingLocal != null) {
                 list.add(matchingLocal)
-                tempSyncedCloudFilenames.add(cloud.fileName)
+                matchedLocalKeys.add(matchingLocal.name)
             } else {
                 val parsedDate = parseDateFromFilename(cloud.fileName)
                 val displayDate = parsedDate ?: cloud.uploadedAt
@@ -144,7 +148,7 @@ fun SearchScreen(
         }
         
         for (local in localPhotos) {
-            if (!tempSyncedCloudFilenames.contains(local.name)) {
+            if (!matchedLocalKeys.contains(local.name)) {
                 list.add(local)
             }
         }

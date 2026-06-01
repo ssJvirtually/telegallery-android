@@ -76,7 +76,10 @@ class UploadWorker(
 
             if (existing == null) {
                 // Prevent duplicate upload if already in cloud database from another device
-                val existingInCloud = db.cloudDao().findByFileName(photo.name)
+                // Use content fingerprint (name+size+dateTaken) to avoid filename collisions
+                val fingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}"
+                val existingInCloud = db.cloudDao().findByFingerprint(fingerprint)
+                    ?: db.cloudDao().findByFileName(photo.name) // Fallback for legacy entries without fingerprint
                 if (existingInCloud != null) {
                     // Mark as uploaded locally since it already resides on the cloud
                     dao.insert(

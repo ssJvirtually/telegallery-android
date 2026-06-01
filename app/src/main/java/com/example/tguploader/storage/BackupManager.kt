@@ -16,6 +16,18 @@ object BackupManager {
 
     private var isBackupRunning = false
 
+    private fun computeSha256(file: File): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        FileInputStream(file).use { fis ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     suspend fun backupDatabase(context: Context, chatId: Long) {
         if (isBackupRunning) return
         isBackupRunning = true
@@ -62,8 +74,9 @@ object BackupManager {
                     return@withContext
                 }
                 
-                // 5. Upload document message to Telegram
-                val uploadResult = uploadFile(tempBackupFile, chatId)
+                // 5. Compute integrity checksum and upload document message to Telegram
+                val sha256 = computeSha256(tempBackupFile)
+                val uploadResult = uploadFile(tempBackupFile, chatId, "TeleGallery SQLite Database Backup #telegallery_backup sha256:$sha256")
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
                     val oldMsgId = PreferencesManager.getLastBackupMessageId(context)
@@ -132,6 +145,18 @@ object BackupManager {
                     // 2. Download the document file from Telegram
                     val downloadedFile = downloadFile(document.document.id)
                     if (downloadedFile != null && downloadedFile.exists()) {
+                        // Verify integrity via SHA-256 checksum
+                        val captionText = docContent?.caption?.text ?: ""
+                        val expectedHash = captionText.substringAfter("sha256:", "").trim()
+                        if (expectedHash.isNotEmpty()) {
+                            val actualHash = computeSha256(downloadedFile)
+                            if (actualHash != expectedHash) {
+                                TdlibManager.addLog("Backup integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Aborting restore.")
+                                return@withContext false
+                            }
+                            TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
+                        }
+
                         TdlibManager.addLog("Backup downloaded successfully. Restoring local database...")
                         
                         // Close current Room database so we can overwrite its files
@@ -195,12 +220,12 @@ object BackupManager {
         }
     }
 
-    private suspend fun uploadFile(file: File, chatId: Long): TdApi.Object {
+    private suspend fun uploadFile(file: File, chatId: Long, captionText: String): TdApi.Object {
         return suspendCancellableCoroutine { continuation ->
             val inputFile = TdApi.InputFileLocal(file.absolutePath)
             val inputMessageContent = TdApi.InputMessageDocument().apply {
                 this.document = inputFile
-                caption = TdApi.FormattedText("TeleGallery SQLite Database Backup #telegallery_backup", emptyArray())
+                this.caption = TdApi.FormattedText(captionText, emptyArray())
             }
             
             val request = TdApi.SendMessage().apply {
@@ -218,5 +243,17 @@ object BackupManager {
                 }
             }
         }
+    }
+
+    private fun computeSha256(file: File): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        FileInputStream(file).use { fis ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 }

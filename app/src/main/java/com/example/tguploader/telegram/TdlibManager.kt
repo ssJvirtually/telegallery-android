@@ -3,23 +3,25 @@ package com.example.tguploader.telegram
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.DelicateCoroutinesApi
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import kotlin.coroutines.resume
 import com.example.tguploader.BuildConfig
 import com.example.tguploader.storage.UploadDatabase
 import com.example.tguploader.storage.CloudPhotoEntity
+import java.io.File
 
 data class ChatInfo(val id: Long, val title: String)
 
 object TdlibManager {
 
     private var client: Client? = null
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     private val _authState = MutableStateFlow<TdApi.AuthorizationState?>(null)
     val authState: StateFlow<TdApi.AuthorizationState?> = _authState
@@ -49,10 +51,13 @@ object TdlibManager {
         if (client != null) return
         addLog("Initializing TDLib library...")
         
-        // Evict any stale cache files from previous runs
+        // Evict any stale upload temp files from previous runs (dedicated subfolder only)
         try {
-            context.cacheDir.listFiles()?.forEach { it.delete() }
-            addLog("Cleared stale temporary cache.")
+            val uploadCacheDir = File(context.cacheDir, "telegallery_uploads")
+            if (uploadCacheDir.exists()) {
+                uploadCacheDir.listFiles()?.forEach { it.delete() }
+            }
+            addLog("Cleared stale upload temp cache.")
         } catch (e: Exception) {}
 
         try {
@@ -90,8 +95,7 @@ object TdlibManager {
                 } else if (state is TdApi.AuthorizationStateClosed) {
                     addLog("Session closed. Restarting TDLib client...")
                     client = null
-                    @OptIn(DelicateCoroutinesApi::class)
-                    GlobalScope.launch(Dispatchers.Default) {
+                    managerScope.launch {
                         delay(500)
                         initialize(context)
                     }
@@ -278,7 +282,8 @@ object TdlibManager {
                                 fileName = fileName,
                                 uploadedAt = uploadedAt,
                                 fileSize = fileSize,
-                                isDocument = isDoc
+                                isDocument = isDoc,
+                                contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}"
                             )
                         )
                     }

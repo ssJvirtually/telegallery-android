@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.example.tguploader.storage.LocalPhoto
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import org.drinkless.tdlib.TdApi
 import java.io.File
 import java.io.FileOutputStream
@@ -17,10 +18,13 @@ object UploadManager {
         isHd: Boolean
     ): TdApi.Object {
         val fileName = photo.name
-        val tempFile = File(context.cacheDir, fileName)
+        val uploadCacheDir = File(context.cacheDir, "telegallery_uploads")
+        uploadCacheDir.mkdirs()
+        val tempFile = File(uploadCacheDir, fileName)
         
         try {
-            return suspendCancellableCoroutine { continuation ->
+            val result = withTimeoutOrNull(120_000L) {
+                suspendCancellableCoroutine { continuation ->
                 try {
                     val uri = Uri.parse(photo.uri)
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -182,7 +186,9 @@ object UploadManager {
                     e.printStackTrace()
                     continuation.resume(TdApi.Error(500, e.message ?: "Unknown upload initialization error"))
                 }
+                }
             }
+            return result ?: TdApi.Error(408, "Upload timed out after 2 minutes")
         } finally {
             // Clean up the temp file from the cache directory immediately when the suspension finishes
             try {
