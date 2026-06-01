@@ -313,7 +313,11 @@ object UploadManager {
                     
                     val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
                         TdlibManager.getClient().send(request) { result ->
-                            cont.resume(result)
+                            if (result is TdApi.Message) {
+                                TdlibManager.pendingUploads[result.id] = cont
+                            } else {
+                                cont.resume(result)
+                            }
                         }
                     }
                     
