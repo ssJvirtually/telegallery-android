@@ -19,6 +19,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -602,180 +605,353 @@ fun PhotosGridScreen(
                         }
                     }
                 } else {
-                    LazyVerticalGrid(
-                        state = gridState,
-                        columns = GridCells.Fixed(gridColumns),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                if (isZooming) {
-                                    scaleX = activeScale
-                                    scaleY = activeScale
-                                    this.transformOrigin = transformOrigin
-                                }
-                            },
-                        contentPadding = PaddingValues(1.dp),
-                        verticalArrangement = Arrangement.spacedBy(1.dp),
-                        horizontalArrangement = Arrangement.spacedBy(1.dp)
-                    ) {
-                        groupedPhotosList.forEach { item ->
-                            when (item) {
-                                is GalleryItem.Header -> {
-                                    item(span = { GridItemSpan(gridColumns) }) {
-                                        Text(
-                                            text = item.date,
-                                            color = TelePhotosTheme.TextPrimary,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(TelePhotosTheme.Background)
-                                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                                        )
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                        val containerHeightPx = constraints.maxHeight.toFloat()
+
+                        LazyVerticalGrid(
+                            state = gridState,
+                            columns = GridCells.Fixed(gridColumns),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    if (isZooming) {
+                                        scaleX = activeScale
+                                        scaleY = activeScale
+                                        this.transformOrigin = transformOrigin
                                     }
-                                }
+                                },
+                            contentPadding = PaddingValues(1.dp),
+                            verticalArrangement = Arrangement.spacedBy(1.dp),
+                            horizontalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            groupedPhotosList.forEach { item ->
+                                when (item) {
+                                    is GalleryItem.Header -> {
+                                        item(span = { GridItemSpan(gridColumns) }) {
+                                            Text(
+                                                text = item.date,
+                                                color = TelePhotosTheme.TextPrimary,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(TelePhotosTheme.Background)
+                                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                            )
+                                        }
+                                    }
 
-                                is GalleryItem.PhotoItem -> {
-                                    val photo = item.photo
-                                    val isSynced = uploadedUris.contains(photo.uri)
-                                    val isCloud = isCloudPhoto(photo.uri)
-                                    val isSelected = selectedPhotos.contains(photo)
+                                    is GalleryItem.PhotoItem -> {
+                                        val photo = item.photo
+                                        val isSynced = uploadedUris.contains(photo.uri)
+                                        val isCloud = isCloudPhoto(photo.uri)
+                                        val isSelected = selectedPhotos.contains(photo)
 
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .aspectRatio(1f)
-                                                .background(TelePhotosTheme.SurfaceVariant)
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (isSelectionMode) {
-                                                            if (isSelected) {
-                                                                selectedPhotos.remove(photo)
-                                                                if (selectedPhotos.isEmpty()) {
-                                                                    isSelectionMode = false
+                                        item {
+                                            Box(
+                                                modifier = Modifier
+                                                    .aspectRatio(1f)
+                                                    .background(TelePhotosTheme.SurfaceVariant)
+                                                    .combinedClickable(
+                                                        onClick = {
+                                                            if (isSelectionMode) {
+                                                                if (isSelected) {
+                                                                    selectedPhotos.remove(photo)
+                                                                    if (selectedPhotos.isEmpty()) {
+                                                                        isSelectionMode = false
+                                                                    }
+                                                                } else {
+                                                                    selectedPhotos.add(photo)
                                                                 }
                                                             } else {
+                                                                // Determine global index in local photos list
+                                                                val index = mergedPhotosList.indexOf(photo)
+                                                                if (index != -1) {
+                                                                    onPhotoSelected(index, mergedPhotosList)
+                                                                }
+                                                            }
+                                                        },
+                                                        onLongClick = {
+                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                            if (!isSelectionMode) {
+                                                                isSelectionMode = true
                                                                 selectedPhotos.add(photo)
                                                             }
+                                                        }
+                                                    )
+                                            ) {
+                                                // Handle loading thumbnails for cloud-only vs local assets
+                                                if (isCloud) {
+                                                    val parts = parseCloudPhotoUri(photo.uri)
+                                                    if (parts != null) {
+                                                        val fileId = parts.second
+                                                        val localThumbnailPath = rememberCloudThumbnailPath(fileId)
+                                                        
+                                                        if (localThumbnailPath != null) {
+                                                            AsyncImage(
+                                                                model = ImageRequest.Builder(LocalContext.current)
+                                                                    .data(localThumbnailPath)
+                                                                    .crossfade(true)
+                                                                    .build(),
+                                                                contentDescription = photo.name,
+                                                                contentScale = ContentScale.Crop,
+                                                                modifier = Modifier.fillMaxSize()
+                                                            )
                                                         } else {
-                                                            // Determine global index in local photos list
-                                                            val index = mergedPhotosList.indexOf(photo)
-                                                            if (index != -1) {
-                                                                onPhotoSelected(index, mergedPhotosList)
+                                                            // Cloud Asset placeholder loading spinner
+                                                            Box(
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                contentAlignment = Alignment.Center
+                                                            ) {
+                                                                CircularProgressIndicator(
+                                                                    color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
+                                                                    modifier = Modifier.size(24.dp),
+                                                                    strokeWidth = 2.dp
+                                                                )
                                                             }
                                                         }
-                                                    },
-                                                    onLongClick = {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                        if (!isSelectionMode) {
-                                                            isSelectionMode = true
-                                                            selectedPhotos.add(photo)
-                                                        }
                                                     }
-                                                )
-                                        ) {
-                                            // Handle loading thumbnails for cloud-only vs local assets
-                                            if (isCloud) {
-                                                val parts = parseCloudPhotoUri(photo.uri)
-                                                if (parts != null) {
-                                                    val fileId = parts.second
-                                                    val localThumbnailPath = rememberCloudThumbnailPath(fileId)
-                                                    
-                                                    if (localThumbnailPath != null) {
-                                                        AsyncImage(
-                                                            model = ImageRequest.Builder(LocalContext.current)
-                                                                .data(localThumbnailPath)
-                                                                .crossfade(true)
-                                                                .build(),
-                                                            contentDescription = photo.name,
-                                                            contentScale = ContentScale.Crop,
-                                                            modifier = Modifier.fillMaxSize()
-                                                        )
-                                                    } else {
-                                                        // Cloud Asset placeholder loading spinner
-                                                        Box(
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            CircularProgressIndicator(
-                                                                color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
-                                                                modifier = Modifier.size(24.dp),
-                                                                strokeWidth = 2.dp
-                                                            )
-                                                        }
-                                                    }
+                                                } else {
+                                                    AsyncImage(
+                                                        model = ImageRequest.Builder(LocalContext.current)
+                                                            .data(photo.uri)
+                                                            .crossfade(true)
+                                                            .build(),
+                                                        contentDescription = photo.name,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
                                                 }
-                                            } else {
-                                                AsyncImage(
-                                                    model = ImageRequest.Builder(LocalContext.current)
-                                                        .data(photo.uri)
-                                                        .crossfade(true)
-                                                        .build(),
-                                                    contentDescription = photo.name,
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier.fillMaxSize()
-                                                )
-                                            }
 
-                                            // Sync Indicator Badges (Google Photos Style)
-                                            if (isSelectionMode) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(6.dp),
-                                                    contentAlignment = Alignment.TopStart
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(20.dp)
-                                                            .clip(CircleShape)
-                                                            .background(
-                                                                if (isSelected) TelePhotosTheme.AccentBlue else Color.Black.copy(alpha = 0.35f)
-                                                            )
-                                                            .border(
-                                                                1.5.dp,
-                                                                Color.White,
-                                                                CircleShape
-                                                            ),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        if (isSelected) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.Check,
-                                                                contentDescription = null,
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(12.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                // Local-only assets show a subtle cloud backup trigger icon on hover/overlay
-                                                if (!isSynced && !isCloud) {
+                                                // Sync Indicator Badges (Google Photos Style)
+                                                if (isSelectionMode) {
                                                     Box(
                                                         modifier = Modifier
                                                             .fillMaxSize()
                                                             .padding(6.dp),
-                                                        contentAlignment = Alignment.BottomEnd
+                                                        contentAlignment = Alignment.TopStart
                                                     ) {
                                                         Box(
                                                             modifier = Modifier
                                                                 .size(20.dp)
                                                                 .clip(CircleShape)
-                                                                .background(Color.Black.copy(alpha = 0.35f)),
+                                                                .background(
+                                                                    if (isSelected) TelePhotosTheme.AccentBlue else Color.Black.copy(alpha = 0.35f)
+                                                                )
+                                                                .border(
+                                                                    1.5.dp,
+                                                                    Color.White,
+                                                                    CircleShape
+                                                                ),
                                                             contentAlignment = Alignment.Center
                                                         ) {
-                                                            Icon(
-                                                                imageVector = Icons.Default.CloudUpload,
-                                                                contentDescription = "Not Synced",
-                                                                tint = Color.White.copy(alpha = 0.9f),
-                                                                modifier = Modifier.size(11.dp)
-                                                            )
+                                                            if (isSelected) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Check,
+                                                                    contentDescription = null,
+                                                                    tint = Color.White,
+                                                                    modifier = Modifier.size(12.dp)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    // Local-only assets show a subtle cloud backup trigger icon on hover/overlay
+                                                    if (!isSynced && !isCloud) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxSize()
+                                                                .padding(6.dp),
+                                                            contentAlignment = Alignment.BottomEnd
+                                                        ) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(20.dp)
+                                                                    .clip(CircleShape)
+                                                                    .background(Color.Black.copy(alpha = 0.35f)),
+                                                                contentAlignment = Alignment.Center
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.CloudUpload,
+                                                                    contentDescription = "Not Synced",
+                                                                    tint = Color.White.copy(alpha = 0.9f),
+                                                                    modifier = Modifier.size(11.dp)
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        }
+
+                        // --- Custom Premium Google Photos-style Scrollbar ---
+                        val totalItems = groupedPhotosList.size
+                        if (totalItems > 5) {
+                            val firstVisibleIndex = gridState.firstVisibleItemIndex
+                            val firstVisibleOffset = gridState.firstVisibleItemScrollOffset
+
+                            val scrollFraction = remember(firstVisibleIndex, firstVisibleOffset, totalItems) {
+                                if (totalItems <= 1) 0f
+                                else {
+                                    val itemFraction = firstVisibleIndex.toFloat() / totalItems.toFloat()
+                                    val detailOffset = if (gridState.layoutInfo.visibleItemsInfo.isNotEmpty()) {
+                                        val itemHeight = gridState.layoutInfo.visibleItemsInfo.first().size.height
+                                        if (itemHeight > 0) {
+                                            (firstVisibleOffset.toFloat() / itemHeight.toFloat()) / totalItems.toFloat()
+                                        } else 0f
+                                    } else 0f
+                                    (itemFraction + detailOffset).coerceIn(0f, 1f)
+                                }
+                            }
+
+                            var isDragging by remember { mutableStateOf(false) }
+                            var dragOffsetFraction by remember { mutableStateOf(0f) }
+
+                            // Auto-fade scrollbar logic matching Telegram/Google Photos
+                            var scrollbarAlpha by remember { mutableStateOf(0f) }
+                            LaunchedEffect(gridState.isScrollInProgress, isDragging) {
+                                if (gridState.isScrollInProgress || isDragging) {
+                                    scrollbarAlpha = 1f
+                                } else {
+                                    // Wait 1.5s then fade out
+                                    kotlinx.coroutines.delay(1500)
+                                    scrollbarAlpha = 0f
+                                }
+                            }
+
+                            val animatedAlpha by animateFloatAsState(
+                                targetValue = scrollbarAlpha,
+                                animationSpec = tween(durationMillis = 300),
+                                label = "scrollbar_alpha"
+                            )
+
+                            if (animatedAlpha > 0f) {
+                                val density = androidx.compose.ui.platform.LocalDensity.current
+                                val paddingPx = with(density) { 32.dp.toPx() }
+                                val trackHeightPx = containerHeightPx - (paddingPx * 2)
+
+                                val thumbHeightDp = 48.dp
+                                val thumbHeightPx = with(density) { thumbHeightDp.toPx() }
+                                val scrollableRangePx = trackHeightPx - thumbHeightPx
+
+                                val activeFraction = if (isDragging) dragOffsetFraction else scrollFraction
+                                val thumbYPx = paddingPx + (activeFraction * scrollableRangePx)
+
+                                val thumbHeight = with(density) { thumbHeightPx.toDp() }
+                                val thumbY = with(density) { thumbYPx.toDp() }
+
+                                // Drag & Touch Area Overlay
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .fillMaxHeight()
+                                        .width(36.dp)
+                                        .graphicsLayer { alpha = animatedAlpha }
+                                        .pointerInput(containerHeightPx, scrollableRangePx) {
+                                            detectVerticalDragGestures(
+                                                onDragStart = { startPosition ->
+                                                    isDragging = true
+                                                    val relativeY = (startPosition.y - paddingPx - (thumbHeightPx / 2))
+                                                    dragOffsetFraction = (relativeY / scrollableRangePx).coerceIn(0f, 1f)
+                                                    coroutineScope.launch {
+                                                        val targetIndex = (dragOffsetFraction * totalItems).toInt().coerceIn(0, totalItems - 1)
+                                                        gridState.scrollToItem(targetIndex)
+                                                    }
+                                                },
+                                                onDragEnd = {
+                                                    isDragging = false
+                                                },
+                                                onDragCancel = {
+                                                    isDragging = false
+                                                },
+                                                onVerticalDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    val currentY = paddingPx + (dragOffsetFraction * scrollableRangePx)
+                                                    val newY = currentY + dragAmount
+                                                    dragOffsetFraction = ((newY - paddingPx) / scrollableRangePx).coerceIn(0f, 1f)
+                                                    
+                                                    coroutineScope.launch {
+                                                        val targetIndex = (dragOffsetFraction * totalItems).toInt().coerceIn(0, totalItems - 1)
+                                                        gridState.scrollToItem(targetIndex)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                ) {
+                                    // Track line (subtle background)
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .fillMaxHeight()
+                                            .padding(vertical = 32.dp)
+                                            .width(2.dp)
+                                            .background(
+                                                color = if (isDragging) TelePhotosTheme.TextSecondary.copy(alpha = 0.3f)
+                                                else TelePhotosTheme.TextSecondary.copy(alpha = 0.1f),
+                                                shape = RoundedCornerShape(1.dp)
+                                            )
+                                    )
+                                    
+                                    // Handle Thumb (Google Photos style pill shape)
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(y = thumbY)
+                                            .align(Alignment.TopEnd)
+                                            .padding(end = 6.dp)
+                                            .width(8.dp)
+                                            .height(thumbHeight)
+                                            .background(
+                                                color = if (isDragging) TelePhotosTheme.AccentBlue
+                                                else TelePhotosTheme.TextSecondary.copy(alpha = 0.6f),
+                                                shape = RoundedCornerShape(4.dp)
+                                            )
+                                    )
+                                }
+
+                                // Floating Date Bubble (Google Photos style month bubble)
+                                val activeItemIndex = (activeFraction * (totalItems - 1)).toInt().coerceIn(0, totalItems - 1)
+                                val activeItem = groupedPhotosList.getOrNull(activeItemIndex)
+
+                                val bubbleText = remember(activeItem) {
+                                    if (activeItem == null) ""
+                                    else {
+                                        when (activeItem) {
+                                            is GalleryItem.Header -> activeItem.date
+                                            is GalleryItem.PhotoItem -> {
+                                                try {
+                                                    val sdf = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+                                                    sdf.format(java.util.Date(activeItem.photo.dateTaken))
+                                                } catch (e: Exception) {
+                                                    ""
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (isDragging && bubbleText.isNotEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(y = thumbY - 8.dp)
+                                            .align(Alignment.TopEnd)
+                                            .padding(end = 40.dp)
+                                            .background(
+                                                color = TelePhotosTheme.AccentBlue,
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = bubbleText,
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
                             }
