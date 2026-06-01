@@ -981,6 +981,19 @@ fun MainAppLayout(
                     )
                 )
                 NavigationBarItem(
+                    selected = activeTab == "Search",
+                    onClick = { activeTab = "Search" },
+                    icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    label = { Text("Search") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = TelePhotosTheme.AccentBlue,
+                        selectedTextColor = TelePhotosTheme.AccentBlue,
+                        unselectedIconColor = TelePhotosTheme.TextSecondary,
+                        unselectedTextColor = TelePhotosTheme.TextSecondary,
+                        indicatorColor = TelePhotosTheme.SurfaceVariant
+                    )
+                )
+                NavigationBarItem(
                     selected = activeTab == "Settings",
                     onClick = { activeTab = "Settings" },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
@@ -1007,6 +1020,10 @@ fun MainAppLayout(
                     fullScreenPhotoIndex = null
                     devicePhotosList = emptyList()
                 }
+            } else if (activeTab == "Search") {
+                BackHandler {
+                    activeTab = "Photos"
+                }
             } else if (activeTab == "Settings") {
                 BackHandler {
                     activeTab = "Photos"
@@ -1016,6 +1033,14 @@ fun MainAppLayout(
             when (activeTab) {
                 "Photos" -> {
                     PhotosGridScreen(
+                        onPhotoSelected = { index, photos ->
+                            fullScreenPhotoIndex = index
+                            devicePhotosList = photos
+                        }
+                    )
+                }
+                "Search" -> {
+                    SearchScreen(
                         onPhotoSelected = { index, photos ->
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
@@ -2690,6 +2715,253 @@ fun PhotoViewerScreen(
                                         text = "Telegram Server Vault",
                                         color = TelePhotosTheme.TextSecondary,
                                         fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchScreen(
+    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
+) {
+    val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
+    
+    var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+    var isScanning by remember { mutableStateOf(true) }
+    
+    val db = remember { UploadDatabase.getDatabase(context) }
+    val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
+    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+    val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
+    val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val scanned = com.example.tguploader.storage.MediaStoreScanner.scan(context)
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                localPhotos = scanned
+                isScanning = false
+            }
+        }
+    }
+
+    // Merge, deduplicate and sort
+    val unifiedPhotos = remember(localPhotos, uploadedLogs, cloudLogs) {
+        val localMap = localPhotos.associateBy { it.name }
+        val list = mutableListOf<LocalPhoto>()
+        val tempSyncedCloudFilenames = mutableSetOf<String>()
+        
+        for (cloud in cloudLogs) {
+            val matchingLocal = localMap[cloud.fileName]
+            if (matchingLocal != null) {
+                list.add(matchingLocal)
+                tempSyncedCloudFilenames.add(cloud.fileName)
+            } else {
+                val parsedDate = parseDateFromFilename(cloud.fileName)
+                val displayDate = parsedDate ?: cloud.uploadedAt
+                list.add(
+                    LocalPhoto(
+                        id = -cloud.messageId,
+                        uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
+                        name = cloud.fileName,
+                        size = cloud.fileSize,
+                        dateTaken = displayDate
+                    )
+                )
+            }
+        }
+        
+        for (local in localPhotos) {
+            if (!tempSyncedCloudFilenames.contains(local.name)) {
+                list.add(local)
+            }
+        }
+        list.sortedByDescending { it.dateTaken }
+    }
+
+    // Filter photos based on search query
+    val filteredPhotos = remember(unifiedPhotos, searchQuery) {
+        if (searchQuery.isBlank()) {
+            emptyList()
+        } else {
+            unifiedPhotos.filter { photo ->
+                val matchesName = photo.name.contains(searchQuery, ignoreCase = true)
+                val formattedDate = try {
+                    java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault()).format(java.util.Date(photo.dateTaken))
+                } catch (e: Exception) { "" }
+                val matchesDate = formattedDate.contains(searchQuery, ignoreCase = true)
+                matchesName || matchesDate
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(TelePhotosTheme.Background)
+            .padding(16.dp)
+    ) {
+        // Search Input Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Search by file name or date...", color = TelePhotosTheme.TextSecondary) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = TelePhotosTheme.AccentBlue) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Default.Close, contentDescription = "Clear", tint = TelePhotosTheme.TextSecondary)
+                    }
+                }
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = TelePhotosTheme.AccentBlue,
+                unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                focusedContainerColor = TelePhotosTheme.Surface,
+                unfocusedContainerColor = TelePhotosTheme.Surface,
+                focusedTextColor = TelePhotosTheme.TextPrimary,
+                unfocusedTextColor = TelePhotosTheme.TextPrimary
+            )
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isScanning && unifiedPhotos.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
+            }
+        } else {
+            if (searchQuery.isBlank()) {
+                // Empty state search illustration
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = TelePhotosTheme.TextSecondary.copy(alpha = 0.3f),
+                            modifier = Modifier.size(80.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Search your photo archive",
+                            color = TelePhotosTheme.TextSecondary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Find photos by name or date, like 'May 2026' or 'IMG'",
+                            color = TelePhotosTheme.TextSecondary.copy(alpha = 0.8f),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            } else if (filteredPhotos.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = TelePhotosTheme.TextSecondary.copy(alpha = 0.3f),
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No results found for \"$searchQuery\"",
+                            color = TelePhotosTheme.TextSecondary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            } else {
+                // Results Grid
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    items(filteredPhotos.size) { index ->
+                        val photo = filteredPhotos[index]
+                        val isCloud = photo.uri.startsWith("cloud://")
+                        val isSynced = if (isCloud) true else (uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
+
+                        val cloudThumbnailPath = if (isCloud) {
+                            val triple = parseCloudPhotoUri(photo.uri)
+                            if (triple != null) {
+                                rememberCloudThumbnailPath(triple.second)
+                            } else null
+                        } else null
+
+                        Box(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    onPhotoSelected(index, filteredPhotos)
+                                }
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(cloudThumbnailPath ?: photo.uri)
+                                    .size(256)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            // Subtle gradient at bottom-right for badge legibility
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(36.dp)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)
+                                        )
+                                    )
+                            )
+
+                            // Cloud Backup state icon overlay
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(6.dp)
+                            ) {
+                                if (isCloud) {
+                                    Icon(
+                                        imageVector = Icons.Default.Cloud,
+                                        contentDescription = "Cloud Only",
+                                        tint = Color(0xFF4285F4),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                } else if (isSynced) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Synced",
+                                        tint = Color(0xFF00E676),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Cloud,
+                                        contentDescription = "Pending Sync",
+                                        tint = Color.White.copy(alpha = 0.5f),
+                                        modifier = Modifier.size(14.dp)
                                     )
                                 }
                             }
