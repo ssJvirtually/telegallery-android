@@ -1574,6 +1574,7 @@ fun PhotosGridScreen(
                             is GalleryItem.Header -> {
                                 Row(
                                     modifier = Modifier
+                                        .animateItemPlacement()
                                         .fillMaxWidth()
                                         .background(TelePhotosTheme.Background)
                                         .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -1630,6 +1631,7 @@ fun PhotosGridScreen(
 
                                 Box(
                                     modifier = Modifier
+                                        .animateItemPlacement()
                                         .aspectRatio(1f)
                                         .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
                                         .combinedClickable(
@@ -3337,6 +3339,7 @@ fun SearchScreen(
     
                             Box(
                                 modifier = Modifier
+                                    .animateItemPlacement()
                                     .aspectRatio(1f)
                                     .background(if (isSelected) TelePhotosTheme.AccentBlue.copy(alpha = 0.25f) else Color.Transparent)
                                     .combinedClickable(
