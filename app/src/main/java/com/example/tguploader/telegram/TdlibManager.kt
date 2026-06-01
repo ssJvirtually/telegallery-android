@@ -11,14 +11,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import kotlin.coroutines.resume
+import com.example.tguploader.BuildConfig
 import com.example.tguploader.storage.UploadDatabase
 import com.example.tguploader.storage.CloudPhotoEntity
 
 data class ChatInfo(val id: Long, val title: String)
 
 object TdlibManager {
-    private const val API_ID = YOUR_TELEGRAM_API_ID
-    private const val API_HASH = "YOUR_TELEGRAM_API_HASH"
 
     private var client: Client? = null
     
@@ -133,8 +132,8 @@ object TdlibManager {
             databaseDirectory = context.filesDir.absolutePath + "/tdlib"
             useMessageDatabase = true
             useSecretChats = false
-            apiId = API_ID
-            apiHash = API_HASH
+            apiId = BuildConfig.TELEGRAM_API_ID
+            apiHash = BuildConfig.TELEGRAM_API_HASH
             systemLanguageCode = "en"
             deviceModel = "Android"
             applicationVersion = "1.0"
