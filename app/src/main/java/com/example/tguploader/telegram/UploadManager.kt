@@ -5,6 +5,9 @@ import android.net.Uri
 import com.example.tguploader.storage.LocalPhoto
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
 import java.io.File
 import java.io.FileOutputStream
@@ -246,6 +249,91 @@ object UploadManager {
         } catch (e: Exception) {
             e.printStackTrace()
             continuation.resume(emptyList())
+        }
+    }
+
+    suspend fun sharePhotosToTelegramChat(context: Context, photos: List<LocalPhoto>, targetChatId: Long): Boolean {
+        return withContext(Dispatchers.IO) {
+            var allSuccess = true
+            val uploadCacheDir = File(context.cacheDir, "telegallery_temp_share")
+            uploadCacheDir.mkdirs()
+            
+            for (photo in photos) {
+                val tempFile = File(uploadCacheDir, photo.name)
+                try {
+                    if (photo.uri.startsWith("cloud://")) {
+                        val parts = photo.uri.substringAfter("cloud://").split("/")
+                        val fileId = parts[1].toInt()
+                        
+                        var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
+                            TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { res ->
+                                cont.resume(res as? TdApi.File)
+                            }
+                        }
+                        
+                        var attempts = 0
+                        while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 15) {
+                            delay(1000)
+                            attempts++
+                            fileObj = suspendCancellableCoroutine { cont ->
+                                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { res ->
+                                    cont.resume(res as? TdApi.File)
+                                }
+                            }
+                        }
+                        
+                        if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                            val downloadedFile = File(fileObj.local.path)
+                            downloadedFile.copyTo(tempFile, overwrite = true)
+                        }
+                    } else {
+                        val uri = Uri.parse(photo.uri)
+                        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                            FileOutputStream(tempFile).use { outputStream ->
+                                inputStream.copyTo(outputStream)
+                            }
+                        }
+                    }
+                    
+                    if (!tempFile.exists() || tempFile.length() == 0L) {
+                        allSuccess = false
+                        continue
+                    }
+                    
+                    val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
+                    val inputMessageContent = TdApi.InputMessagePhoto().apply {
+                        this.photo = inputFile
+                        caption = TdApi.FormattedText("Shared via TeleGallery", emptyArray())
+                    }
+                    
+                    val request = TdApi.SendMessage().apply {
+                        this.chatId = targetChatId
+                        this.inputMessageContent = inputMessageContent
+                    }
+                    
+                    val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                        TdlibManager.getClient().send(request) { result ->
+                            cont.resume(result)
+                        }
+                    }
+                    
+                    if (res is TdApi.Error) {
+                        allSuccess = false
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    allSuccess = false
+                } finally {
+                    try {
+                        if (tempFile.exists()) {
+                            tempFile.delete()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+            allSuccess
         }
     }
 }

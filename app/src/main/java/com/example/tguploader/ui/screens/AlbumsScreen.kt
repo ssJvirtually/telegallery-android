@@ -2,10 +2,12 @@ package com.example.tguploader.ui.screens
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.material.icons.automirrored.filled.Forward
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -135,6 +137,11 @@ fun AlbumsScreen(
     var selectedAlbumId by remember { mutableStateOf<Long?>(null) }
     var selectedAlbumName by remember { mutableStateOf("") }
 
+    // States for long-press Album options actions dialog
+    var selectedAlbumForActions by remember { mutableStateOf<AlbumUiModel?>(null) }
+    var showTelegramAlbumShareDialog by remember { mutableStateOf(false) }
+    var photosToShareInTelegram by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+
     if (selectedAlbumId != null) {
         // Detailed album view
         AlbumDetailsView(
@@ -234,27 +241,184 @@ fun AlbumsScreen(
                                 onClick = {
                                     selectedAlbumId = album.id
                                     selectedAlbumName = album.name
+                                },
+                                onLongClick = {
+                                    selectedAlbumForActions = album
                                 }
                             )
                         }
-                    }
                 }
+            }
+            
+            // Album options menu on long-press
+            if (selectedAlbumForActions != null) {
+                AlertDialog(
+                    onDismissRequest = { selectedAlbumForActions = null },
+                    title = {
+                        Text(
+                            text = selectedAlbumForActions!!.name,
+                            fontWeight = FontWeight.Bold,
+                            color = TelePhotosTheme.TextPrimary,
+                            fontSize = 18.sp
+                        )
+                    },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            // 1. Share via Telegram
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val albumId = selectedAlbumForActions!!.id
+                                        selectedAlbumForActions = null
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val photosMapping = db.albumDao().getAlbumPhotosDirect(albumId)
+                                            val photoUris = photosMapping.map { it.photoUri }
+                                            val photosList = mergedPhotosList.filter { photoUris.contains(it.uri) }
+                                            
+                                            withContext(Dispatchers.Main) {
+                                                if (photosList.isEmpty()) {
+                                                    Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    photosToShareInTelegram = photosList
+                                                    showTelegramAlbumShareDialog = true
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Forward,
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.AccentBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(text = "Share via Telegram", color = TelePhotosTheme.TextPrimary, fontSize = 16.sp)
+                            }
+
+                            // 2. Share via System (Standard Share)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val albumId = selectedAlbumForActions!!.id
+                                        selectedAlbumForActions = null
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val photosMapping = db.albumDao().getAlbumPhotosDirect(albumId)
+                                            val photoUris = photosMapping.map { it.photoUri }
+                                            val photosList = mergedPhotosList.filter { photoUris.contains(it.uri) }
+                                            
+                                            withContext(Dispatchers.Main) {
+                                                if (photosList.isEmpty()) {
+                                                    Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    try {
+                                                        val shareUris = ArrayList<android.net.Uri>().apply {
+                                                            addAll(photosList.map { android.net.Uri.parse(it.uri) })
+                                                        }
+                                                        val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                                                            type = "image/*"
+                                                            putParcelableArrayListExtra(Intent.EXTRA_STREAM, shareUris)
+                                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                        }
+                                                        context.startActivity(Intent.createChooser(shareIntent, "Share Album Photos"))
+                                                    } catch (e: Exception) {
+                                                        Toast.makeText(context, "Sharing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.AccentBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(text = "Share via other apps", color = TelePhotosTheme.TextPrimary, fontSize = 16.sp)
+                            }
+
+                            // 3. Delete Album
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val albumId = selectedAlbumForActions!!.id
+                                        val albumName = selectedAlbumForActions!!.name
+                                        selectedAlbumForActions = null
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            db.albumDao().deleteAlbum(albumId)
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.GoogleRed,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(text = "Delete Album", color = TelePhotosTheme.GoogleRed, fontSize = 16.sp)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { selectedAlbumForActions = null }) {
+                            Text("Close", color = TelePhotosTheme.AccentBlue)
+                        }
+                    },
+                    containerColor = TelePhotosTheme.Surface,
+                    shape = RoundedCornerShape(20.dp)
+                )
+            }
+
+            // Render custom Telegram share dialog
+            if (showTelegramAlbumShareDialog) {
+                TelegramShareDialog(
+                    photosToShare = photosToShareInTelegram,
+                    onDismissRequest = { 
+                        showTelegramAlbumShareDialog = false 
+                        photosToShareInTelegram = emptyList()
+                    },
+                    onShareComplete = {
+                        showTelegramAlbumShareDialog = false
+                        photosToShareInTelegram = emptyList()
+                    }
+                )
             }
         }
     }
 }
+}
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AlbumCard(
     album: AlbumUiModel,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(TelePhotosTheme.Surface)
-            .clickable { onClick() }
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .padding(8.dp)
     ) {
         // Thumbnail cover with gradient fallback

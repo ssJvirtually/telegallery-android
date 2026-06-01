@@ -153,6 +153,7 @@ fun PhotosGridScreen(
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
         var showAddToAlbumDialog by remember { mutableStateOf(false) }
+        var showTelegramShareDialog by remember { mutableStateOf(false) }
 
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp
@@ -364,6 +365,19 @@ fun PhotosGridScreen(
                             Icon(
                                 imageVector = Icons.Default.Share,
                                 contentDescription = "Share selected",
+                                tint = TelePhotosTheme.AccentBlue
+                            )
+                        }
+
+                        // 1.5 Custom Telegram Share (Forward Arrow icon)
+                        IconButton(onClick = {
+                            if (selectedPhotos.isNotEmpty()) {
+                                showTelegramShareDialog = true
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Forward,
+                                contentDescription = "Forward to Telegram Chat",
                                 tint = TelePhotosTheme.AccentBlue
                             )
                         }
@@ -1137,6 +1151,19 @@ fun PhotosGridScreen(
                 },
                 containerColor = TelePhotosTheme.Surface,
                 shape = RoundedCornerShape(20.dp)
+            )
+        }
+
+        // Render custom Telegram share dialog
+        if (showTelegramShareDialog) {
+            TelegramShareDialog(
+                photosToShare = selectedPhotos.toList(),
+                onDismissRequest = { showTelegramShareDialog = false },
+                onShareComplete = {
+                    showTelegramShareDialog = false
+                    selectedPhotos.clear()
+                    isSelectionMode = false
+                }
             )
         }
     }
