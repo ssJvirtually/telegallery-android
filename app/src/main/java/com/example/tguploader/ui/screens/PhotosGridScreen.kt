@@ -792,6 +792,36 @@ fun PhotosGridScreen(
                         // --- Custom Premium Google Photos-style Scrollbar ---
                         val totalItems = groupedPhotosList.size
                         if (totalItems > 5) {
+                            val monthSections = remember(groupedPhotosList) {
+                                val sections = mutableListOf<Int>()
+                                val seenMonths = mutableSetOf<String>()
+                                val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
+                                val sdfMonthYear = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.US)
+                                
+                                for (index in groupedPhotosList.indices) {
+                                    val item = groupedPhotosList[index]
+                                    val dateMs = when (item) {
+                                        is GalleryItem.Header -> {
+                                            try {
+                                                sdfHeader.parse(item.date)?.time ?: 0L
+                                            } catch (e: Exception) {
+                                                0L
+                                            }
+                                        }
+                                        is GalleryItem.PhotoItem -> item.photo.dateTaken
+                                    }
+                                    
+                                    if (dateMs > 0L) {
+                                        val monthKey = sdfMonthYear.format(java.util.Date(dateMs))
+                                        if (seenMonths.add(monthKey)) {
+                                            sections.add(index)
+                                        }
+                                    }
+                                }
+                                if (sections.isEmpty()) sections.add(0)
+                                sections
+                            }
+
                             val firstVisibleIndex = gridState.firstVisibleItemIndex
                             val firstVisibleOffset = gridState.firstVisibleItemScrollOffset
 
@@ -858,8 +888,9 @@ fun PhotosGridScreen(
                                                     val relativeY = (startPosition.y - paddingPx - (thumbHeightPx / 2))
                                                     dragOffsetFraction = (relativeY / scrollableRangePx).coerceIn(0f, 1f)
                                                     coroutineScope.launch {
-                                                        val targetIndex = (dragOffsetFraction * totalItems).toInt().coerceIn(0, totalItems - 1)
-                                                        gridState.scrollToItem(targetIndex)
+                                                        val targetSectionIndex = (dragOffsetFraction * monthSections.size).toInt().coerceIn(0, monthSections.size - 1)
+                                                        val targetGridIndex = monthSections[targetSectionIndex]
+                                                        gridState.scrollToItem(targetGridIndex)
                                                     }
                                                 },
                                                 onDragEnd = {
@@ -875,8 +906,9 @@ fun PhotosGridScreen(
                                                     dragOffsetFraction = ((newY - paddingPx) / scrollableRangePx).coerceIn(0f, 1f)
                                                     
                                                     coroutineScope.launch {
-                                                        val targetIndex = (dragOffsetFraction * totalItems).toInt().coerceIn(0, totalItems - 1)
-                                                        gridState.scrollToItem(targetIndex)
+                                                        val targetSectionIndex = (dragOffsetFraction * monthSections.size).toInt().coerceIn(0, monthSections.size - 1)
+                                                        val targetGridIndex = monthSections[targetSectionIndex]
+                                                        gridState.scrollToItem(targetGridIndex)
                                                     }
                                                 }
                                             )
@@ -928,7 +960,8 @@ fun PhotosGridScreen(
                                 }
 
                                 // Floating Date Bubble (Google Photos style month bubble)
-                                val activeItemIndex = (activeFraction * (totalItems - 1)).toInt().coerceIn(0, totalItems - 1)
+                                val activeSectionIndex = (activeFraction * (monthSections.size - 1)).toInt().coerceIn(0, monthSections.size - 1)
+                                val activeItemIndex = monthSections.getOrNull(activeSectionIndex) ?: 0
                                 val activeItem = groupedPhotosList.getOrNull(activeItemIndex)
 
                                 val bubbleText = remember(activeItem) {
