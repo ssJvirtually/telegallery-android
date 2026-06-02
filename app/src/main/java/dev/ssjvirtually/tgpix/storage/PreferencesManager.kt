@@ -124,7 +124,7 @@ object PreferencesManager {
 
     fun isHdMode(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_HD_MODE, true) // Default is true (upload in HD)
+            .getBoolean(KEY_HD_MODE, false) // Default is false (upload in standard quality/SD)
     }
 
     private const val KEY_LAST_BACKUP_MSG_ID = "last_backup_msg_id"

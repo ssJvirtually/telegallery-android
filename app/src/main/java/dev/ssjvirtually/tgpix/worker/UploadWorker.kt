@@ -132,7 +132,6 @@ class UploadWorker(
             val dao = db.dao()
 
             var uploadedCount = 0
-            val isHd = PreferencesManager.isHdMode(applicationContext)
 
             // 9. Loop and upload new photos sequentially (one-by-one)
             for (photo in photos) {
@@ -170,10 +169,11 @@ class UploadWorker(
                         continue
                     }
 
-                    val modeStr = if (isHd) "HD" else "standard quality"
+                    val currentIsHd = PreferencesManager.isHdMode(applicationContext)
+                    val modeStr = if (currentIsHd) "HD" else "standard quality"
                     TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
                     
-                    val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, isHd)
+                    val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, currentIsHd)
 
                     if (uploadResult is TdApi.Message) {
                         TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
