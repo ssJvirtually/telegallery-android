@@ -22,6 +22,7 @@ object TdlibManager {
 
     private var client: Client? = null
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    @Volatile var myUserId: Long = 0L
     
     private val _authState = MutableStateFlow<TdApi.AuthorizationState?>(null)
     val authState: StateFlow<TdApi.AuthorizationState?> = _authState
@@ -92,6 +93,13 @@ object TdlibManager {
                 
                 if (state is TdApi.AuthorizationStateWaitTdlibParameters) {
                     setParameters(context)
+                } else if (state is TdApi.AuthorizationStateReady) {
+                    getClient().send(TdApi.GetMe()) { result ->
+                        if (result is TdApi.User) {
+                            myUserId = result.id
+                            addLog("Logged in as ${result.firstName} (User ID: ${result.id}, Saved Messages target active)")
+                        }
+                    }
                 } else if (state is TdApi.AuthorizationStateClosed) {
                     addLog("Session closed. Restarting TDLib client...")
                     client = null

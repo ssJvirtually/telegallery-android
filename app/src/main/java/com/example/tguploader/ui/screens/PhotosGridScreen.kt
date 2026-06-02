@@ -97,10 +97,28 @@ fun PhotosGridScreen(
         )
     }
 
+    val permissionsToRequest = remember {
+        val list = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            list.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            list.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+        }
+        list.toTypedArray()
+    }
+
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasPermission = isGranted
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val storageGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions[Manifest.permission.READ_MEDIA_IMAGES] == true
+        } else {
+            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+        }
+        hasPermission = storageGranted
     }
 
     if (!hasPermission) {
@@ -134,11 +152,7 @@ fun PhotosGridScreen(
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        launcher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-                    } else {
-                        launcher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    }
+                    launcher.launch(permissionsToRequest)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                 shape = RoundedCornerShape(12.dp)
@@ -188,12 +202,10 @@ fun PhotosGridScreen(
         LaunchedEffect(Unit) {
             coroutineScope.launch(Dispatchers.IO) {
                 // 1. Attempt to restore local database from remote Telegram backup if cache is empty
-                if (chatId != 0L) {
-                    try {
-                        com.example.tguploader.storage.BackupManager.restoreDatabase(context, chatId)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                try {
+                    com.example.tguploader.storage.BackupManager.restoreDatabase(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
 
                 val scanned = MediaStoreScanner.scan(context)
@@ -216,11 +228,11 @@ fun PhotosGridScreen(
         // 2. Event-driven debounced backup synchronization (checks every 5 minutes after last idle state change)
         val totalRecords = cloudLogs.size + uploadedLogs.size
         LaunchedEffect(totalRecords) {
-            if (chatId != 0L && totalRecords > 0) {
+            if (totalRecords > 0) {
                 val lastBackupCount = PreferencesManager.getLastBackupRecordCount(context)
                 if (totalRecords != lastBackupCount) {
                     try {
-                        com.example.tguploader.storage.BackupManager.backupDatabase(context, chatId)
+                        com.example.tguploader.storage.BackupManager.backupDatabase(context)
                         PreferencesManager.setLastBackupRecordCount(context, totalRecords)
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -232,24 +244,59 @@ fun PhotosGridScreen(
         // Merge local photos and cloud-only photos
         val mergedPhotosList = remember(localPhotos, cloudLogs) {
             val list = mutableListOf<LocalPhoto>()
-            // Build fingerprint-based map for more accurate matching (prevents filename collisions)
-            val localByFingerprint = localPhotos.associateBy { "${it.name}_${it.size}_${it.dateTaken}" }
-            val localByName = localPhotos.associateBy { it.name }
+            
+            val regexTrashed = Regex("""^\.trashed-\d+-""")
+            fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
+            
+            // Build helper maps for multi-layered matching to eliminate duplicates
+            val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }
+            val localByName = localPhotos.groupBy { it.name.normalize() }
+            val localByDateAndSize = localPhotos.associateBy { "${it.dateTaken / 1000}_${it.size}" }
+            val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
+            
             val matchedLocalKeys = mutableSetOf<String>()
 
             // 1. Process cloud vault files
             for (cloud in cloudLogs) {
-                val cloudFingerprint = "${cloud.fileName}_${cloud.fileSize}_${cloud.uploadedAt}"
-                val matchingLocal = localByFingerprint[cloudFingerprint]
-                    ?: localByName[cloud.fileName] // Fallback for legacy entries without fingerprint
+                val cloudNormName = cloud.fileName.normalize()
+                val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_${cloud.uploadedAt}"
+                val parsedDate = parseDateFromFilename(cloud.fileName)
+                val displayDate = parsedDate ?: cloud.uploadedAt
+                
+                // Try matching cloud photo to local photo in order of specificity:
+                // A. Exact fingerprint (case-insensitive name + size + dateTaken)
+                var matchingLocal = localByFingerprint[cloudFingerprint]
+                
+                // B. Case-insensitive filename match (pick first local photo matching name)
+                if (matchingLocal == null) {
+                    matchingLocal = localByName[cloudNormName]?.firstOrNull()
+                }
+                
+                // C. Size and parsed Date Taken match (in seconds)
+                if (matchingLocal == null && parsedDate != null) {
+                    matchingLocal = localByDateAndSize["${parsedDate / 1000}_${cloud.fileSize}"]
+                }
+                
+                // D. Closest Date Taken match (within 2 seconds) for similarly named files
+                if (matchingLocal == null && parsedDate != null) {
+                    val parsedSeconds = parsedDate / 1000
+                    val candidates = (localByDate[parsedSeconds] ?: emptyList()) +
+                                     (localByDate[parsedSeconds - 1] ?: emptyList()) +
+                                     (localByDate[parsedSeconds + 1] ?: emptyList())
+                    matchingLocal = candidates.firstOrNull { candidate ->
+                        val cName = candidate.name.normalize()
+                        cName == cloudNormName || 
+                        (cName.startsWith("img_") && cloudNormName.startsWith("img_")) || 
+                        (cName.startsWith("photo_") && cloudNormName.startsWith("photo_"))
+                    }
+                }
+                
                 if (matchingLocal != null) {
-                    // Match found: Sync verified
+                    // Match found: Display local photo as the verified copy
                     list.add(matchingLocal)
-                    matchedLocalKeys.add(matchingLocal.name)
+                    matchedLocalKeys.add(matchingLocal.name.lowercase())
                 } else {
                     // Cloud only asset
-                    val parsedDate = parseDateFromFilename(cloud.fileName)
-                    val displayDate = parsedDate ?: cloud.uploadedAt
                     list.add(
                         LocalPhoto(
                             id = -cloud.messageId, // Negative IDs strictly delineate cloud-only assets
@@ -264,7 +311,7 @@ fun PhotosGridScreen(
 
             // 2. Inject unsynced local device photos
             for (local in localPhotos) {
-                if (!matchedLocalKeys.contains(local.name)) {
+                if (!matchedLocalKeys.contains(local.name.lowercase())) {
                     list.add(local)
                 }
             }

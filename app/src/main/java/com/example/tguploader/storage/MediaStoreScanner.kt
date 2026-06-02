@@ -47,6 +47,9 @@ object MediaStoreScanner {
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
                     val name = cursor.getString(nameColumn) ?: "photo_$id.jpg"
+                    if (name.startsWith(".") || name.contains(".trashed", ignoreCase = true)) {
+                        continue
+                    }
                     val size = cursor.getLong(sizeColumn)
                     
                     var dateTaken = cursor.getLong(dateTakenColumn)

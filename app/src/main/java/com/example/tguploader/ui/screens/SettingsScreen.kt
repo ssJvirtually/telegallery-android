@@ -34,6 +34,7 @@ import com.example.tguploader.ui.theme.TelePhotosTheme
 import com.example.tguploader.worker.UploadWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(
@@ -44,7 +45,13 @@ fun SettingsScreen(
     val context = LocalContext.current as MainActivity
     val chats by TdlibManager.chats.collectAsState()
     val systemLogs by TdlibManager.logs.collectAsState()
-    var showChatPickerDialog by remember { mutableStateOf(false) }
+    var activePickerType by remember { mutableStateOf<String?>(null) }
+    
+    var dbChatTitle by remember {
+        mutableStateOf(
+            PreferencesManager.getDbChatTitle(context) ?: "Private Saved Messages"
+        )
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -84,7 +91,7 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Selected Chat Display card
+            // Vault & Backup Channels Card
             item {
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -93,30 +100,89 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Backup Target Chat",
-                            color = TelePhotosTheme.TextSecondary,
-                            fontSize = 12.sp
+                            text = "Backup Channels",
+                            color = TelePhotosTheme.TextPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Photos Backup Target
+                        Column {
                             Text(
-                                text = selectedChatTitle,
-                                color = TelePhotosTheme.AccentBlue,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
+                                text = "Photos Backup Target",
+                                color = TelePhotosTheme.TextSecondary,
+                                fontSize = 12.sp
                             )
-                            TextButton(onClick = {
-                                TdlibManager.loadChats()
-                                showChatPickerDialog = true
-                            }) {
-                                Text("Change", color = TelePhotosTheme.AccentBlue, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedChatTitle,
+                                    color = TelePhotosTheme.AccentBlue,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                TextButton(onClick = {
+                                    TdlibManager.loadChats()
+                                    activePickerType = "main"
+                                }) {
+                                    Text("Change", color = TelePhotosTheme.AccentBlue, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider(color = TelePhotosTheme.SurfaceVariant)
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Database Backup Target
+                        Column {
+                            Text(
+                                text = "Database Backup Target",
+                                color = TelePhotosTheme.TextSecondary,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = dbChatTitle,
+                                    color = TelePhotosTheme.AccentBlue,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Row {
+                                    TextButton(onClick = {
+                                        TdlibManager.loadChats()
+                                        activePickerType = "db"
+                                    }) {
+                                        Text("Change", color = TelePhotosTheme.AccentBlue, fontWeight = FontWeight.Bold)
+                                    }
+                                    if (dbChatTitle != "Private Saved Messages") {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        TextButton(onClick = {
+                                            PreferencesManager.saveDbChatId(context, 0L)
+                                            PreferencesManager.saveDbChatTitle(context, "Private Saved Messages")
+                                            dbChatTitle = "Private Saved Messages"
+                                            Toast.makeText(context, "Database backup target reset to Saved Messages", Toast.LENGTH_SHORT).show()
+                                        }) {
+                                            Text("Reset", color = Color.Gray, fontWeight = FontWeight.Normal)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -255,6 +321,40 @@ fun SettingsScreen(
             }
 
             item {
+                var isRestoring by remember { mutableStateOf(false) }
+                Button(
+                    onClick = {
+                        isRestoring = true
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val success = com.example.tguploader.storage.BackupManager.restoreDatabaseForce(context)
+                            withContext(Dispatchers.Main) {
+                                isRestoring = false
+                                if (success) {
+                                    Toast.makeText(context, "Database & Albums restored successfully! Reloading...", Toast.LENGTH_LONG).show()
+                                    onResetChat()
+                                } else {
+                                    Toast.makeText(context, "Failed to restore backup (check your database backup chat settings or active connection).", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    },
+                    enabled = !isRestoring,
+                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    if (isRestoring) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    } else {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Restore Albums & Database Backup Now", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            item {
                 OutlinedButton(
                     onClick = {
                         AuthManager.logOut {
@@ -316,8 +416,8 @@ fun SettingsScreen(
     }
 
     // Modal popup to select active chat
-    if (showChatPickerDialog) {
-        Dialog(onDismissRequest = { showChatPickerDialog = false }) {
+    if (activePickerType != null) {
+        Dialog(onDismissRequest = { activePickerType = null }) {
             var searchQuery by remember { mutableStateOf("") }
             val filteredChats = remember(chats, searchQuery) {
                 chats.filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -332,7 +432,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "Change Target Chat",
+                        text = if (activePickerType == "main") "Change Photos Target Chat" else "Change Database Target Chat",
                         color = TelePhotosTheme.TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -384,10 +484,17 @@ fun SettingsScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            PreferencesManager.saveChatId(context, chat.id)
-                                            PreferencesManager.saveChatTitle(context, chat.title)
-                                            onResetChat() // Triggers UI redraw in parent
-                                            showChatPickerDialog = false
+                                            val selectedTitle = chat.title.ifEmpty { "Saved Messages" }
+                                            if (activePickerType == "main") {
+                                                PreferencesManager.saveChatId(context, chat.id)
+                                                PreferencesManager.saveChatTitle(context, selectedTitle)
+                                                onResetChat() // Triggers UI redraw in parent
+                                            } else {
+                                                PreferencesManager.saveDbChatId(context, chat.id)
+                                                PreferencesManager.saveDbChatTitle(context, selectedTitle)
+                                                dbChatTitle = selectedTitle
+                                            }
+                                            activePickerType = null
                                         }
                                 ) {
                                     Text(

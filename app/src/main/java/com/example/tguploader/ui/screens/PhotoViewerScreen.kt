@@ -439,8 +439,17 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
             }
         } else {
             try {
-                val uri = android.net.Uri.parse(photo.uri)
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val rawUri = android.net.Uri.parse(photo.uri)
+                val photoUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    try {
+                        android.provider.MediaStore.setRequireOriginal(rawUri)
+                    } catch (e: Exception) {
+                        rawUri
+                    }
+                } else {
+                    rawUri
+                }
+                context.contentResolver.openInputStream(photoUri)?.use { inputStream ->
                     val exifInterface = androidx.exifinterface.media.ExifInterface(inputStream)
                     val latLongArr = FloatArray(2)
                     if (exifInterface.getLatLong(latLongArr)) {
