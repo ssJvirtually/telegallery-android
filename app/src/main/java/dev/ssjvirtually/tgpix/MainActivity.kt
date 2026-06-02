@@ -39,6 +39,11 @@ class MainActivity : ComponentActivity() {
         
         // Initialize TDLib core
         TdlibManager.initialize(applicationContext)
+        
+        // Start background backup sync immediately if configured
+        if (PreferencesManager.getChatId(applicationContext) != 0L) {
+            scheduleSyncWorker()
+        }
 
         setContent {
             // Premium light theme matching Google Photos & Telegram aesthetics
@@ -157,6 +162,7 @@ class MainActivity : ComponentActivity() {
         val wifiOnly = PreferencesManager.isWifiOnly(applicationContext)
         val networkType = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
 
+        // 1. Enqueue Periodic Work for long-term scheduling (every 15 mins)
         val request = PeriodicWorkRequestBuilder<UploadWorker>(
             15, TimeUnit.MINUTES
         ).setConstraints(
@@ -171,6 +177,15 @@ class MainActivity : ComponentActivity() {
                 ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
+
+        // 2. Enqueue an immediate One-Time Work Request to start sync right away!
+        val oneTimeRequest = OneTimeWorkRequestBuilder<UploadWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(networkType)
+                    .build()
+            ).build()
+        WorkManager.getInstance(applicationContext).enqueue(oneTimeRequest)
         
         val dataMsg = if (wifiOnly) "Wi-Fi Only (Data Saver Active)" else "Wi-Fi + Mobile Data allowed"
         runOnUiThread {

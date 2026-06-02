@@ -553,13 +553,13 @@ fun PhotosGridScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Row {
                             Text(
-                                text = "Tele",
+                                text = "TG",
                                 color = TelePhotosTheme.AccentBlue,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Gallery",
+                                text = "Pix",
                                 color = TelePhotosTheme.TextPrimary,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Medium

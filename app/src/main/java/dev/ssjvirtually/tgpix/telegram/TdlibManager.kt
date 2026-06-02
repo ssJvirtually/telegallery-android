@@ -38,6 +38,7 @@ object TdlibManager {
 
     fun addLog(msg: String) {
         val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+        android.util.Log.d("TGPix", msg)
         val current = _logs.value.toMutableList()
         current.add("[$time] $msg")
         if (current.size > 50) current.removeAt(0)
