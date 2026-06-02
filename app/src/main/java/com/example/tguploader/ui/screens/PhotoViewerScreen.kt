@@ -93,7 +93,7 @@ fun PhotoViewerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Transparent)
     ) {
         HorizontalPager(
             state = pagerState,
@@ -105,123 +105,179 @@ fun PhotoViewerScreen(
             if (photo != null) {
                 val isCloud = isCloudPhoto(photo.uri)
                 
-                var scale by remember { mutableStateOf(1f) }
-                var offset by remember { mutableStateOf(Offset.Zero) }
+                val scale = remember { Animatable(1f) }
+                val offsetX = remember { Animatable(0f) }
+                val offsetY = remember { Animatable(0f) }
                 
                 val density = LocalDensity.current
                 val configuration = LocalConfiguration.current
                 val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
                 val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
                 
-                // Track dynamic swipe up to open metadata panel (Google Photos Swipe Up Gestures)
+                // Track dynamic swipe up/down gesture offset
                 val dragOffsetY = remember { Animatable(0f) }
+                val backgroundAlpha = (1f - (dragOffsetY.value.coerceAtLeast(0f) / screenHeightPx)).coerceIn(0f, 1f)
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(scale) {
-                            detectTapGestures(
-                                onTap = { showChrome = !showChrome },
-                                onDoubleTap = { tapOffset ->
-                                    if (scale > 1f) {
-                                        scale = 1f
-                                        offset = Offset.Zero
-                                    } else {
-                                        scale = 2.5f
-                                        val centerX = screenWidthPx / 2f
-                                        val centerY = screenHeightPx / 2f
-                                        val targetX = (centerX - tapOffset.x) * (2.5f - 1f)
-                                        val targetY = (centerY - tapOffset.y) * (2.5f - 1f)
-                                        val boundX = 1.5f * screenWidthPx / 2f
-                                        val boundY = 1.5f * screenHeightPx / 2f
-                                        offset = Offset(
-                                            x = targetX.coerceIn(-boundX, boundX),
-                                            y = targetY.coerceIn(-boundY, boundY)
-                                        )
+                        .background(Color.Black.copy(alpha = backgroundAlpha))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = { showChrome = !showChrome },
+                                    onDoubleTap = { tapOffset ->
+                                        val targetScale = if (scale.value > 1.1f) 1f else 2.5f
+                                        val targetX = if (targetScale == 1f) 0f else {
+                                            val centerX = screenWidthPx / 2f
+                                            ((centerX - tapOffset.x) * (targetScale - 1f)).coerceIn(
+                                                -(targetScale - 1f) * screenWidthPx / 2f,
+                                                (targetScale - 1f) * screenWidthPx / 2f
+                                            )
+                                        }
+                                        val targetY = if (targetScale == 1f) 0f else {
+                                            val centerY = screenHeightPx / 2f
+                                            ((centerY - tapOffset.y) * (targetScale - 1f)).coerceIn(
+                                                -(targetScale - 1f) * screenHeightPx / 2f,
+                                                (targetScale - 1f) * screenHeightPx / 2f
+                                            )
+                                        }
+                                        
+                                        coroutineScope.launch {
+                                            launch {
+                                                scale.animateTo(targetScale, spring(stiffness = Spring.StiffnessMediumLow))
+                                            }
+                                            launch {
+                                                offsetX.animateTo(targetX, spring(stiffness = Spring.StiffnessMediumLow))
+                                            }
+                                            launch {
+                                                offsetY.animateTo(targetY, spring(stiffness = Spring.StiffnessMediumLow))
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            .pointerInput(Unit) {
+                                while (true) {
+                                    detectTransformGesturesCustom(
+                                        panZoomLock = true,
+                                        getScale = { scale.value }
+                                    ) { centroid, pan, zoom ->
+                                        coroutineScope.launch {
+                                            val currentScale = scale.value
+                                            // Direct scale/pan manipulation, allow rubber-banding [0.75f, 5f]
+                                            val newScale = (currentScale * zoom).coerceIn(0.75f, 5f)
+                                            val scaleFactor = newScale / currentScale
+                                            
+                                            val centroidSec = centroid - Offset(screenWidthPx / 2f, screenHeightPx / 2f)
+                                            
+                                            val newOffsetX = offsetX.value + pan.x + (centroidSec.x - offsetX.value) * (1f - scaleFactor)
+                                            val newOffsetY = offsetY.value + pan.y + (centroidSec.y - offsetY.value) * (1f - scaleFactor)
+                                            
+                                            val maxBoundX = (newScale - 1f).coerceAtLeast(0f) * screenWidthPx / 2f
+                                            val maxBoundY = (newScale - 1f).coerceAtLeast(0f) * screenHeightPx / 2f
+                                            
+                                            scale.snapTo(newScale)
+                                            offsetX.snapTo(newOffsetX.coerceIn(-maxBoundX, maxBoundX))
+                                            offsetY.snapTo(newOffsetY.coerceIn(-maxBoundY, maxBoundY))
+                                        }
+                                    }
+                                    
+                                    // Gesture ended: Animate back to boundaries if needed
+                                    val targetScale = scale.value.coerceIn(1f, 4f)
+                                    val maxBoundX = (targetScale - 1f) * screenWidthPx / 2f
+                                    val maxBoundY = (targetScale - 1f) * screenHeightPx / 2f
+                                    val targetOffsetX = offsetX.value.coerceIn(-maxBoundX, maxBoundX)
+                                    val targetOffsetY = offsetY.value.coerceIn(-maxBoundY, maxBoundY)
+                                    
+                                    coroutineScope.launch {
+                                        launch {
+                                            scale.animateTo(targetScale, spring(stiffness = Spring.StiffnessMediumLow))
+                                        }
+                                        launch {
+                                            offsetX.animateTo(targetOffsetX, spring(stiffness = Spring.StiffnessMediumLow))
+                                        }
+                                        launch {
+                                            offsetY.animateTo(targetOffsetY, spring(stiffness = Spring.StiffnessMediumLow))
+                                        }
                                     }
                                 }
-                            )
-                        }
-                        .pointerInput(scale) {
-                            detectTransformGesturesCustom(panZoomLock = true, scale = scale) { _, pan, zoom ->
-                                val newScale = (scale * zoom).coerceIn(1f, 4f)
-                                scale = newScale
-                                if (newScale > 1f) {
-                                    val boundX = (newScale - 1f) * screenWidthPx / 2f
-                                    val boundY = (newScale - 1f) * screenHeightPx / 2f
-                                    offset = Offset(
-                                        x = (offset.x + pan.x).coerceIn(-boundX, boundX),
-                                        y = (offset.y + pan.y).coerceIn(-boundY, boundY)
+                            }
+                            .pointerInput(scale.value <= 1.05f) {
+                                if (scale.value <= 1.05f) {
+                                    detectVerticalDragGestures(
+                                        onDragEnd = {
+                                            coroutineScope.launch {
+                                                if (dragOffsetY.value < -180f) {
+                                                    isDetailsVisible = true
+                                                    dragOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                                } else if (dragOffsetY.value > 180f) {
+                                                    // Slide down completely and dismiss
+                                                    dragOffsetY.animateTo(screenHeightPx, spring(stiffness = Spring.StiffnessMediumLow))
+                                                    onClose()
+                                                } else {
+                                                    dragOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                                }
+                                            }
+                                        },
+                                        onDragCancel = {
+                                            coroutineScope.launch {
+                                                dragOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+                                            }
+                                        },
+                                        onVerticalDrag = { _, dragAmount ->
+                                            if (showChrome) {
+                                                showChrome = false
+                                            }
+                                            coroutineScope.launch {
+                                                dragOffsetY.snapTo((dragOffsetY.value + dragAmount).coerceIn(-screenHeightPx, screenHeightPx))
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                            .graphicsLayer {
+                                scaleX = scale.value
+                                scaleY = scale.value
+                                translationX = offsetX.value
+                                translationY = offsetY.value + dragOffsetY.value
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                         if (isCloud) {
+                            val parts = parseCloudPhotoUri(photo.uri)
+                            if (parts != null) {
+                                val localFilePath = rememberCloudThumbnailPath(
+                                    messageId = parts.first,
+                                    isThumbnail = false
+                                )
+                                
+                                if (localFilePath != null) {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(localFilePath)
+                                            .build(),
+                                        contentDescription = photo.name,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 } else {
-                                    offset = Offset.Zero
+                                    CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
                                 }
                             }
-                        }
-                        .pointerInput(scale) {
-                            if (scale == 1f) {
-                                detectVerticalDragGestures(
-                                    onDragEnd = {
-                                        coroutineScope.launch {
-                                            if (dragOffsetY.value < -180f) {
-                                                isDetailsVisible = true
-                                            }
-                                            dragOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
-                                        }
-                                    },
-                                    onDragCancel = {
-                                        coroutineScope.launch {
-                                            dragOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
-                                        }
-                                    },
-                                    onVerticalDrag = { _, dragAmount ->
-                                        if (dragAmount < 0 || dragOffsetY.value < 0) {
-                                            coroutineScope.launch {
-                                                dragOffsetY.snapTo((dragOffsetY.value + dragAmount).coerceIn(-screenHeightPx.toFloat(), 0f))
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            translationX = offset.x
-                            translationY = offset.y + dragOffsetY.value
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                     if (isCloud) {
-                        val parts = parseCloudPhotoUri(photo.uri)
-                        if (parts != null) {
-                            val localFilePath = rememberCloudThumbnailPath(
-                                messageId = parts.first,
-                                isThumbnail = false
+                        } else {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(photo.uri)
+                                    .build(),
+                                contentDescription = photo.name,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            
-                            if (localFilePath != null) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(localFilePath)
-                                        .build(),
-                                    contentDescription = photo.name,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
-                            }
                         }
-                    } else {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(photo.uri)
-                                .build(),
-                            contentDescription = photo.name,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
                     }
                 }
             }
@@ -716,7 +772,7 @@ fun formatCoordinates(latitude: Double, longitude: Double): String {
 // allowing the parent HorizontalPager to execute butter-smooth left/right swiping navigation natively.
 suspend fun PointerInputScope.detectTransformGesturesCustom(
     panZoomLock: Boolean = false,
-    scale: Float,
+    getScale: () -> Float,
     onGesture: (centroid: Offset, pan: Offset, zoom: Float) -> Unit
 ) {
     awaitEachGesture {
@@ -734,7 +790,8 @@ suspend fun PointerInputScope.detectTransformGesturesCustom(
                 
                 // If only 1 finger is down and scale is 1f, let's completely ignore and bubble up unconsumed
                 // so that the parent swiper horizontal pager receives the drag gesture cleanly.
-                val shouldIgnore = activePointers.size <= 1 && scale <= 1f
+                val currentScale = getScale()
+                val shouldIgnore = activePointers.size <= 1 && currentScale <= 1.05f
                 
                 if (!shouldIgnore) {
                     val zoomChange = event.calculateZoom()
