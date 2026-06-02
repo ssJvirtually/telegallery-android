@@ -71,13 +71,13 @@ fun PhoneLoginScreen() {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row {
                     Text(
-                        text = "Tele",
+                        text = "TG",
                         color = TelePhotosTheme.AccentBlue,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Gallery",
+                        text = "Pix",
                         color = TelePhotosTheme.TextPrimary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Medium
