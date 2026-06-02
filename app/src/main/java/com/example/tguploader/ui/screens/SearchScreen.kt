@@ -514,35 +514,33 @@ fun SearchScreen(
                                     )
                             ) {
                                 if (isCloud) {
-                                    val parts = parseCloudPhotoUri(photo.uri)
-                                    if (parts != null) {
-                                        val fileId = parts.second
-                                        val localThumbnailPath = rememberCloudThumbnailPath(fileId)
-                                        
-                                        if (localThumbnailPath != null) {
-                                            AsyncImage(
-                                                model = ImageRequest.Builder(LocalContext.current)
-                                                    .data(localThumbnailPath)
-                                                    .crossfade(true)
-                                                    .build(),
-                                                contentDescription = photo.name,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                CircularProgressIndicator(
-                                                    color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
-                                                    modifier = Modifier.size(24.dp),
-                                                    strokeWidth = 2.dp
-                                                )
-                                            }
-                                        }
-                                    }
-                                } else {
+                                     val localThumbnailPath = rememberCloudThumbnailPath(
+                                         messageId = -photo.id,
+                                         isThumbnail = true
+                                     )
+                                     if (localThumbnailPath != null) {
+                                         AsyncImage(
+                                             model = ImageRequest.Builder(LocalContext.current)
+                                                 .data(localThumbnailPath)
+                                                 .crossfade(true)
+                                                 .build(),
+                                             contentDescription = photo.name,
+                                             contentScale = ContentScale.Crop,
+                                             modifier = Modifier.fillMaxSize()
+                                         )
+                                     } else {
+                                         Box(
+                                             modifier = Modifier.fillMaxSize(),
+                                             contentAlignment = Alignment.Center
+                                         ) {
+                                             CircularProgressIndicator(
+                                                 color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
+                                                 modifier = Modifier.size(24.dp),
+                                                 strokeWidth = 2.dp
+                                             )
+                                         }
+                                     }
+                                 } else {
                                     AsyncImage(
                                         model = ImageRequest.Builder(LocalContext.current)
                                             .data(photo.uri)

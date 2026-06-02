@@ -175,16 +175,18 @@ fun PhotoViewerScreen(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (isCloud) {
+                     if (isCloud) {
                         val parts = parseCloudPhotoUri(photo.uri)
                         if (parts != null) {
-                            val fileId = parts.second
-                            val localThumbnailPath = rememberCloudThumbnailPath(fileId)
+                            val localFilePath = rememberCloudThumbnailPath(
+                                messageId = parts.first,
+                                isThumbnail = false
+                            )
                             
-                            if (localThumbnailPath != null) {
+                            if (localFilePath != null) {
                                 AsyncImage(
                                     model = ImageRequest.Builder(LocalContext.current)
-                                        .data(localThumbnailPath)
+                                        .data(localFilePath)
                                         .build(),
                                     contentDescription = photo.name,
                                     contentScale = ContentScale.Fit,

@@ -720,38 +720,37 @@ fun PhotosGridScreen(
                                                         }
                                                     )
                                             ) {
-                                                // Handle loading thumbnails for cloud-only vs local assets
-                                                if (isCloud) {
-                                                    val parts = parseCloudPhotoUri(photo.uri)
-                                                    if (parts != null) {
-                                                        val fileId = parts.second
-                                                        val localThumbnailPath = rememberCloudThumbnailPath(fileId)
-                                                        
-                                                        if (localThumbnailPath != null) {
-                                                            AsyncImage(
-                                                                model = ImageRequest.Builder(LocalContext.current)
-                                                                    .data(localThumbnailPath)
-                                                                    .crossfade(true)
-                                                                    .build(),
-                                                                contentDescription = photo.name,
-                                                                contentScale = ContentScale.Crop,
-                                                                modifier = Modifier.fillMaxSize()
-                                                            )
-                                                        } else {
-                                                            // Cloud Asset placeholder loading spinner
-                                                            Box(
-                                                                modifier = Modifier.fillMaxSize(),
-                                                                contentAlignment = Alignment.Center
-                                                            ) {
-                                                                CircularProgressIndicator(
-                                                                    color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
-                                                                    modifier = Modifier.size(24.dp),
-                                                                    strokeWidth = 2.dp
-                                                                )
-                                                            }
-                                                        }
-                                                    }
-                                                } else {
+                                                 // Handle loading thumbnails for cloud-only vs local assets
+                                                 if (isCloud) {
+                                                     val localThumbnailPath = rememberCloudThumbnailPath(
+                                                         messageId = -photo.id,
+                                                         isThumbnail = true
+                                                     )
+                                                     
+                                                     if (localThumbnailPath != null) {
+                                                         AsyncImage(
+                                                             model = ImageRequest.Builder(LocalContext.current)
+                                                                 .data(localThumbnailPath)
+                                                                 .crossfade(true)
+                                                                 .build(),
+                                                             contentDescription = photo.name,
+                                                             contentScale = ContentScale.Crop,
+                                                             modifier = Modifier.fillMaxSize()
+                                                         )
+                                                     } else {
+                                                         // Cloud Asset placeholder loading spinner
+                                                         Box(
+                                                             modifier = Modifier.fillMaxSize(),
+                                                             contentAlignment = Alignment.Center
+                                                         ) {
+                                                             CircularProgressIndicator(
+                                                                 color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
+                                                                 modifier = Modifier.size(24.dp),
+                                                                 strokeWidth = 2.dp
+                                                             )
+                                                         }
+                                                     }
+                                                 } else {
                                                     AsyncImage(
                                                         model = ImageRequest.Builder(LocalContext.current)
                                                             .data(photo.uri)
@@ -890,6 +889,24 @@ fun PhotosGridScreen(
                                     // Wait 1.5s then fade out
                                     kotlinx.coroutines.delay(1500)
                                     scrollbarAlpha = 0f
+                                }
+                            }
+
+                            // Haptic feedback when transitioning to a new month section during scroll or drag
+                            val currentMonthKey = remember(firstVisibleIndex, monthSections) {
+                                var activeSectionIdx = 0
+                                for (i in monthSections.indices) {
+                                    if (monthSections[i] <= firstVisibleIndex) {
+                                        activeSectionIdx = i
+                                    } else {
+                                        break
+                                    }
+                                }
+                                activeSectionIdx
+                            }
+                            LaunchedEffect(currentMonthKey) {
+                                if (gridState.isScrollInProgress || isDragging) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
                             }
 

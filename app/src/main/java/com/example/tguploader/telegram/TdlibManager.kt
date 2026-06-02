@@ -173,6 +173,25 @@ object TdlibManager {
         }
     }
 
+    suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        try {
+            val cl = client
+            if (cl == null) {
+                continuation.resume(TdApi.Error(500, "TDLib Client not initialized!"))
+                return@suspendCancellableCoroutine
+            }
+            cl.send(request) { result ->
+                if (continuation.isActive) {
+                    continuation.resume(result)
+                }
+            }
+        } catch (e: Exception) {
+            if (continuation.isActive) {
+                continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
+            }
+        }
+    }
+
     suspend fun syncCloudHistory(context: Context, chatId: Long) {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
@@ -185,20 +204,6 @@ object TdlibManager {
         var lastMessageId = 0L
         var crawling = true
         addLog("Starting server vault synchronization crawl...")
-        
-        suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-            try {
-                getClient().send(request) { result ->
-                    if (continuation.isActive) {
-                        continuation.resume(result)
-                    }
-                }
-            } catch (e: Exception) {
-                if (continuation.isActive) {
-                    continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
-                }
-            }
-        }
 
         while (crawling) {
             val getHistory = TdApi.GetChatHistory().apply {
@@ -213,9 +218,17 @@ object TdlibManager {
             if (result is TdApi.Messages && result.messages.isNotEmpty()) {
                 val entities = mutableListOf<CloudPhotoEntity>()
                 for (msg in result.messages) {
+                    // Check if this message already exists in the local database
+                    if (cloudDao.exists(msg.id)) {
+                        addLog("Found existing message index in database. Terminating crawl.")
+                        crawling = false
+                        break
+                    }
+
                     val content = msg.content
                     var fileName = ""
                     var fileId = 0
+                    var thumbFileId = 0
                     var remoteId = ""
                     var fileSize = 0L
                     var isDoc = false
@@ -228,6 +241,9 @@ object TdlibManager {
                             fileId = largest.photo.id
                             remoteId = largest.photo.remote.id
                             fileSize = largest.photo.size.toLong()
+                            
+                            // Store first photo size as thumbnail (usually 's' or 'm')
+                            thumbFileId = sizes.first().photo.id
                             
                             val captionText = content.caption.text
                             val metadata = parseMetadataFromCaption(captionText)
@@ -261,6 +277,9 @@ object TdlibManager {
                             fileSize = doc.document.size
                             isDoc = true
                             
+                            // Store document thumbnail if present, fallback to document fileId
+                            thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                            
                             val captionText = content.caption.text
                             val metadata = parseMetadataFromCaption(captionText)
                             if (metadata != null) {
@@ -283,7 +302,8 @@ object TdlibManager {
                                 uploadedAt = uploadedAt,
                                 fileSize = fileSize,
                                 isDocument = isDoc,
-                                contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}"
+                                contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}",
+                                telegramThumbnailFileId = thumbFileId
                             )
                         )
                     }
@@ -300,6 +320,32 @@ object TdlibManager {
             }
         }
         addLog("Vault server synchronization crawl completed.")
+        
+        // Trigger storage cache cleanup to stay within 500 MB limit
+        try {
+            optimizeStorage(context)
+        } catch (e: Exception) {}
+    }
+
+    fun optimizeStorage(context: Context) {
+        val client = client ?: return
+        addLog("Enforcing 500 MB file cache limits on TDLib storage...")
+        val sizeLimit = 500L * 1024L * 1024L // 500 MB threshold
+        val request = TdApi.OptimizeStorage().apply {
+            size = sizeLimit
+            ttl = 0
+            count = 0
+            immunityDelay = 0
+            fileTypes = null
+            chatIds = longArrayOf()
+            excludeChatIds = longArrayOf()
+            returnDeletedFileStatistics = false
+        }
+        client.send(request) { result ->
+            if (result is TdApi.StorageStatistics) {
+                addLog("File cache optimized successfully.")
+            }
+        }
     }
 
     private data class ParsedMetadata(

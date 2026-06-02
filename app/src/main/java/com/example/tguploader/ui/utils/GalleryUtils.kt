@@ -4,6 +4,10 @@ import androidx.compose.runtime.*
 import com.example.tguploader.storage.LocalPhoto
 import com.example.tguploader.telegram.TdlibManager
 import org.drinkless.tdlib.TdApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import com.example.tguploader.storage.PreferencesManager
+import androidx.compose.ui.platform.LocalContext
 
 sealed class GalleryItem {
     data class Header(val date: String) : GalleryItem()
@@ -67,37 +71,79 @@ fun parseDateFromFilename(fileName: String): Long? {
     return null
 }
 
+
 @Composable
-fun rememberCloudThumbnailPath(fileId: Int): String? {
-    var localPath by remember(fileId) { mutableStateOf<String?>(null) }
+fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
+    val context = LocalContext.current
+    var localPath by remember(messageId, isThumbnail) { mutableStateOf<String?>(null) }
     
-    LaunchedEffect(fileId) {
-        TdlibManager.getClient().send(TdApi.GetFile(fileId)) { result ->
-            if (result is TdApi.File) {
-                if (result.local.isDownloadingCompleted) {
-                    localPath = result.local.path
-                } else if (!result.local.isDownloadingActive) {
-                    TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { downloadResult ->
-                        if (downloadResult is TdApi.File) {
-                            // Download started
+    LaunchedEffect(messageId, isThumbnail) {
+        val chatId = PreferencesManager.getChatId(context)
+        if (chatId == 0L) return@LaunchedEffect
+        
+        try {
+            android.util.Log.d("Telegallery", "Requesting messageId=$messageId (isThumbnail=$isThumbnail) from chatId=$chatId")
+            val messageResult = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+            if (messageResult is TdApi.Message) {
+                val content = messageResult.content
+                var targetFileId = 0
+                
+                if (content is TdApi.MessagePhoto) {
+                    val sizes = content.photo.sizes
+                    if (sizes.isNotEmpty()) {
+                        targetFileId = if (isThumbnail) {
+                            sizes.first().photo.id
+                        } else {
+                            sizes.last().photo.id
                         }
                     }
-                }
-            }
-        }
-    }
-    
-    LaunchedEffect(fileId, localPath) {
-        if (localPath == null) {
-            while (true) {
-                kotlinx.coroutines.delay(1000)
-                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { result ->
-                    if (result is TdApi.File && result.local.isDownloadingCompleted) {
-                        localPath = result.local.path
+                } else if (content is TdApi.MessageDocument) {
+                    val doc = content.document
+                    targetFileId = if (isThumbnail) {
+                        doc.thumbnail?.file?.id ?: doc.document.id
+                    } else {
+                        doc.document.id
                     }
                 }
-                if (localPath != null) break
+                
+                if (targetFileId != 0) {
+                    val fileResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
+                    if (fileResult is TdApi.File) {
+                        if (fileResult.local.isDownloadingCompleted) {
+                            localPath = fileResult.local.path
+                            android.util.Log.d("Telegallery", "File already downloaded: $localPath")
+                        } else {
+                            android.util.Log.d("Telegallery", "Starting download for targetFileId=$targetFileId")
+                            val downloadResult = TdlibManager.sendRequest(TdApi.DownloadFile(targetFileId, 1, 0, 0, false))
+                            if (downloadResult is TdApi.File) {
+                                var downloaded = false
+                                while (!downloaded) {
+                                    delay(1000)
+                                    val pollResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
+                                    if (pollResult is TdApi.File && pollResult.local.isDownloadingCompleted) {
+                                        localPath = pollResult.local.path
+                                        downloaded = true
+                                        android.util.Log.d("Telegallery", "Download completed: $localPath")
+                                    } else if (pollResult is TdApi.Error) {
+                                        android.util.Log.e("Telegallery", "Error polling file: code=${pollResult.code} message=${pollResult.message}")
+                                        break
+                                    }
+                                }
+                            } else if (downloadResult is TdApi.Error) {
+                                android.util.Log.e("Telegallery", "DownloadFile failed for targetFileId=$targetFileId: code=${downloadResult.code} message=${downloadResult.message}")
+                            }
+                        }
+                    } else if (fileResult is TdApi.Error) {
+                        android.util.Log.e("Telegallery", "GetFile failed for targetFileId=$targetFileId: code=${fileResult.code} message=${fileResult.message}")
+                    }
+                } else {
+                    android.util.Log.w("Telegallery", "No valid targetFileId found in message content")
+                }
+            } else if (messageResult is TdApi.Error) {
+                android.util.Log.e("Telegallery", "GetMessage failed for messageId=$messageId: code=${messageResult.code} message=${messageResult.message}")
             }
+        } catch (e: Exception) {
+            android.util.Log.e("Telegallery", "Exception in rememberCloudThumbnailPath: ${e.message}", e)
         }
     }
     

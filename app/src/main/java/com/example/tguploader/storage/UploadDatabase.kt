@@ -50,13 +50,17 @@ data class CloudPhotoEntity(
     val isDocument: Boolean,
     val localCachedThumbnailPath: String? = null,
     val localCachedLargePath: String? = null,
-    val contentFingerprint: String = ""
+    val contentFingerprint: String = "",
+    val telegramThumbnailFileId: Int = 0
 )
 
 @Dao
 interface CloudPhotoDao {
     @Query("SELECT * FROM cloud_photos ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<CloudPhotoEntity>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM cloud_photos WHERE messageId = :messageId)")
+    suspend fun exists(messageId: Long): Boolean
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBatch(photos: List<CloudPhotoEntity>)
@@ -120,7 +124,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -151,6 +155,14 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE cloud_photos ADD COLUMN telegramThumbnailFileId INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -158,7 +170,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 INSTANCE = instance
                 instance
