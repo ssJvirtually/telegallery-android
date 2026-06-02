@@ -101,20 +101,46 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     val userId = meResult.id
                     val expectedSignature = generateVaultSignature(userId)
                     
+                    // Local helper to check if chat is verified (via description or pinned message)
+                    suspend fun isChatVerified(chat: TdApi.Chat, sig: String): Boolean {
+                        // 1. Try verifying via supergroup description
+                        val chatType = chat.type
+                        if (chatType is TdApi.ChatTypeSupergroup) {
+                            val supergroupId = chatType.supergroupId
+                            val fullInfo = suspendCancellableCoroutine<TdApi.SupergroupFullInfo?> { cont ->
+                                try {
+                                    TdlibManager.getClient().send(TdApi.GetSupergroupFullInfo(supergroupId)) { res ->
+                                        cont.resume(res as? TdApi.SupergroupFullInfo)
+                                    }
+                                } catch (e: Exception) {
+                                    cont.resume(null)
+                                }
+                            }
+                            if (fullInfo != null && fullInfo.description.contains("TG-SIG-$sig")) {
+                                return true
+                            }
+                        }
+                        
+                        // 2. Fallback: Try verifying via pinned message (backward compatibility)
+                        val pinnedMsg = sendRequest(TdApi.GetChatPinnedMessage(chat.id))
+                        if (pinnedMsg is TdApi.Message) {
+                            val content = pinnedMsg.content
+                            if (content is TdApi.MessageText && content.text.text.contains("TG-SIG-$sig")) {
+                                return true
+                            }
+                        }
+                        return false
+                    }
+                    
                     // First, fetch main chats list to populate cache
                     val chatsResult = sendRequest(TdApi.GetChats(TdApi.ChatListMain(), 100))
                     if (chatsResult is TdApi.Chats) {
                         for (chatId in chatsResult.chatIds) {
                             val chat = sendRequest(TdApi.GetChat(chatId))
                             if (chat is TdApi.Chat && chat.title.equals("TGPix", ignoreCase = true)) {
-                                // Fetch and verify pinned message
-                                val pinnedMsg = sendRequest(TdApi.GetChatPinnedMessage(chat.id))
-                                if (pinnedMsg is TdApi.Message) {
-                                    val content = pinnedMsg.content
-                                    if (content is TdApi.MessageText && content.text.text.contains("TG-SIG-$expectedSignature")) {
-                                        existingChatId = chat.id
-                                        break
-                                    }
+                                if (isChatVerified(chat, expectedSignature)) {
+                                    existingChatId = chat.id
+                                    break
                                 }
                             }
                         }
@@ -131,13 +157,9 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                             for (chatId in searchResult.chatIds) {
                                 val chat = sendRequest(TdApi.GetChat(chatId))
                                 if (chat is TdApi.Chat && chat.title.equals("TGPix", ignoreCase = true)) {
-                                    val pinnedMsg = sendRequest(TdApi.GetChatPinnedMessage(chat.id))
-                                    if (pinnedMsg is TdApi.Message) {
-                                        val content = pinnedMsg.content
-                                        if (content is TdApi.MessageText && content.text.text.contains("TG-SIG-$expectedSignature")) {
-                                            existingChatId = chat.id
-                                            break
-                                        }
+                                    if (isChatVerified(chat, expectedSignature)) {
+                                        existingChatId = chat.id
+                                        break
                                     }
                                 }
                             }
@@ -163,6 +185,13 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     return@launch
                 }
                 
+                // Generate a secure vault backup key and compute signature *before* supergroup creation
+                var signature = ""
+                val meRes = sendRequest(TdApi.GetMe())
+                if (meRes is TdApi.User) {
+                    signature = generateVaultSignature(meRes.id)
+                }
+
                 // Step 1: Create a private Telegram channel named TGPix
                 withContext(Dispatchers.Main) {
                     progressText = "Creating private backup channel 'TGPix' on Telegram..."
@@ -171,7 +200,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                 val createRequest = TdApi.CreateNewSupergroupChat().apply {
                     title = "TGPix"
                     isChannel = true
-                    description = "TGPix secure photo backup repository. Please do not delete."
+                    description = "TGPix secure photo backup repository. Please do not delete. Vault Signature: TG-SIG-$signature"
                 }
                 
                 val chatResult = sendRequest(createRequest)
@@ -179,17 +208,11 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                 if (chatResult is TdApi.Chat) {
                     val newChatId = chatResult.id
                     
-                    // Step 2: Generate a secure vault backup key and compute signature
+                    // Step 2: Generate a secure vault backup key
                     withContext(Dispatchers.Main) {
                         progressText = "Generating unique vault encryption key..."
                     }
                     val uniqueKey = "TG-VAULT-${UUID.randomUUID().toString().uppercase().take(8)}"
-                    
-                    var signature = ""
-                    val meResult = sendRequest(TdApi.GetMe())
-                    if (meResult is TdApi.User) {
-                        signature = generateVaultSignature(meResult.id)
-                    }
                     
                     val welcomeText = "🔑 TGPix Secure Backup Vault Initialized!\n\n" +
                             "Vault Key: `$uniqueKey`\n" +
