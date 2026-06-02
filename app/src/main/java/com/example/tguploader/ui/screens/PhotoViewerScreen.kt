@@ -110,7 +110,8 @@ fun PhotoViewerScreen(
                 
                 val density = LocalDensity.current
                 val configuration = LocalConfiguration.current
-                val screenHeightPx = with(density) { configuration.screenHeightDp.dp.roundToPx() }
+                val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+                val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
                 
                 // Track dynamic swipe up to open metadata panel (Google Photos Swipe Up Gestures)
                 val dragOffsetY = remember { Animatable(0f) }
@@ -121,21 +122,37 @@ fun PhotoViewerScreen(
                         .pointerInput(scale) {
                             detectTapGestures(
                                 onTap = { showChrome = !showChrome },
-                                onDoubleTap = {
+                                onDoubleTap = { tapOffset ->
                                     if (scale > 1f) {
                                         scale = 1f
                                         offset = Offset.Zero
                                     } else {
                                         scale = 2.5f
+                                        val centerX = screenWidthPx / 2f
+                                        val centerY = screenHeightPx / 2f
+                                        val targetX = (centerX - tapOffset.x) * (2.5f - 1f)
+                                        val targetY = (centerY - tapOffset.y) * (2.5f - 1f)
+                                        val boundX = 1.5f * screenWidthPx / 2f
+                                        val boundY = 1.5f * screenHeightPx / 2f
+                                        offset = Offset(
+                                            x = targetX.coerceIn(-boundX, boundX),
+                                            y = targetY.coerceIn(-boundY, boundY)
+                                        )
                                     }
                                 }
                             )
                         }
                         .pointerInput(scale) {
                             detectTransformGesturesCustom(panZoomLock = true, scale = scale) { _, pan, zoom ->
-                                scale = (scale * zoom).coerceIn(1f, 4f)
-                                if (scale > 1f) {
-                                    offset += pan
+                                val newScale = (scale * zoom).coerceIn(1f, 4f)
+                                scale = newScale
+                                if (newScale > 1f) {
+                                    val boundX = (newScale - 1f) * screenWidthPx / 2f
+                                    val boundY = (newScale - 1f) * screenHeightPx / 2f
+                                    offset = Offset(
+                                        x = (offset.x + pan.x).coerceIn(-boundX, boundX),
+                                        y = (offset.y + pan.y).coerceIn(-boundY, boundY)
+                                    )
                                 } else {
                                     offset = Offset.Zero
                                 }
