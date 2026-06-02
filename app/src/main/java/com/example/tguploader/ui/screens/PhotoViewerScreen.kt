@@ -801,8 +801,14 @@ suspend fun PointerInputScope.detectTransformGesturesCustom(
                         zoom *= zoomChange
                         pan += panChange
 
-                        val centroid = event.calculateCentroid(useCurrent = false)
-                        val zoomMotion = Math.abs(1 - zoom) * centroid.getDistance()
+                        val centroid = event.calculateCentroid(useCurrent = false).let {
+                            if (it == Offset.Unspecified) event.calculateCentroid(useCurrent = true) else it
+                        }
+                        val zoomMotion = if (centroid != Offset.Unspecified) {
+                            Math.abs(1 - zoom) * centroid.getDistance()
+                        } else {
+                            0f
+                        }
                         val panMotion = pan.getDistance()
 
                         if (zoomMotion > touchSlop || panMotion > touchSlop) {
@@ -811,7 +817,9 @@ suspend fun PointerInputScope.detectTransformGesturesCustom(
                     }
 
                     if (pastTouchSlop) {
-                        val centroid = event.calculateCentroid(useCurrent = false)
+                        val centroid = event.calculateCentroid(useCurrent = false).let {
+                            if (it == Offset.Unspecified) event.calculateCentroid(useCurrent = true) else it
+                        }
                         if (zoomChange != 1f || panChange != Offset.Zero) {
                             onGesture(centroid, panChange, zoomChange)
                         }
