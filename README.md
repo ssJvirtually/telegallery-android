@@ -19,6 +19,15 @@
 
 ---
 
+## 📲 Download & Installation
+
+To try the latest version of TGPix, you can download the ready-to-run APK directly:
+* **[Download Latest APK (v1.0.0)](https://github.com/ssJvirtually/TGPix/releases/download/v1.0.0/app-debug.apk)**
+
+For all available versions, full changelogs, and target architectures, please visit the **[GitHub Releases Page](https://github.com/ssJvirtually/TGPix/releases)** to check for the latest binaries.
+
+---
+
 ## ⚠️ Important Disclaimers
 
 > [!WARNING]
