@@ -77,7 +77,7 @@ fun OtpVerifyScreen() {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "An authorization code was sent to your official Telegram client.",
+                    text = "An authorization code was sent to your official Telegram app. Please check the official 'Telegram' service chat for your OTP.",
                     color = TelePhotosTheme.TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center

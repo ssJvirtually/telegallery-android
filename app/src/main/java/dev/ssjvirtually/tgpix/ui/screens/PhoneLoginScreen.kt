@@ -1,12 +1,14 @@
 package dev.ssjvirtually.tgpix.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,19 @@ import dev.ssjvirtually.tgpix.telegram.AuthManager
 fun PhoneLoginScreen() {
     var phone by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    
+    val countryCodes = listOf(
+        "+91" to "India (+91)",
+        "+1" to "USA/Canada (+1)",
+        "+44" to "UK (+44)",
+        "+61" to "Australia (+61)",
+        "+49" to "Germany (+49)",
+        "+33" to "France (+33)",
+        "+65" to "Singapore (+65)",
+        "+971" to "UAE (+971)"
+    )
+    var selectedCode by remember { mutableStateOf("+91") }
+    var expanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background),
@@ -91,27 +106,81 @@ fun PhoneLoginScreen() {
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(28.dp))
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("Phone Number", color = TelePhotosTheme.TextSecondary) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = TelePhotosTheme.AccentBlue,
-                        unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
-                        focusedLabelColor = TelePhotosTheme.AccentBlue,
-                        unfocusedLabelColor = TelePhotosTheme.TextSecondary,
-                        focusedTextColor = TelePhotosTheme.TextPrimary,
-                        unfocusedTextColor = TelePhotosTheme.TextPrimary
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(0.35f)
+                            .clickable { expanded = true }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedCode,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Code", color = TelePhotosTheme.TextSecondary) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = TelePhotosTheme.AccentBlue,
+                                unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                                focusedLabelColor = TelePhotosTheme.AccentBlue,
+                                unfocusedLabelColor = TelePhotosTheme.TextSecondary,
+                                focusedTextColor = TelePhotosTheme.TextPrimary,
+                                unfocusedTextColor = TelePhotosTheme.TextPrimary
+                            ),
+                            trailingIcon = {
+                                IconButton(onClick = { expanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Select country code",
+                                        tint = TelePhotosTheme.TextSecondary
+                                    )
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier.background(TelePhotosTheme.Surface)
+                        ) {
+                            countryCodes.forEach { (code, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, color = TelePhotosTheme.TextPrimary) },
+                                    onClick = {
+                                        selectedCode = code
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = { phone = it },
+                        label = { Text("Phone Number", color = TelePhotosTheme.TextSecondary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        modifier = Modifier.weight(0.65f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = TelePhotosTheme.AccentBlue,
+                            unfocusedBorderColor = TelePhotosTheme.SurfaceVariant,
+                            focusedLabelColor = TelePhotosTheme.AccentBlue,
+                            unfocusedLabelColor = TelePhotosTheme.TextSecondary,
+                            focusedTextColor = TelePhotosTheme.TextPrimary,
+                            unfocusedTextColor = TelePhotosTheme.TextPrimary
+                        )
                     )
-                )
+                }
                 Spacer(modifier = Modifier.height(28.dp))
                 Button(
                     onClick = {
                         isLoading = true
-                        AuthManager.sendPhone(phone) {
+                        val fullPhoneNumber = if (phone.trim().startsWith("+")) phone.trim() else selectedCode + phone.trim()
+                        AuthManager.sendPhone(fullPhoneNumber) {
                             isLoading = false
                         }
                     },
