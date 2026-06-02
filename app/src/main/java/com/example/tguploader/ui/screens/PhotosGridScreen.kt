@@ -1133,7 +1133,7 @@ fun PhotosGridScreen(
                                         coroutineScope.launch(Dispatchers.IO) {
                                             val newAlbumId = db.albumDao().insertAlbum(AlbumEntity(name = name))
                                             val albumPhotos = selectedPhotos.map { photo ->
-                                                AlbumPhotoEntity(albumId = newAlbumId, photoUri = photo.uri)
+                                                AlbumPhotoEntity(albumId = newAlbumId, photoUri = photo.name)
                                             }
                                             db.albumDao().insertAlbumPhotos(albumPhotos)
                                             
@@ -1177,7 +1177,7 @@ fun PhotosGridScreen(
                                             showAddToAlbumDialog = false
                                             coroutineScope.launch(Dispatchers.IO) {
                                                 val albumPhotos = selectedPhotos.map { photo ->
-                                                    AlbumPhotoEntity(albumId = album.id, photoUri = photo.uri)
+                                                    AlbumPhotoEntity(albumId = album.id, photoUri = photo.name)
                                                 }
                                                 db.albumDao().insertAlbumPhotos(albumPhotos)
                                                 

@@ -160,7 +160,10 @@ fun AlbumsScreen(
         withContext(Dispatchers.IO) {
             val uiModels = albums.map { album ->
                 val photos = db.albumDao().getAlbumPhotosDirect(album.id)
-                val coverPhoto = photos.lastOrNull()?.photoUri
+                val coverFileName = photos.lastOrNull()?.photoUri
+                val coverPhoto = coverFileName?.let { key ->
+                    mergedPhotosList.firstOrNull { it.name == key || it.uri == key }?.uri
+                }
                 AlbumUiModel(
                     id = album.id,
                     name = album.name,
@@ -538,7 +541,9 @@ fun AlbumDetailsView(
     
     // Filter overall timeline photos down to exactly the ones inside this album
     val albumPhotos = remember(albumPhotoUris, mergedPhotosList) {
-        mergedPhotosList.filter { photo -> albumPhotoUris.contains(photo.uri) }
+        mergedPhotosList.filter { photo ->
+            albumPhotoUris.any { it == photo.name || it == photo.uri }
+        }
     }
 
     BackHandler {
@@ -598,6 +603,7 @@ fun AlbumDetailsView(
                         IconButton(onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
                                 selectedPhotos.forEach { photo ->
+                                    db.albumDao().removePhotoFromAlbum(albumId, photo.name)
                                     db.albumDao().removePhotoFromAlbum(albumId, photo.uri)
                                 }
                                 withContext(Dispatchers.Main) {
