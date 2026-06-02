@@ -402,6 +402,62 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
         java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy • h:mm a", java.util.Locale.getDefault()).format(java.util.Date(photo.dateTaken))
     }
 
+    // Resolve localFilePath for EXIF parsing if cloud photo
+    var localFilePath: String? = null
+    if (isCloud) {
+        val parts = remember(photo.uri) { parseCloudPhotoUri(photo.uri) }
+        if (parts != null) {
+            localFilePath = rememberCloudThumbnailPath(
+                messageId = parts.first,
+                isThumbnail = false
+            )
+        }
+    }
+
+    // Resolve absolute file path for device files
+    val absolutePath = remember(photo.uri) {
+        if (!isCloud) {
+            getAbsolutePathFromUri(context, photo.uri) ?: photo.uri
+        } else {
+            "Telegram Cloud Vault"
+        }
+    }
+
+    // Extract EXIF latitude and longitude coordinates
+    val latLong = remember(photo, localFilePath) {
+        if (isCloud) {
+            localFilePath?.let { path ->
+                try {
+                    val exifInterface = androidx.exifinterface.media.ExifInterface(path)
+                    val latLongArr = FloatArray(2)
+                    if (exifInterface.getLatLong(latLongArr)) {
+                        Pair(latLongArr[0].toDouble(), latLongArr[1].toDouble())
+                    } else null
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        } else {
+            try {
+                val uri = android.net.Uri.parse(photo.uri)
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val exifInterface = androidx.exifinterface.media.ExifInterface(inputStream)
+                    val latLongArr = FloatArray(2)
+                    if (exifInterface.getLatLong(latLongArr)) {
+                        Pair(latLongArr[0].toDouble(), latLongArr[1].toDouble())
+                    } else null
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+
+    // Reverse geocode to find a nice location name
+    val locationName = latLong?.let { (lat, lon) ->
+        rememberLocationName(context, lat, lon)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -477,6 +533,68 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
             }
         }
 
+        // Path / Storage Location element
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Folder,
+                contentDescription = null,
+                tint = TelePhotosTheme.AccentBlue,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = absolutePath,
+                    color = TelePhotosTheme.TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "File Path",
+                    color = TelePhotosTheme.TextSecondary,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        // Location GPS element (if EXIF GPS info exists)
+        if (latLong != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Place,
+                    contentDescription = null,
+                    tint = TelePhotosTheme.AccentBlue,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = locationName ?: "Resolving location...",
+                        color = TelePhotosTheme.TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = formatCoordinates(latLong.first, latLong.second),
+                        color = TelePhotosTheme.TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
         // Storage / cloud sync element (if synced or cloud-only)
         if (isSynced || isCloud) {
             val cloudMsgId = if (photo.id < 0) -photo.id else photo.id
@@ -509,6 +627,63 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
             }
         }
     }
+}
+
+fun getAbsolutePathFromUri(context: Context, uriString: String): String? {
+    try {
+        val uri = Uri.parse(uriString)
+        if (uri.scheme == "content") {
+            val projection = arrayOf(android.provider.MediaStore.Images.Media.DATA)
+            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val columnIndex = cursor.getColumnIndex(android.provider.MediaStore.Images.Media.DATA)
+                    if (columnIndex != -1) {
+                        return cursor.getString(columnIndex)
+                    }
+                }
+            }
+        } else if (uri.scheme == "file") {
+            return uri.path
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return null
+}
+
+@Composable
+fun rememberLocationName(context: Context, latitude: Double, longitude: Double): String? {
+    var locationName by remember(latitude, longitude) { mutableStateOf<String?>(null) }
+    LaunchedEffect(latitude, longitude) {
+        withContext(Dispatchers.IO) {
+            try {
+                if (android.location.Geocoder.isPresent()) {
+                    val geocoder = android.location.Geocoder(context)
+                    val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+                    if (!addresses.isNullOrEmpty()) {
+                        val address = addresses[0]
+                        val city = address.locality ?: address.subAdminArea ?: address.adminArea
+                        val country = address.countryName
+                        val name = if (city != null && country != null) {
+                            "$city, $country"
+                        } else {
+                            city ?: country ?: address.getAddressLine(0)
+                        }
+                        locationName = name
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+    return locationName
+}
+
+fun formatCoordinates(latitude: Double, longitude: Double): String {
+    val latDirection = if (latitude >= 0) "N" else "S"
+    val lonDirection = if (longitude >= 0) "E" else "W"
+    return "%.4f° %s, %.4f° %s".format(Math.abs(latitude), latDirection, Math.abs(longitude), lonDirection)
 }
 
 // Premium custom pinch-to-zoom and pan gesture detector that avoids consuming horizontal drag/swipes when scale is 1f,
