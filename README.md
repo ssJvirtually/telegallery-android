@@ -1,25 +1,60 @@
-# <img src="screenshots/logo.png" width="48" align="center" /> TeleGallery
+# <p align="center"><img src="screenshots/logo.png" width="100" alt="TGPix Logo" /></p>
 
-**TeleGallery** is a premium, lightweight, and modern Google Photos-like Android application that uses private, secure Telegram channels for unlimited cloud media backups. It beautifully blends the clean, minimalist surfaces of **Google Photos** with the styling cues, authentication backend, and lightning-fast media transport of **Telegram**.
+<h1 align="center">TGPix</h1>
+
+<p align="center">
+  <strong>A premium, privacy-first Google Photos-style Android gallery backed by your own Telegram cloud storage.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ssJvirtually/TGPix/releases"><img src="https://img.shields.io/badge/Platform-Android_8.0+-green.svg" alt="Platform" /></a>
+  <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-1.9-purple.svg" alt="Kotlin" /></a>
+  <a href="https://core.telegram.org/tdlib"><img src="https://img.shields.io/badge/TDLib-1.8.56-blue.svg" alt="TDLib" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License" /></a>
+</p>
 
 ---
 
+**TGPix** is an elegant, open-source Android application that provides an intuitive, high-performance photo gallery interface (matching Google Photos aesthetics) powered entirely by your private Telegram channels for unlimited, secure cloud media backups. It leverages the native MTProto backend through Telegram's TDLib to upload, synchronize, and stream your media seamlessly.
+
+---
+
+## ⚠️ Important Disclaimers
+
+> [!WARNING]
+> ### 🛑 Unofficial Project & Telegram Association
+> TGPix is an **unofficial** third-party application. It is **not** affiliated, associated, authorized, endorsed by, or in any way officially connected with Telegram FZ-LLC, Telegram Messenger Inc., or any of their subsidiaries or affiliates.
+
 > [!CAUTION]
-> ### ⚠️ Critical Account & Storage Disclaimer
-> **TeleGallery** stores your backed-up media exclusively in a private Telegram supergroup/channel mapped to your active Telegram account.
-> * **If you lose access to your Telegram account (due to an official ban, suspension, loss of your active SIM card/phone number, or manual deletion), you will lose access to all backed-up cloud photos.**
-> * There is no secondary storage server or recovery pathway. Always ensure your Telegram account is secure and has up-to-date recovery methods.
+> ### ⚡ Breaking Changes Notice
+> This project is under active development. **Many breaking changes are coming in future releases.** Features, database schemas, and configuration models are subject to major adjustments without notice.
+
+> [!IMPORTANT]
+> ### 🔑 Account Responsibility & Data Loss Warning
+> Your media is stored exclusively inside private Telegram supergroups/channels mapped to your active Telegram account.
+> * **If you lose access to your Telegram account** (due to suspension, ban, loss of your active SIM card/phone number, or manual deletion), **you will permanently lose access to all backed-up cloud photos.**
+> * **No Secondary Backups**: There is no secondary storage server, database backup server, or recovery pathway. Your data is strictly inside your Telegram account.
+> * **Limitation of Liability**: The contributors, developers, committers, and maintainers of this project are **nowhere responsible** for any data loss, account suspensions, or technical issues that may arise from using this application. You use this software entirely at your own risk.
+
+---
+
+## 🔒 Security & Privacy (Zero-Middleman)
+
+We believe in absolute transparency:
+* **No Middleman Servers**: TGPix runs 100% on your device. Your photos are never routed through any third-party APIs, middleman servers, or analytical services.
+* **Direct MTProto Transport**: All communication, authentication, and media uploads occur directly between your device and the official Telegram servers using MTProto.
+* **Open Source Codebase**: Since the project is fully open source, you can review all file access and network logging calls directly in the source files.
 
 ---
 
 ## 🌟 Key Features
 
-* **🎨 Sleek Premium Light Theme:** A beautifully polished light-mode aesthetic that blends Telegram Blue (`#2481CC`) with clean, off-white Google Photos surfaces (`#F4F6F9`) and dynamic cool-grey typography.
-* **⚡ Continuous Smooth Fast Scrollbar:** A high-precision, sub-pixel vertical fast scrollbar matching the physics of Telegram and Google Photos. Uses a custom row-based layout calculation (`firstVisibleIndex + itemOffsetFraction * columns`) to completely eliminate dragging stutters or releasing jumps.
-* **📅 Floating Date Bubble:** A glassmorphic month/year indicator bubble that slides dynamically next to the user's finger during dragging.
-* **🔄 Intelligent Deduplication Sync:** Keeps track of uploaded images in a reactive local SQLite Room database. Safely bypasses duplicates even when you manually trigger a force synchronization.
-* **☁️ Multi-Device Vault Onboarding:** On first login, the app determinants a secure SHA-256 vault signature mapped to your Telegram user ID, auto-creates a private channel named `"TeleGallery"`, and pins the welcome sync keys. Logging in on a fresh secondary device immediately scans Telegram's servers, recovers the pre-existing channel, and populates the grid.
-* **🖼️ Immersive Detail View:** Swipe through your pictures in full resolution with Compose `HorizontalPager`. Features safe single-photo manual backups, JNI file downsampling to prevent memory crashes, native sharing, local device deletions, and saving cloud items back to the public `Downloads` folder.
+* **🎨 Immersive Google Photos Aesthetic**: A highly polished light-mode interface blending Telegram Blue (`#2481CC`) with clean, fluid surfaces (`#F4F6F9`) and dynamic modern typography.
+* **⚡ Continuous Smooth Panning & Zoom**: Dynamic pinch-to-zoom gestures, custom boundaries checking, drag panning, swipe-to-dismiss, and centroid-based double-tap zoom for full-screen photo interactions.
+* **📅 Floating Date Indicator**: A glassmorphic month/year bubble that tracks your finger dynamically during fast-scrolling sweeps.
+* **🔄 Intelligent Deduplication Sync**: Uses a reactive SQLite Room database to track upload fingerprints, bypassing duplicates even when running manual backup sweeps.
+* **☁️ Multi-Device Vault Onboarding**: Uses cryptographically verified signatures (derived from your unique user ID) pinned in your Telegram channel to automatically find, link, or provision your private gallery vault across multiple devices.
+* **🖼️ Lazy Load & Thumbnail Cache**: Displays compressed previews instantly while loading full-resolution photo assets in the background.
 
 ---
 
@@ -37,50 +72,61 @@
 
 ## 🛠️ Tech Stack & Architecture
 
-| Layer | Component | Description |
-|---|---|---|
-| **Language** | Kotlin + Coroutines | Fast, safe asynchronous threading and reactive sequences. |
-| **UI Engine** | Jetpack Compose (M3) | State-driven declarative UI with clean Material You design. |
-| **Core Client** | Telegram TDLib JNI | Pure native MTProto client handling OTP signups and reliable transport. |
-| **Image Loading** | Coil Compose | Memory-sensitive image decoder with strict thumbnail size constraints. |
-| **Database** | Room + SQLite | Relational mappings storing local sync statuses and cloud logs. |
-| **Background Sync** | WorkManager | System-scheduled periodic backups that survive device restarts. |
+* **UI Framework**: Jetpack Compose (M3) for declarative, reactive UI layouts.
+* **Core Transport**: Telegram TDLib JNI wrapper (v1.8.56) for secure Telegram socket connection.
+* **Database Layer**: Room SQLite Database for storing local sync status and photo registry logs.
+* **Image Processor**: Coil Compose for lazy-loaded image rendering and bitmap downsampling.
+* **Background Processing**: Android Jetpack WorkManager for periodic background backups.
 
 ---
 
-## 🚀 How to Run Locally
+## 🚀 How to Build Locally
 
-Follow these instructions to set up the build environment and compile TeleGallery on your own computer.
+Follow these steps to configure your environment and build TGPix from the source code.
 
 ### 📋 Prerequisites
-1. **Java JDK 17:** Ensure Java 17 is installed on your path.
-2. **Android SDK (API 34):** Ensure you have the Android SDK installed with compile tools.
-3. **Telegram API ID & API Hash:**
-   * Go to [my.telegram.org](https://my.telegram.org), log in, create a developer application, and obtain your `api_id` and `api_hash`.
-   * Open the project and add them inside the configuration files (`TdlibManager.kt` or preferences) to initialize TDLib.
+1. **Java JDK 17**: Make sure JDK 17 is installed on your computer.
+2. **Android SDK (API 34)**: Ensure compile-tools and Android SDK are set up.
+3. **Telegram API credentials**:
+   * Log in to [my.telegram.org](https://my.telegram.org).
+   * Create an application to get your `api_id` and `api_hash`.
 
-### 💻 Local Compilation Steps
+### 💻 Build Instructions (Gradle Wrapper)
 
-#### Option 1: Command Line (Windows PowerShell)
-You can build the debug package directly via Gradle command line using the local SDK configuration:
-
-1. Open PowerShell in the project root directory.
-2. Configure your environment paths (pointing to your Java 17 and Android SDK locations):
-   ```powershell
-   $env:JAVA_HOME="C:\Users\jskr4\.jdks\azul-17.0.13"
-   $env:ANDROID_HOME="E:\android-build-tools\android-sdk"
+#### 1. Setup API Keys
+Because `local.properties` is ignored in Git to prevent credentials leaks, you must create it in the root folder of the project:
+1. Open or create the [local.properties](file:///E:/telegallery-calude/local.properties) file in the root folder of the project.
+2. Add your Telegram credentials as follows:
+   ```properties
+   TELEGRAM_API_ID=YOUR_TELEGRAM_API_ID
+   TELEGRAM_API_HASH="YOUR_TELEGRAM_API_HASH"
    ```
-3. Run the Gradle debug build:
-   ```powershell
-   & "E:\android-build-tools\gradle-8.7\bin\gradle.bat" assembleDebug
-   ```
-4. Once completed successfully, the debug APK is located at:
-   `app/build/outputs/apk/debug/app-debug.apk`
+   *(Note: Wrap your `api_hash` in double-quotes as shown above).*
 
-#### Option 2: Android Studio
-1. Open Android Studio.
-2. Select **File > Open** and choose the `telegallery-calude` folder.
-3. Wait for the Gradle project sync to complete.
-4. Go to **File > Project Structure > SDK Location** and verify that your **JDK 17** is selected.
-5. Connect your Android device or start an emulator.
-6. Click the **Run** button (green play icon) in the toolbar to compile and install the application directly.
+#### 2. Set Environment Variables
+Open PowerShell or your command line in the project root directory and set the Java and Android SDK path variables:
+```powershell
+$env:JAVA_HOME="C:\Program Files\Java\jdk-17"
+$env:ANDROID_HOME="C:\Users\YOUR_USER\AppData\Local\Android\Sdk"
+```
+
+#### 3. Compile the Debug APK
+Run the Gradle wrapper assemble task:
+```powershell
+.\gradlew.bat assembleDebug
+```
+Once the build completes, your debug APK will be located at:
+`app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## 🤝 Contributing, Forking & License
+
+This project is licensed under the **MIT License**.
+
+* **Open for Contributions**: Pull requests, bug reports, and features suggestions are welcome! Feel free to open an issue or submit a PR.
+* **Forks**: You are free to fork this repository, make changes, and use them for your own personal use.
+
+---
+
+*TGPix - Powered by unlimited, secure Telegram cloud vaults.*
