@@ -254,29 +254,65 @@ fun PhotoViewerScreen(
                                     messageId = parts.first,
                                     isThumbnail = false
                                 )
+                                val localThumbnailPath = rememberCloudThumbnailPath(
+                                    messageId = parts.first,
+                                    isThumbnail = true
+                                )
                                 
-                                if (localFilePath != null) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(localFilePath)
-                                            .build(),
-                                        contentDescription = photo.name,
-                                        contentScale = ContentScale.Fit,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    // 1. Cloud Thumbnail Image (displays instantly from cache)
+                                    if (localThumbnailPath != null) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(localThumbnailPath)
+                                                .build(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Fit,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                    
+                                    // 2. Cloud Full-Res Image
+                                    if (localFilePath != null) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(localFilePath)
+                                                .build(),
+                                            contentDescription = photo.name,
+                                            contentScale = ContentScale.Fit,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    } else {
+                                        CircularProgressIndicator(
+                                            color = TelePhotosTheme.AccentBlue,
+                                            modifier = Modifier.align(Alignment.Center)
+                                        )
+                                    }
                                 }
                             }
                         } else {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(photo.uri)
-                                    .build(),
-                                contentDescription = photo.name,
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                // 1. Local Thumbnail Image (small size for instant cache hit)
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(photo.uri)
+                                        .size(300)
+                                        .build(),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                
+                                // 2. Local Full-Res Image
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(photo.uri)
+                                        .build(),
+                                    contentDescription = photo.name,
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                     }
                 }
