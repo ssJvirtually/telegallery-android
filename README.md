@@ -104,7 +104,7 @@ Follow these steps to configure your environment and build TGPix from the source
 
 #### 1. Setup API Keys
 Because `local.properties` is ignored in Git to prevent credentials leaks, you must create it in the root folder of the project:
-1. Open or create the [local.properties](file:///E:/telegallery-calude/local.properties) file in the root folder of the project.
+1. Open or create the [local.properties](file:///E:/tgpix-calude/local.properties) file in the root folder of the project.
 2. Add your Telegram credentials as follows:
    ```properties
    TELEGRAM_API_ID=YOUR_TELEGRAM_API_ID

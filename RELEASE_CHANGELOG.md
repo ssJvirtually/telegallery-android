@@ -1,6 +1,6 @@
-# 📝 TeleGallery Android — Version Release Changelog
+# 📝 TGPix Android — Version Release Changelog
 
-This changelog documents the version releases, features, bug fixes, and architectural enhancements made to **TeleGallery** — the premium, lightweight Google Photos-like Android application that utilizes private Telegram channels for unlimited, secure media backup.
+This changelog documents the version releases, features, bug fixes, and architectural enhancements made to **TGPix** — the premium, lightweight Google Photos-like Android application that utilizes private Telegram channels for unlimited, secure media backup.
 
 ---
 
@@ -53,13 +53,13 @@ This changelog documents the version releases, features, bug fixes, and architec
 ## 🚀 Release v1.7.0 — Multi-Device Recovery & UI Thread Fixes
 * **Features & Technical Updates:**
   * Cured sign-up setup crashes caused by Android thread policy violations. Wrapped WorkManager Toast triggers inside `runOnUiThread { ... }` so they always execute safely on the UI Main thread, eliminating the `Can't toast on a thread that has not called Looper.prepare()` fatal crash.
-  * Replaced local client-side `SearchChats()` with server-side `TdApi.SearchChatsOnServer()` during recovery. Since fresh logins on new devices start with an empty local cache, a server-side search ensures that pre-existing `"TeleGallery"` channels are successfully retrieved directly from Telegram's servers.
+  * Replaced local client-side `SearchChats()` with server-side `TdApi.SearchChatsOnServer()` during recovery. Since fresh logins on new devices start with an empty local cache, a server-side search ensures that pre-existing `"TGPix"` channels are successfully retrieved directly from Telegram's servers.
 
 ---
 
 ## 🚀 Release v1.6.0 — Cryptographic Vault Signature Matching
 * **Features & Technical Updates:**
-  * Introduced a mathematically secure, deterministic vault verification system to prevent duplicate channels when multiple private channels share the same `"TeleGallery"` name.
+  * Introduced a mathematically secure, deterministic vault verification system to prevent duplicate channels when multiple private channels share the same `"TGPix"` name.
   * **Deterministic SHA-256 Hashing:** Computes a unique, identical signature by hashing the user's Telegram User ID (retrieved via `TdApi.GetMe()`) with a secure salt. Because the Telegram User ID is identical across reinstalls and separate devices, this hash is fully reproducible.
   * **Signature Pinned Verification:** Appends the signature (`TG-SIG-<hash>`) to the pinned welcome message in the channel. During recovery onboarding, the app fetches the channel's pinned message and validates the hash before linking the vault.
 
@@ -68,7 +68,7 @@ This changelog documents the version releases, features, bug fixes, and architec
 ## 🚀 Release v1.5.0 — Automated Recovery & Duplication Prevention
 * **Features & Technical Updates:**
   * Implemented an automated vault scan to prevent creating a new channel if the user has already onboarded previously.
-  * Queries the user's top 100 recent chats using `TdApi.GetChats()` to check for pre-existing channels named `"TeleGallery"`.
+  * Queries the user's top 100 recent chats using `TdApi.GetChats()` to check for pre-existing channels named `"TGPix"`.
   * If found, the app automatically link-syncs the pre-existing channel and immediately opens the gallery grid, bypassing new channel generation.
 
 ---
@@ -76,7 +76,7 @@ This changelog documents the version releases, features, bug fixes, and architec
 ## 🚀 Release v1.4.0 — Automated Vault Onboarding
 * **Features & Technical Updates:**
   * Removed manual chat selection picker screens during signup onboarding.
-  * Programmatically creates a secure private channel named `"TeleGallery"` on Telegram under the user's account.
+  * Programmatically creates a secure private channel named `"TGPix"` on Telegram under the user's account.
   * Generates a unique welcome sync key, posts it to the channel, pins the message, and automatically saves it as the target sync destination.
 
 ---

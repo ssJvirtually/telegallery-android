@@ -10,11 +10,11 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace 'com.example.tguploader'
+    namespace 'dev.ssjvirtually.tgpix'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.tguploader"
+        applicationId "dev.ssjvirtually.tgpix"
         minSdk 26
         targetSdk 34
         versionCode 1
