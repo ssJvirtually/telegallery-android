@@ -25,7 +25,7 @@ data class UpdateInfo(
 object UpdateManager {
     // We will query a version.json located in the main branch of the repository.
     // When the user pushes updates, they update this file.
-    private const val UPDATE_JSON_URL = "https://raw.githubusercontent.com/ssjvirtually/TGPix/main/version.json"
+    private const val UPDATE_JSON_URL = "https://raw.githubusercontent.com/ssJvirtually/TGPix/main/version.json"
 
     /**
      * Checks if a new version is available by comparing local VERSION_CODE with the one in version.json.
