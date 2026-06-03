@@ -10,6 +10,7 @@ import dev.ssjvirtually.tgpix.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import android.util.Log
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -27,18 +28,23 @@ object UpdateManager {
     // When the user pushes updates, they update this file.
     private const val UPDATE_JSON_URL = "https://raw.githubusercontent.com/ssJvirtually/TGPix/main/version.json"
 
+    private const val TAG = "TGPixUpdate"
+
     /**
      * Checks if a new version is available by comparing local VERSION_CODE with the one in version.json.
      */
     suspend fun checkForUpdates(): UpdateInfo? = withContext(Dispatchers.IO) {
+        Log.d(TAG, "Checking for updates from URL: $UPDATE_JSON_URL")
         try {
             val url = URL(UPDATE_JSON_URL)
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 8000
             connection.readTimeout = 8000
             
+            Log.d(TAG, "Connection response code: ${connection.responseCode}")
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 val responseText = connection.inputStream.bufferedReader().use { it.readText() }
+                Log.d(TAG, "Response JSON: $responseText")
                 val json = JSONObject(responseText)
                 
                 val latestVersionCode = json.getInt("versionCode")
@@ -48,8 +54,10 @@ object UpdateManager {
                 val releaseNotes = json.optString("releaseNotes", "")
                 
                 val currentVersionCode = BuildConfig.VERSION_CODE
+                Log.d(TAG, "Current versionCode: $currentVersionCode, Remote versionCode: $latestVersionCode")
                 
                 if (latestVersionCode > currentVersionCode) {
+                    Log.i(TAG, "New update available: v$latestVersionName (code $latestVersionCode)")
                     return@withContext UpdateInfo(
                         versionCode = latestVersionCode,
                         versionName = latestVersionName,
@@ -57,11 +65,13 @@ object UpdateManager {
                         forceUpdate = forceUpdate,
                         releaseNotes = releaseNotes
                     )
+                } else {
+                    Log.d(TAG, "App is up-to-date.")
                 }
             }
             null
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error checking for updates", e)
             null
         }
     }
@@ -74,6 +84,7 @@ object UpdateManager {
         apkUrl: String,
         onProgress: (Float) -> Unit
     ): File? = withContext(Dispatchers.IO) {
+        Log.d(TAG, "Downloading APK from: $apkUrl")
         try {
             val url = URL(apkUrl)
             val connection = url.openConnection() as HttpURLConnection
@@ -81,9 +92,11 @@ object UpdateManager {
             connection.readTimeout = 30000
             
             val fileLength = connection.contentLength
+            Log.d(TAG, "File length: $fileLength bytes")
             val apkFile = File(context.cacheDir, "TGPix-update.apk")
             if (apkFile.exists()) {
                 apkFile.delete()
+                Log.d(TAG, "Deleted old update file in cache.")
             }
             
             connection.inputStream.use { input ->
@@ -102,9 +115,10 @@ object UpdateManager {
                     }
                 }
             }
+            Log.i(TAG, "Download finished successfully. Path: ${apkFile.absolutePath}")
             apkFile
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error downloading APK", e)
             null
         }
     }
@@ -137,14 +151,17 @@ object UpdateManager {
      * Starts the Android Package Installer for the downloaded APK file.
      */
     fun installApk(context: Context, apkFile: File) {
+        Log.d(TAG, "installApk called with: ${apkFile.absolutePath}")
         val authority = "${context.packageName}.fileprovider"
         val apkUri = FileProvider.getUriForFile(context, authority, apkFile)
+        Log.d(TAG, "Generated FileProvider Uri: $apkUri")
         
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(apkUri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+        Log.i(TAG, "Launching package installer intent.")
         context.startActivity(intent)
     }
 }
