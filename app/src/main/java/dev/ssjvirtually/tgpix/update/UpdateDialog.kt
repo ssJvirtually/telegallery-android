@@ -164,25 +164,40 @@ fun UpdateDialog(
                         }
 
                         // Buttons
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            if (!updateInfo.forceUpdate) {
-                                TextButton(
-                                    onClick = onDismiss,
-                                    colors = ButtonDefaults.textButtonColors(contentColor = TelePhotosTheme.TextSecondary)
-                                ) {
-                                    Text("Later")
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
                             Button(
                                 onClick = { onStartDownload() },
                                 colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Update Now", color = Color.White)
+                            }
+                            
+                            if (!updateInfo.forceUpdate) {
+                                Button(
+                                    onClick = {
+                                        onStartDownload()
+                                        onRunInBackground()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.SurfaceVariant),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Update in Background", color = TelePhotosTheme.TextPrimary)
+                                }
+                                
+                                TextButton(
+                                    onClick = onDismiss,
+                                    colors = ButtonDefaults.textButtonColors(contentColor = TelePhotosTheme.TextSecondary),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Later")
+                                }
                             }
                         }
                     }

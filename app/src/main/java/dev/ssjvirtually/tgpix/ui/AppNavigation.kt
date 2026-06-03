@@ -173,6 +173,10 @@ fun AppNavigation() {
                 onDismiss = {
                     activeUpdateInfo = null
                     showUpdateDialog = false
+                    isBackgroundDownloading = false
+                    updateState = UpdateState.IDLE
+                    downloadedFile = null
+                    downloadProgress = 0f
                 }
             )
         }
