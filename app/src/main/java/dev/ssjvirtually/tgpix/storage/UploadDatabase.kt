@@ -51,7 +51,8 @@ data class CloudPhotoEntity(
     val localCachedThumbnailPath: String? = null,
     val localCachedLargePath: String? = null,
     val contentFingerprint: String = "",
-    val telegramThumbnailFileId: Int = 0
+    val telegramThumbnailFileId: Int = 0,
+    val tags: String = ""
 )
 
 @Dao
@@ -124,7 +125,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -163,6 +164,14 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE cloud_photos ADD COLUMN tags TEXT NOT NULL DEFAULT ''"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -170,7 +179,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

@@ -243,6 +243,7 @@ object TdlibManager {
                     var fileSize = 0L
                     var isDoc = false
                     var uploadedAt = msg.date.toLong() * 1000L
+                    var tags = ""
                     
                     if (content is TdApi.MessagePhoto) {
                         val sizes = content.photo.sizes
@@ -261,6 +262,7 @@ object TdlibManager {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
                                 fileSize = metadata.size
+                                tags = metadata.tags.joinToString(" ")
                             } else {
                                 fileName = if (captionText.isNotEmpty()) {
                                     captionText.substringBefore("\n").trim()
@@ -296,6 +298,7 @@ object TdlibManager {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
                                 fileSize = metadata.size
+                                tags = metadata.tags.joinToString(" ")
                             } else {
                                 fileName = docName
                             }
@@ -313,7 +316,8 @@ object TdlibManager {
                                 fileSize = fileSize,
                                 isDocument = isDoc,
                                 contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}",
-                                telegramThumbnailFileId = thumbFileId
+                                telegramThumbnailFileId = thumbFileId,
+                                tags = tags
                             )
                         )
                     }
@@ -362,7 +366,8 @@ object TdlibManager {
         val id: Long,
         val name: String,
         val size: Long,
-        val dateTaken: Long
+        val dateTaken: Long,
+        val tags: List<String> = emptyList()
     )
 
     private fun parseMetadataFromCaption(caption: String): ParsedMetadata? {
@@ -370,11 +375,21 @@ object TdlibManager {
         try {
             val jsonStr = caption.substringAfter("#tgpix_metadata").trim()
             val jsonObj = org.json.JSONObject(jsonStr)
+            
+            val tagsList = mutableListOf<String>()
+            val tagsArray = jsonObj.optJSONArray("tags")
+            if (tagsArray != null) {
+                for (i in 0 until tagsArray.length()) {
+                    tagsList.add(tagsArray.getString(i))
+                }
+            }
+
             return ParsedMetadata(
                 id = jsonObj.optLong("id", 0L),
                 name = jsonObj.optString("name", ""),
                 size = jsonObj.optLong("size", 0L),
-                dateTaken = jsonObj.optLong("dateTaken", 0L)
+                dateTaken = jsonObj.optLong("dateTaken", 0L),
+                tags = tagsList
             )
         } catch (e: Exception) {
             e.printStackTrace()

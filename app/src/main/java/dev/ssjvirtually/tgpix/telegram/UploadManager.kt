@@ -143,7 +143,10 @@ object UploadManager {
                         val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
                         val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
                         val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
-                        val metadataJson = """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken}}"""
+                        
+                        // Prepare tags for JSON storage (comma separated)
+                        val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
+                        val metadataJson = """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"tags":[$tagsJsonArray]}"""
 
                         val captionText = """
                             📷 **Photo Metadata**

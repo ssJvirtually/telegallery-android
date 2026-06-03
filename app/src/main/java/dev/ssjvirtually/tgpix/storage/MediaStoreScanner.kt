@@ -11,7 +11,8 @@ data class LocalPhoto(
     val uri: String,
     val name: String,
     val size: Long,
-    val dateTaken: Long
+    val dateTaken: Long,
+    val tags: String = ""
 )
 
 object MediaStoreScanner {

@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -648,6 +649,37 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
                     color = TelePhotosTheme.TextSecondary,
                     fontSize = 12.sp
                 )
+            }
+        }
+
+        // Tags element (if exists)
+        if (photo.tags.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Label,
+                    contentDescription = null,
+                    tint = TelePhotosTheme.AccentBlue,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = photo.tags,
+                        color = TelePhotosTheme.TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Tags",
+                        color = TelePhotosTheme.TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
 

@@ -126,7 +126,7 @@ fun AlbumsScreen(
             if (matchingLocal != null) {
                 // Match found: Display local photo as the verified copy
                 if (!addedUris.contains(matchingLocal.uri)) {
-                    list.add(matchingLocal)
+                    list.add(matchingLocal.copy(tags = cloud.tags))
                     addedUris.add(matchingLocal.uri)
                 }
                 matchedLocalKeys.add(matchingLocal.name.lowercase())
@@ -140,7 +140,8 @@ fun AlbumsScreen(
                             uri = cloudUri,
                             name = cloud.fileName,
                             size = cloud.fileSize,
-                            dateTaken = displayDate
+                            dateTaken = displayDate,
+                            tags = cloud.tags
                         )
                     )
                     addedUris.add(cloudUri)

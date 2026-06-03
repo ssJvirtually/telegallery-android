@@ -169,7 +169,7 @@ fun SearchScreen(
             
             if (matchingLocal != null) {
                 if (!addedUris.contains(matchingLocal.uri)) {
-                    list.add(matchingLocal)
+                    list.add(matchingLocal.copy(tags = cloud.tags))
                     addedUris.add(matchingLocal.uri)
                 }
                 matchedLocalKeys.add(matchingLocal.name.lowercase())
@@ -182,7 +182,8 @@ fun SearchScreen(
                             uri = cloudUri,
                             name = cloud.fileName,
                             size = cloud.fileSize,
-                            dateTaken = displayDate
+                            dateTaken = displayDate,
+                            tags = cloud.tags
                         )
                     )
                     addedUris.add(cloudUri)
@@ -206,7 +207,7 @@ fun SearchScreen(
             val formattedDate = try {
                 sdf.format(java.util.Date(photo.dateTaken)).lowercase()
             } catch (e: Exception) { "" }
-            val keywords = "${photo.name.lowercase()} $formattedDate"
+            val keywords = "${photo.name.lowercase()} ${photo.tags.lowercase()} $formattedDate"
             SearchItem(photo, keywords)
         }
     }
