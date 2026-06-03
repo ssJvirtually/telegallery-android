@@ -35,6 +35,16 @@ object TdlibManager {
 
     // Active upload tracking
     val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
+    val completedUploads = java.util.concurrent.ConcurrentHashMap<Long, TdApi.Object>()
+
+    fun registerPendingUpload(messageId: Long, callback: (TdApi.Object) -> Unit) {
+        val completed = completedUploads.remove(messageId)
+        if (completed != null) {
+            callback(completed)
+        } else {
+            pendingUploads[messageId] = callback
+        }
+    }
 
     fun addLog(msg: String) {
         val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
@@ -116,6 +126,11 @@ object TdlibManager {
                 val callback = pendingUploads.remove(oldId)
                 if (callback != null) {
                     callback(obj.message)
+                } else {
+                    if (completedUploads.size > 200) {
+                        completedUploads.clear()
+                    }
+                    completedUploads[oldId] = obj.message
                 }
                 cleanupSentMessageFile(context, obj.message)
             }
@@ -124,6 +139,11 @@ object TdlibManager {
                 val callback = pendingUploads.remove(oldId)
                 if (callback != null) {
                     callback(obj.error)
+                } else {
+                    if (completedUploads.size > 200) {
+                        completedUploads.clear()
+                    }
+                    completedUploads[oldId] = obj.error
                 }
             }
             is TdApi.UpdateNewChat -> {

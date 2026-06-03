@@ -64,7 +64,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
             TdlibManager.getClient().send(messageRequest) { result ->
                 if (result is TdApi.Message) {
                     // Register continuation to resume when UpdateMessageSendSucceeded fires
-                    TdlibManager.pendingUploads[result.id] = { res ->
+                    TdlibManager.registerPendingUpload(result.id) { res ->
                         continuation.resume(res)
                     }
                 } else {

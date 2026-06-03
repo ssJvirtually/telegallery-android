@@ -6,6 +6,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
+import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
@@ -201,7 +202,7 @@ object UploadManager {
                         TdlibManager.getClient().send(request) { result ->
                             if (result is TdApi.Message) {
                                 // Register continuation to resume when UpdateMessageSendSucceeded fires
-                                TdlibManager.pendingUploads[result.id] = { res ->
+                                TdlibManager.registerPendingUpload(result.id) { res ->
                                     continuation.resume(res)
                                 }
                                 val modeStr = if (isHd) "HD Lossless" else "Compressed"
@@ -263,46 +264,78 @@ object UploadManager {
         }
     }
 
+    private suspend fun downloadCloudPhoto(context: Context, cloudUri: String): File? {
+        val parts = cloudUri.substringAfter("cloud://").split("/")
+        if (parts.size < 3) return null
+        val messageId = parts[0].toLong()
+        val vaultChatId = PreferencesManager.getChatId(context)
+        if (vaultChatId == 0L) return null
+
+        try {
+            val messageResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                TdlibManager.getClient().send(TdApi.GetMessage(vaultChatId, messageId)) { res ->
+                    cont.resume(res)
+                }
+            }
+            if (messageResult is TdApi.Message) {
+                val content = messageResult.content
+                var targetFileId = 0
+                if (content is TdApi.MessagePhoto) {
+                    val sizes = content.photo.sizes
+                    if (sizes.isNotEmpty()) {
+                        targetFileId = sizes.last().photo.id
+                    }
+                } else if (content is TdApi.MessageDocument) {
+                    targetFileId = content.document.document.id
+                }
+
+                if (targetFileId != 0) {
+                    var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
+                        TdlibManager.getClient().send(TdApi.DownloadFile(targetFileId, 1, 0, 0, false)) { res ->
+                            cont.resume(res as? TdApi.File)
+                        }
+                    }
+                    var attempts = 0
+                    while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 15) {
+                        delay(1000)
+                        attempts++
+                        fileObj = suspendCancellableCoroutine { cont ->
+                            TdlibManager.getClient().send(TdApi.GetFile(targetFileId)) { res ->
+                                cont.resume(res as? TdApi.File)
+                            }
+                        }
+                    }
+                    if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                        val downloadedFile = File(fileObj.local.path)
+                        if (downloadedFile.exists() && downloadedFile.length() > 0L) {
+                            return downloadedFile
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
     suspend fun sharePhotosToTelegramChat(context: Context, photos: List<LocalPhoto>, targetChatId: Long): Boolean {
         return withContext(Dispatchers.IO) {
             var allSuccess = true
             val uploadCacheDir = File(context.cacheDir, "tgpix_temp_share")
             uploadCacheDir.mkdirs()
             
-            val chunks = photos.chunked(10)
-            for (chunk in chunks) {
-                val tempFiles = mutableListOf<File>()
-                val inputMessageContents = mutableListOf<TdApi.InputMessageContent>()
-                var prepareSuccess = true
-                
-                for (photo in chunk) {
+            val isHd = PreferencesManager.isHdMode(context)
+            
+            if (isHd) {
+                // Send each photo individually as a Document
+                for (photo in photos) {
                     val tempFile = File(uploadCacheDir, photo.name)
-                    tempFiles.add(tempFile)
                     try {
                         if (photo.uri.startsWith("cloud://")) {
-                            val parts = photo.uri.substringAfter("cloud://").split("/")
-                            val fileId = parts[1].toInt()
-                            
-                            var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
-                                TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { res ->
-                                    cont.resume(res as? TdApi.File)
-                                }
-                            }
-                            
-                            var attempts = 0
-                            while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 15) {
-                                delay(1000)
-                                attempts++
-                                fileObj = suspendCancellableCoroutine { cont ->
-                                    TdlibManager.getClient().send(TdApi.GetFile(fileId)) { res ->
-                                        cont.resume(res as? TdApi.File)
-                                    }
-                                }
-                            }
-                            
-                            if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
-                                val downloadedFile = File(fileObj.local.path)
-                                downloadedFile.copyTo(tempFile, overwrite = true)
+                            val downloaded = downloadCloudPhoto(context, photo.uri)
+                            if (downloaded != null && downloaded.exists()) {
+                                downloaded.copyTo(tempFile, overwrite = true)
                             }
                         } else {
                             val uri = Uri.parse(photo.uri)
@@ -314,41 +347,25 @@ object UploadManager {
                         }
                         
                         if (!tempFile.exists() || tempFile.length() == 0L) {
-                            prepareSuccess = false
-                            break
+                            allSuccess = false
+                            continue
                         }
                         
                         val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
-                        val inputMessageContent = TdApi.InputMessagePhoto().apply {
-                            this.photo = inputFile
+                        val inputMessageContent = TdApi.InputMessageDocument().apply {
+                            this.document = inputFile
                             caption = TdApi.FormattedText("Shared via TGPix", emptyArray())
                         }
-                        inputMessageContents.add(inputMessageContent)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        prepareSuccess = false
-                        break
-                    }
-                }
-                
-                if (!prepareSuccess || inputMessageContents.size != chunk.size) {
-                    allSuccess = false
-                    for (f in tempFiles) {
-                        try { if (f.exists()) f.delete() } catch (e: Exception) {}
-                    }
-                    continue
-                }
-                
-                try {
-                    if (inputMessageContents.size == 1) {
+                        
                         val request = TdApi.SendMessage().apply {
                             this.chatId = targetChatId
-                            this.inputMessageContent = inputMessageContents.first()
+                            this.inputMessageContent = inputMessageContent
                         }
+                        
                         val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
                             TdlibManager.getClient().send(request) { result ->
                                 if (result is TdApi.Message) {
-                                    TdlibManager.pendingUploads[result.id] = { res ->
+                                    TdlibManager.registerPendingUpload(result.id) { res ->
                                         cont.resume(res)
                                     }
                                 } else {
@@ -356,45 +373,126 @@ object UploadManager {
                                 }
                             }
                         }
+                        
                         if (res is TdApi.Error) {
                             allSuccess = false
                         }
-                    } else {
-                        val request = TdApi.SendMessageAlbum().apply {
-                            this.chatId = targetChatId
-                            this.inputMessageContents = inputMessageContents.toTypedArray()
-                        }
-                        val deferreds = mutableListOf<CompletableDeferred<TdApi.Object>>()
-                        val messagesResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
-                            TdlibManager.getClient().send(request) { result ->
-                                if (result is TdApi.Messages) {
-                                    for (msg in result.messages) {
-                                        val deferred = CompletableDeferred<TdApi.Object>()
-                                        deferreds.add(deferred)
-                                        TdlibManager.pendingUploads[msg.id] = { res ->
-                                            deferred.complete(res)
-                                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        allSuccess = false
+                    } finally {
+                        try { if (tempFile.exists()) tempFile.delete() } catch (e: Exception) {}
+                    }
+                }
+            } else {
+                // Send photos as compressed photo album chunks
+                val chunks = photos.chunked(10)
+                for (chunk in chunks) {
+                    val tempFiles = mutableListOf<File>()
+                    val inputMessageContents = mutableListOf<TdApi.InputMessageContent>()
+                    var prepareSuccess = true
+                    
+                    for (photo in chunk) {
+                        val tempFile = File(uploadCacheDir, photo.name)
+                        tempFiles.add(tempFile)
+                        try {
+                            if (photo.uri.startsWith("cloud://")) {
+                                val downloaded = downloadCloudPhoto(context, photo.uri)
+                                if (downloaded != null && downloaded.exists()) {
+                                    downloaded.copyTo(tempFile, overwrite = true)
+                                }
+                            } else {
+                                val uri = Uri.parse(photo.uri)
+                                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                    FileOutputStream(tempFile).use { outputStream ->
+                                        inputStream.copyTo(outputStream)
                                     }
                                 }
-                                cont.resume(result)
                             }
+                            
+                            if (!tempFile.exists() || tempFile.length() == 0L) {
+                                prepareSuccess = false
+                                break
+                            }
+                            
+                            val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
+                            val inputMessageContent = TdApi.InputMessagePhoto().apply {
+                                this.photo = inputFile
+                                caption = TdApi.FormattedText("Shared via TGPix", emptyArray())
+                            }
+                            inputMessageContents.add(inputMessageContent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            prepareSuccess = false
+                            break
                         }
-                        
-                        if (messagesResult is TdApi.Messages) {
-                            val results = deferreds.map { it.await() }
-                            if (results.any { it is TdApi.Error }) {
+                    }
+                    
+                    if (!prepareSuccess || inputMessageContents.size != chunk.size) {
+                        allSuccess = false
+                        for (f in tempFiles) {
+                            try { if (f.exists()) f.delete() } catch (e: Exception) {}
+                        }
+                        continue
+                    }
+                    
+                    try {
+                        if (inputMessageContents.size == 1) {
+                            val request = TdApi.SendMessage().apply {
+                                this.chatId = targetChatId
+                                this.inputMessageContent = inputMessageContents.first()
+                            }
+                            val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                                TdlibManager.getClient().send(request) { result ->
+                                    if (result is TdApi.Message) {
+                                        TdlibManager.registerPendingUpload(result.id) { res ->
+                                            cont.resume(res)
+                                        }
+                                    } else {
+                                        cont.resume(result)
+                                    }
+                                }
+                            }
+                            if (res is TdApi.Error) {
                                 allSuccess = false
                             }
                         } else {
-                            allSuccess = false
+                            val request = TdApi.SendMessageAlbum().apply {
+                                this.chatId = targetChatId
+                                this.inputMessageContents = inputMessageContents.toTypedArray()
+                            }
+                            val deferreds = mutableListOf<CompletableDeferred<TdApi.Object>>()
+                            val messagesResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                                TdlibManager.getClient().send(request) { result ->
+                                    if (result is TdApi.Messages) {
+                                        for (msg in result.messages) {
+                                            val deferred = CompletableDeferred<TdApi.Object>()
+                                            deferreds.add(deferred)
+                                            TdlibManager.registerPendingUpload(msg.id) { res ->
+                                                deferred.complete(res)
+                                            }
+                                        }
+                                    }
+                                    cont.resume(result)
+                                }
+                            }
+                            
+                            if (messagesResult is TdApi.Messages) {
+                                val results = deferreds.map { it.await() }
+                                if (results.any { it is TdApi.Error }) {
+                                    allSuccess = false
+                                }
+                            } else {
+                                allSuccess = false
+                            }
                         }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    allSuccess = false
-                } finally {
-                    for (f in tempFiles) {
-                        try { if (f.exists()) f.delete() } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        allSuccess = false
+                    } finally {
+                        for (f in tempFiles) {
+                            try { if (f.exists()) f.delete() } catch (e: Exception) {}
+                        }
                     }
                 }
             }
@@ -418,30 +516,10 @@ object UploadManager {
             for (photo in photos) {
                 if (photo.uri.startsWith("cloud://")) {
                     try {
-                        val parts = photo.uri.substringAfter("cloud://").split("/")
-                        val fileId = parts[1].toInt()
-                        
-                        var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
-                            TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { res ->
-                                cont.resume(res as? TdApi.File)
-                            }
-                        }
-                        
-                        var attempts = 0
-                        while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 15) {
-                            delay(1000)
-                            attempts++
-                            fileObj = suspendCancellableCoroutine { cont ->
-                                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { res ->
-                                    cont.resume(res as? TdApi.File)
-                                }
-                            }
-                        }
-                        
-                        if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                        val downloaded = downloadCloudPhoto(context, photo.uri)
+                        if (downloaded != null && downloaded.exists()) {
                             val tempFile = File(shareCacheDir, photo.name)
-                            val downloadedFile = File(fileObj.local.path)
-                            downloadedFile.copyTo(tempFile, overwrite = true)
+                            downloaded.copyTo(tempFile, overwrite = true)
                             
                             val authority = "${context.packageName}.fileprovider"
                             val uri = FileProvider.getUriForFile(context, authority, tempFile)
