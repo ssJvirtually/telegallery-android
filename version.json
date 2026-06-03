@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.0.6",
-  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v1.0.6/TGPix.apk",
+  "versionCode": 8,
+  "versionName": "1.0.7",
+  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v1.0.7/TGPix.apk",
   "forceUpdate": false,
-  "releaseNotes": "Fixes concurrent TDLib client initialization race condition on app/worker startups."
+  "releaseNotes": "Fixes duplicated photos in the timeline grid and selection mismatch"
 }
