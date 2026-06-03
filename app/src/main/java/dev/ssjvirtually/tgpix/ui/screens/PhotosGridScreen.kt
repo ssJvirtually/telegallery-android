@@ -22,6 +22,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -41,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -166,6 +169,12 @@ fun PhotosGridScreen(
         var isScanningLocal by remember { mutableStateOf(true) }
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+        var dragStartPhotoIndex by remember { mutableStateOf<Int?>(null) }
+        var dragCurrentPhotoIndex by remember { mutableStateOf<Int?>(null) }
+        var isDraggingToSelect by remember { mutableStateOf(false) }
+        var initialSelection by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+        var isSelecting by remember { mutableStateOf(true) }
+        var dragCurrentPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
         var showAddToAlbumDialog by remember { mutableStateOf(false) }
         var showTelegramShareDialog by remember { mutableStateOf(false) }
 
@@ -404,18 +413,10 @@ fun PhotosGridScreen(
                         // 1. Share Multi Action
                         IconButton(onClick = {
                             if (selectedPhotos.isNotEmpty()) {
-                                try {
-                                    val shareUris = ArrayList<Uri>().apply {
-                                        addAll(selectedPhotos.map { Uri.parse(it.uri) })
-                                    }
-                                    val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                                        type = "image/*"
-                                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, shareUris)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share Photos"))
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Sharing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                coroutineScope.launch {
+                                    UploadManager.sharePhotosToSystem(context, selectedPhotos.toList())
+                                    selectedPhotos.clear()
+                                    isSelectionMode = false
                                 }
                             }
                         }) {
@@ -433,9 +434,10 @@ fun PhotosGridScreen(
                             }
                         }) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Forward,
+                                imageVector = Icons.AutoMirrored.Filled.Send,
                                 contentDescription = "Forward to Telegram Chat",
-                                tint = TelePhotosTheme.AccentBlue
+                                tint = TelePhotosTheme.AccentBlue,
+                                modifier = Modifier.rotate(-30f)
                             )
                         }
 
@@ -716,6 +718,110 @@ fun PhotosGridScreen(
                                         scaleY = activeScale
                                         this.transformOrigin = transformOrigin
                                     }
+                                }
+                                .pointerInput(groupedPhotosList) {
+                                    detectDragGesturesAfterLongPress(
+                                        onDragStart = { startOffset ->
+                                            val startIndex = gridState.getItemIndexAt(startOffset)
+                                            val startItem = startIndex?.let { groupedPhotosList.getOrNull(it) }
+                                            if (startItem is GalleryItem.PhotoItem) {
+                                                dragStartPhotoIndex = startIndex
+                                                dragCurrentPhotoIndex = startIndex
+                                                dragCurrentPosition = startOffset
+                                                isDraggingToSelect = true
+                                                initialSelection = selectedPhotos.toList()
+                                                isSelecting = !initialSelection.contains(startItem.photo)
+                                                
+                                                if (isSelecting) {
+                                                    if (!selectedPhotos.contains(startItem.photo)) selectedPhotos.add(startItem.photo)
+                                                } else {
+                                                    selectedPhotos.remove(startItem.photo)
+                                                }
+                                                isSelectionMode = true
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                
+                                                // Start Auto-Scroll loop
+                                                coroutineScope.launch {
+                                                    while (isDraggingToSelect) {
+                                                        val currentY = dragCurrentPosition.y
+                                                        val containerHeight = containerHeightPx
+                                                        var scrollDelta = 0f
+                                                        
+                                                        if (currentY < 150f) {
+                                                            scrollDelta = -30f
+                                                        } else if (currentY > containerHeight - 150f) {
+                                                            scrollDelta = 30f
+                                                        }
+                                                        
+                                                        if (scrollDelta != 0f) {
+                                                            try {
+                                                                gridState.scrollBy(scrollDelta)
+                                                                val currentIndex = gridState.getItemIndexAt(dragCurrentPosition)
+                                                                if (currentIndex != null && currentIndex != dragCurrentPhotoIndex) {
+                                                                    dragCurrentPhotoIndex = currentIndex
+                                                                    val start = minOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                                    val end = maxOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                                    
+                                                                    val photosInRange = (start..end).mapNotNull { idx ->
+                                                                        (groupedPhotosList.getOrNull(idx) as? GalleryItem.PhotoItem)?.photo
+                                                                    }
+                                                                    
+                                                                    selectedPhotos.clear()
+                                                                    selectedPhotos.addAll(initialSelection)
+                                                                    for (photo in photosInRange) {
+                                                                        if (isSelecting) {
+                                                                            if (!selectedPhotos.contains(photo)) selectedPhotos.add(photo)
+                                                                        } else {
+                                                                            selectedPhotos.remove(photo)
+                                                                        }
+                                                                    }
+                                                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                                }
+                                                            } catch (e: Exception) {}
+                                                        }
+                                                        delay(30)
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        onDragEnd = {
+                                            isDraggingToSelect = false
+                                            dragStartPhotoIndex = null
+                                            dragCurrentPhotoIndex = null
+                                        },
+                                        onDragCancel = {
+                                            isDraggingToSelect = false
+                                            dragStartPhotoIndex = null
+                                            dragCurrentPhotoIndex = null
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            if (isDraggingToSelect && dragStartPhotoIndex != null) {
+                                                change.consume()
+                                                dragCurrentPosition += dragAmount
+                                                val currentIndex = gridState.getItemIndexAt(dragCurrentPosition)
+                                                if (currentIndex != null && currentIndex != dragCurrentPhotoIndex) {
+                                                    dragCurrentPhotoIndex = currentIndex
+                                                    val start = minOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                    val end = maxOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                    
+                                                    val photosInRange = (start..end).mapNotNull { idx ->
+                                                        (groupedPhotosList.getOrNull(idx) as? GalleryItem.PhotoItem)?.photo
+                                                    }
+                                                    
+                                                    selectedPhotos.clear()
+                                                    selectedPhotos.addAll(initialSelection)
+                                                    for (photo in photosInRange) {
+                                                        if (isSelecting) {
+                                                            if (!selectedPhotos.contains(photo)) selectedPhotos.add(photo)
+                                                        } else {
+                                                            selectedPhotos.remove(photo)
+                                                        }
+                                                    }
+                                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                }
+                                            }
+                                        }
+                                    )
                                 },
                             contentPadding = PaddingValues(1.dp),
                             verticalArrangement = Arrangement.spacedBy(1.dp),
@@ -1263,3 +1369,15 @@ private fun showCreateAlbumDialog(context: Context, onConfirm: (String) -> Unit)
         .setNegativeButton("Cancel", null)
         .show()
 }
+
+private fun androidx.compose.foundation.lazy.grid.LazyGridState.getItemIndexAt(offset: androidx.compose.ui.geometry.Offset): Int? {
+    val itemsInfo = layoutInfo.visibleItemsInfo
+    val matched = itemsInfo.find { item ->
+        val x = offset.x.toInt()
+        val y = offset.y.toInt()
+        x >= item.offset.x && x <= item.offset.x + item.size.width &&
+        y >= item.offset.y && y <= item.offset.y + item.size.height
+    }
+    return matched?.index
+}
+

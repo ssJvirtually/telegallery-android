@@ -127,22 +127,13 @@ class ShareWorker(
 
             val mainChatId = PreferencesManager.getChatId(applicationContext)
             val isHd = PreferencesManager.isHdMode(applicationContext)
-            var sharedCount = 0
 
-            // 5. Sharing pipeline loop
+            // 5. Backup-Before-Share pipeline loop (upload if local-only and not backed up yet)
             for ((index, photo) in photosToShare.withIndex()) {
-                val progressMsg = "Sharing: ${photo.name} (${index + 1}/${photosToShare.size})"
-                try {
-                    setForeground(createForegroundInfo(progressMsg))
-                } catch (e: Exception) {}
-
-                // Check sync status in backup database
                 val isSynced = db.dao().find(photo.uri) != null
-                
-                // A. Backup-Before-Share: upload if local-only and not backed up yet
                 if (!isSynced && !photo.uri.startsWith("cloud://") && mainChatId != 0L) {
                     try {
-                        val backupProgressMsg = "Backing up: ${photo.name} before sharing..."
+                        val backupProgressMsg = "Backing up: ${photo.name} before sharing (${index + 1}/${photosToShare.size})..."
                         setForeground(createForegroundInfo(backupProgressMsg))
                     } catch (e: Exception) {}
                     
@@ -160,15 +151,20 @@ class ShareWorker(
                         TdlibManager.addLog("ShareWorker: Failed to back up '${photo.name}' before sharing. Continuing.")
                     }
                 }
-
-                // B. Share to target chat
-                val shareResult = UploadManager.sharePhotosToTelegramChat(applicationContext, listOf(photo), targetChatId)
-                if (shareResult) {
-                    sharedCount++
-                }
             }
 
-            TdlibManager.addLog("ShareWorker: Manual sharing completed. Shared $sharedCount of ${photosToShare.size} items.")
+            // 6. Batch Share to target chat
+            try {
+                setForeground(createForegroundInfo("Sharing ${photosToShare.size} items..."))
+            } catch (e: Exception) {}
+            
+            val shareResult = UploadManager.sharePhotosToTelegramChat(applicationContext, photosToShare, targetChatId)
+            
+            if (shareResult) {
+                TdlibManager.addLog("ShareWorker: Manual sharing completed successfully for all ${photosToShare.size} items.")
+            } else {
+                TdlibManager.addLog("ShareWorker: Manual sharing finished, but some items failed.")
+            }
             return Result.success()
 
         } catch (e: Exception) {

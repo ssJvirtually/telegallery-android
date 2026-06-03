@@ -2,12 +2,17 @@ package dev.ssjvirtually.tgpix.telegram
 
 import android.content.Context
 import android.net.Uri
+import android.content.Intent
+import android.widget.Toast
+import androidx.core.content.FileProvider
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
 import org.drinkless.tdlib.TdApi
 import java.io.File
 import java.io.FileOutputStream
@@ -261,10 +266,152 @@ object UploadManager {
             val uploadCacheDir = File(context.cacheDir, "tgpix_temp_share")
             uploadCacheDir.mkdirs()
             
-            for (photo in photos) {
-                val tempFile = File(uploadCacheDir, photo.name)
+            val chunks = photos.chunked(10)
+            for (chunk in chunks) {
+                val tempFiles = mutableListOf<File>()
+                val inputMessageContents = mutableListOf<TdApi.InputMessageContent>()
+                var prepareSuccess = true
+                
+                for (photo in chunk) {
+                    val tempFile = File(uploadCacheDir, photo.name)
+                    tempFiles.add(tempFile)
+                    try {
+                        if (photo.uri.startsWith("cloud://")) {
+                            val parts = photo.uri.substringAfter("cloud://").split("/")
+                            val fileId = parts[1].toInt()
+                            
+                            var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
+                                TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { res ->
+                                    cont.resume(res as? TdApi.File)
+                                }
+                            }
+                            
+                            var attempts = 0
+                            while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 15) {
+                                delay(1000)
+                                attempts++
+                                fileObj = suspendCancellableCoroutine { cont ->
+                                    TdlibManager.getClient().send(TdApi.GetFile(fileId)) { res ->
+                                        cont.resume(res as? TdApi.File)
+                                    }
+                                }
+                            }
+                            
+                            if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                                val downloadedFile = File(fileObj.local.path)
+                                downloadedFile.copyTo(tempFile, overwrite = true)
+                            }
+                        } else {
+                            val uri = Uri.parse(photo.uri)
+                            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                                FileOutputStream(tempFile).use { outputStream ->
+                                    inputStream.copyTo(outputStream)
+                                }
+                            }
+                        }
+                        
+                        if (!tempFile.exists() || tempFile.length() == 0L) {
+                            prepareSuccess = false
+                            break
+                        }
+                        
+                        val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
+                        val inputMessageContent = TdApi.InputMessagePhoto().apply {
+                            this.photo = inputFile
+                            caption = TdApi.FormattedText("Shared via TGPix", emptyArray())
+                        }
+                        inputMessageContents.add(inputMessageContent)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        prepareSuccess = false
+                        break
+                    }
+                }
+                
+                if (!prepareSuccess || inputMessageContents.size != chunk.size) {
+                    allSuccess = false
+                    for (f in tempFiles) {
+                        try { if (f.exists()) f.delete() } catch (e: Exception) {}
+                    }
+                    continue
+                }
+                
                 try {
-                    if (photo.uri.startsWith("cloud://")) {
+                    if (inputMessageContents.size == 1) {
+                        val request = TdApi.SendMessage().apply {
+                            this.chatId = targetChatId
+                            this.inputMessageContent = inputMessageContents.first()
+                        }
+                        val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                            TdlibManager.getClient().send(request) { result ->
+                                if (result is TdApi.Message) {
+                                    TdlibManager.pendingUploads[result.id] = cont
+                                } else {
+                                    cont.resume(result)
+                                }
+                            }
+                        }
+                        if (res is TdApi.Error) {
+                            allSuccess = false
+                        }
+                    } else {
+                        val request = TdApi.SendMessageAlbum().apply {
+                            this.chatId = targetChatId
+                            this.inputMessageContents = inputMessageContents.toTypedArray()
+                        }
+                        val messagesResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                            TdlibManager.getClient().send(request) { result ->
+                                cont.resume(result)
+                            }
+                        }
+                        
+                        if (messagesResult is TdApi.Messages) {
+                            coroutineScope {
+                                val jobs = messagesResult.messages.map { msg ->
+                                    async {
+                                        suspendCancellableCoroutine<TdApi.Object> { cont ->
+                                            TdlibManager.pendingUploads[msg.id] = cont
+                                        }
+                                    }
+                                }
+                                val results = jobs.map { it.await() }
+                                if (results.any { it is TdApi.Error }) {
+                                    allSuccess = false
+                                }
+                            }
+                        } else {
+                            allSuccess = false
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    allSuccess = false
+                } finally {
+                    for (f in tempFiles) {
+                        try { if (f.exists()) f.delete() } catch (e: Exception) {}
+                    }
+                }
+            }
+            allSuccess
+        }
+    }
+
+    suspend fun sharePhotosToSystem(context: Context, photos: List<LocalPhoto>) {
+        withContext(Dispatchers.IO) {
+            val shareCacheDir = File(context.cacheDir, "tgpix_temp_share")
+            shareCacheDir.mkdirs()
+            
+            val hasCloudPhotos = photos.any { it.uri.startsWith("cloud://") }
+            if (hasCloudPhotos) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Preparing cloud photos for sharing...", Toast.LENGTH_SHORT).show()
+                }
+            }
+            
+            val shareUris = ArrayList<android.net.Uri>()
+            for (photo in photos) {
+                if (photo.uri.startsWith("cloud://")) {
+                    try {
                         val parts = photo.uri.substringAfter("cloud://").split("/")
                         val fileId = parts[1].toInt()
                         
@@ -286,61 +433,36 @@ object UploadManager {
                         }
                         
                         if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                            val tempFile = File(shareCacheDir, photo.name)
                             val downloadedFile = File(fileObj.local.path)
                             downloadedFile.copyTo(tempFile, overwrite = true)
-                        }
-                    } else {
-                        val uri = Uri.parse(photo.uri)
-                        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                            FileOutputStream(tempFile).use { outputStream ->
-                                inputStream.copyTo(outputStream)
-                            }
-                        }
-                    }
-                    
-                    if (!tempFile.exists() || tempFile.length() == 0L) {
-                        allSuccess = false
-                        continue
-                    }
-                    
-                    val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
-                    val inputMessageContent = TdApi.InputMessagePhoto().apply {
-                        this.photo = inputFile
-                        caption = TdApi.FormattedText("Shared via TGPix", emptyArray())
-                    }
-                    
-                    val request = TdApi.SendMessage().apply {
-                        this.chatId = targetChatId
-                        this.inputMessageContent = inputMessageContent
-                    }
-                    
-                    val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
-                        TdlibManager.getClient().send(request) { result ->
-                            if (result is TdApi.Message) {
-                                TdlibManager.pendingUploads[result.id] = cont
-                            } else {
-                                cont.resume(result)
-                            }
-                        }
-                    }
-                    
-                    if (res is TdApi.Error) {
-                        allSuccess = false
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    allSuccess = false
-                } finally {
-                    try {
-                        if (tempFile.exists()) {
-                            tempFile.delete()
+                            
+                            val authority = "${context.packageName}.fileprovider"
+                            val uri = FileProvider.getUriForFile(context, authority, tempFile)
+                            shareUris.add(uri)
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                } else {
+                    shareUris.add(android.net.Uri.parse(photo.uri))
                 }
             }
-            allSuccess
+            
+            if (shareUris.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                        type = "image/*"
+                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, shareUris)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Photos"))
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "No photos could be prepared for sharing.", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }

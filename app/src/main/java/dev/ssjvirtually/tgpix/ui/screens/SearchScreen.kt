@@ -7,26 +7,35 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -71,6 +80,13 @@ fun SearchScreen(
     
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+    var showTelegramShareDialog by remember { mutableStateOf(false) }
+    var dragStartPhotoIndex by remember { mutableStateOf<Int?>(null) }
+    var dragCurrentPhotoIndex by remember { mutableStateOf<Int?>(null) }
+    var isDraggingToSelect by remember { mutableStateOf(false) }
+    var initialSelection by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+    var isSelecting by remember { mutableStateOf(true) }
+    var dragCurrentPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
 
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
@@ -222,6 +238,28 @@ fun SearchScreen(
         }
     }
 
+    // Group filtered photos by clean human-readable date header
+    val groupedPhotosList = remember(filteredPhotos) {
+        val list = mutableListOf<GalleryItem>()
+        val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
+        var lastDateHeader = ""
+
+        for (photo in filteredPhotos) {
+            val dateHeader = try {
+                sdfHeader.format(java.util.Date(photo.dateTaken))
+            } catch (e: Exception) {
+                "Unknown Date"
+            }
+
+            if (dateHeader != lastDateHeader) {
+                list.add(GalleryItem.Header(dateHeader))
+                lastDateHeader = dateHeader
+            }
+            list.add(GalleryItem.PhotoItem(photo))
+        }
+        list
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -262,18 +300,10 @@ fun SearchScreen(
                     // Batch Share Action
                     IconButton(onClick = {
                         if (selectedPhotos.isNotEmpty()) {
-                            try {
-                                val shareUris = ArrayList<Uri>().apply {
-                                    addAll(selectedPhotos.map { Uri.parse(it.uri) })
-                                }
-                                val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                                    type = "image/*"
-                                    putParcelableArrayListExtra(Intent.EXTRA_STREAM, shareUris)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share Photos"))
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Sharing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            coroutineScope.launch {
+                                UploadManager.sharePhotosToSystem(context, selectedPhotos.toList())
+                                selectedPhotos.clear()
+                                isSelectionMode = false
                             }
                         }
                     }) {
@@ -281,6 +311,20 @@ fun SearchScreen(
                             imageVector = Icons.Default.Share,
                             contentDescription = "Share selected",
                             tint = TelePhotosTheme.AccentBlue
+                        )
+                    }
+                    
+                    // Telegram Share Action (Instagram-like paper airplane icon)
+                    IconButton(onClick = {
+                        if (selectedPhotos.isNotEmpty()) {
+                            showTelegramShareDialog = true
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Share to Telegram Chat",
+                            tint = TelePhotosTheme.AccentBlue,
+                            modifier = Modifier.rotate(-30f)
                         )
                     }
                     
@@ -461,7 +505,7 @@ fun SearchScreen(
                 val gridState = rememberLazyGridState()
                 val haptic = LocalHapticFeedback.current
                 
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
                         .pointerInput(Unit) { // Dynamic Zoom Columns
@@ -506,6 +550,7 @@ fun SearchScreen(
                             }
                         }
                 ) {
+                    val containerHeightPx = constraints.maxHeight.toFloat()
                     LazyVerticalGrid(
                         state = gridState,
                         columns = GridCells.Fixed(gridColumns),
@@ -517,137 +562,498 @@ fun SearchScreen(
                                     scaleY = activeScale
                                     this.transformOrigin = transformOrigin
                                 }
+                            }
+                            .pointerInput(groupedPhotosList) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { startOffset ->
+                                        val startIndex = gridState.getItemIndexAt(startOffset)
+                                        val startItem = startIndex?.let { groupedPhotosList.getOrNull(it) }
+                                        if (startItem is GalleryItem.PhotoItem) {
+                                            dragStartPhotoIndex = startIndex
+                                            dragCurrentPhotoIndex = startIndex
+                                            dragCurrentPosition = startOffset
+                                            isDraggingToSelect = true
+                                            initialSelection = selectedPhotos.toList()
+                                            isSelecting = !initialSelection.contains(startItem.photo)
+                                            
+                                            if (isSelecting) {
+                                                if (!selectedPhotos.contains(startItem.photo)) selectedPhotos.add(startItem.photo)
+                                            } else {
+                                                selectedPhotos.remove(startItem.photo)
+                                            }
+                                            isSelectionMode = true
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            
+                                            // Start Auto-Scroll loop
+                                            coroutineScope.launch {
+                                                while (isDraggingToSelect) {
+                                                    val currentY = dragCurrentPosition.y
+                                                    val containerHeight = containerHeightPx
+                                                    var scrollDelta = 0f
+                                                    
+                                                    if (currentY < 150f) {
+                                                        scrollDelta = -30f
+                                                    } else if (currentY > containerHeight - 150f) {
+                                                        scrollDelta = 30f
+                                                    }
+                                                    
+                                                    if (scrollDelta != 0f) {
+                                                        try {
+                                                            gridState.scrollBy(scrollDelta)
+                                                            val currentIndex = gridState.getItemIndexAt(dragCurrentPosition)
+                                                            if (currentIndex != null && currentIndex != dragCurrentPhotoIndex) {
+                                                                dragCurrentPhotoIndex = currentIndex
+                                                                val start = minOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                                val end = maxOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                                
+                                                                val photosInRange = (start..end).mapNotNull { idx ->
+                                                                    (groupedPhotosList.getOrNull(idx) as? GalleryItem.PhotoItem)?.photo
+                                                                }
+                                                                
+                                                                selectedPhotos.clear()
+                                                                selectedPhotos.addAll(initialSelection)
+                                                                for (photo in photosInRange) {
+                                                                    if (isSelecting) {
+                                                                        if (!selectedPhotos.contains(photo)) selectedPhotos.add(photo)
+                                                                    } else {
+                                                                        selectedPhotos.remove(photo)
+                                                                    }
+                                                                }
+                                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                            }
+                                                        } catch (e: Exception) {}
+                                                    }
+                                                    delay(30)
+                                                }
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        isDraggingToSelect = false
+                                        dragStartPhotoIndex = null
+                                        dragCurrentPhotoIndex = null
+                                    },
+                                    onDragCancel = {
+                                        isDraggingToSelect = false
+                                        dragStartPhotoIndex = null
+                                        dragCurrentPhotoIndex = null
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        if (isDraggingToSelect && dragStartPhotoIndex != null) {
+                                            change.consume()
+                                            dragCurrentPosition += dragAmount
+                                            val currentIndex = gridState.getItemIndexAt(dragCurrentPosition)
+                                            if (currentIndex != null && currentIndex != dragCurrentPhotoIndex) {
+                                                dragCurrentPhotoIndex = currentIndex
+                                                val start = minOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                val end = maxOf(dragStartPhotoIndex!!, dragCurrentPhotoIndex!!)
+                                                
+                                                val photosInRange = (start..end).mapNotNull { idx ->
+                                                    (groupedPhotosList.getOrNull(idx) as? GalleryItem.PhotoItem)?.photo
+                                                }
+                                                
+                                                selectedPhotos.clear()
+                                                selectedPhotos.addAll(initialSelection)
+                                                for (photo in photosInRange) {
+                                                    if (isSelecting) {
+                                                        if (!selectedPhotos.contains(photo)) selectedPhotos.add(photo)
+                                                    } else {
+                                                        selectedPhotos.remove(photo)
+                                                    }
+                                                }
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            }
+                                        }
+                                    }
+                                )
                             },
                         contentPadding = PaddingValues(1.dp),
                         verticalArrangement = Arrangement.spacedBy(1.dp),
                         horizontalArrangement = Arrangement.spacedBy(1.dp)
                     ) {
-                        items(filteredPhotos) { photo ->
-                            val isSynced = uploadedUris.contains(photo.uri)
-                            val isCloud = isCloudPhoto(photo.uri)
-                            val isSelected = selectedPhotos.contains(photo)
-
-                            Box(
-                                modifier = Modifier
-                                    .aspectRatio(1f)
-                                    .background(TelePhotosTheme.SurfaceVariant)
-                                    .combinedClickable(
-                                        onClick = {
-                                            if (isSelectionMode) {
-                                                if (isSelected) {
-                                                    selectedPhotos.remove(photo)
-                                                    if (selectedPhotos.isEmpty()) {
-                                                        isSelectionMode = false
-                                                    }
-                                                } else {
-                                                    selectedPhotos.add(photo)
-                                                }
-                                            } else {
-                                                val index = filteredPhotos.indexOf(photo)
-                                                if (index != -1) {
-                                                    onPhotoSelected(index, filteredPhotos)
-                                                }
-                                            }
-                                        },
-                                        onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            if (!isSelectionMode) {
-                                                isSelectionMode = true
-                                                selectedPhotos.add(photo)
-                                            }
-                                        }
-                                    )
-                            ) {
-                                if (isCloud) {
-                                     val localThumbnailPath = rememberCloudThumbnailPath(
-                                         messageId = -photo.id,
-                                         isThumbnail = true
-                                     )
-                                     if (localThumbnailPath != null) {
-                                         AsyncImage(
-                                             model = ImageRequest.Builder(LocalContext.current)
-                                                 .data(localThumbnailPath)
-                                                 .crossfade(true)
-                                                 .build(),
-                                             contentDescription = photo.name,
-                                             contentScale = ContentScale.Crop,
-                                             modifier = Modifier.fillMaxSize()
-                                         )
-                                     } else {
-                                         Box(
-                                             modifier = Modifier.fillMaxSize(),
-                                             contentAlignment = Alignment.Center
-                                         ) {
-                                             CircularProgressIndicator(
-                                                 color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
-                                                 modifier = Modifier.size(24.dp),
-                                                 strokeWidth = 2.dp
-                                             )
-                                         }
-                                     }
-                                 } else {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(photo.uri)
-                                            .crossfade(true)
-                                            .build(),
-                                        contentDescription = photo.name,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                        groupedPhotosList.forEach { item ->
+                            when (item) {
+                                is GalleryItem.Header -> {
+                                    item(span = { GridItemSpan(gridColumns) }) {
+                                        Text(
+                                            text = item.date,
+                                            color = TelePhotosTheme.TextPrimary,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(TelePhotosTheme.Background)
+                                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                        )
+                                    }
                                 }
 
-                                if (isSelectionMode) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(6.dp),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
+                                is GalleryItem.PhotoItem -> {
+                                    val photo = item.photo
+                                    val isSynced = uploadedUris.contains(photo.uri)
+                                    val isCloud = isCloudPhoto(photo.uri)
+                                    val isSelected = selectedPhotos.contains(photo)
+
+                                    item {
                                         Box(
                                             modifier = Modifier
-                                                .size(20.dp)
-                                                .clip(CircleShape)
-                                                .background(
-                                                    if (isSelected) TelePhotosTheme.AccentBlue else Color.Black.copy(alpha = 0.35f)
+                                                .aspectRatio(1f)
+                                                .background(TelePhotosTheme.SurfaceVariant)
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        if (isSelectionMode) {
+                                                            if (isSelected) {
+                                                                selectedPhotos.remove(photo)
+                                                                if (selectedPhotos.isEmpty()) {
+                                                                    isSelectionMode = false
+                                                                }
+                                                            } else {
+                                                                selectedPhotos.add(photo)
+                                                            }
+                                                        } else {
+                                                            val plainPhotos = groupedPhotosList.filterIsInstance<GalleryItem.PhotoItem>().map { it.photo }
+                                                            val index = plainPhotos.indexOf(photo)
+                                                            if (index != -1) {
+                                                                onPhotoSelected(index, plainPhotos)
+                                                            }
+                                                        }
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        if (!isSelectionMode) {
+                                                            isSelectionMode = true
+                                                            selectedPhotos.add(photo)
+                                                        }
+                                                    }
                                                 )
-                                                .border(1.5.dp, Color.White, CircleShape),
-                                            contentAlignment = Alignment.Center
                                         ) {
-                                            if (isSelected) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Check,
-                                                    contentDescription = null,
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(12.dp)
+                                            if (isCloud) {
+                                                 val localThumbnailPath = rememberCloudThumbnailPath(
+                                                     messageId = -photo.id,
+                                                     isThumbnail = true
+                                                 )
+                                                 if (localThumbnailPath != null) {
+                                                     AsyncImage(
+                                                         model = ImageRequest.Builder(LocalContext.current)
+                                                             .data(localThumbnailPath)
+                                                             .crossfade(true)
+                                                             .build(),
+                                                         contentDescription = photo.name,
+                                                         contentScale = ContentScale.Crop,
+                                                         modifier = Modifier.fillMaxSize()
+                                                     )
+                                                 } else {
+                                                     Box(
+                                                         modifier = Modifier.fillMaxSize(),
+                                                         contentAlignment = Alignment.Center
+                                                     ) {
+                                                         CircularProgressIndicator(
+                                                             color = TelePhotosTheme.AccentBlue.copy(alpha = 0.4f),
+                                                             modifier = Modifier.size(24.dp),
+                                                             strokeWidth = 2.dp
+                                                         )
+                                                     }
+                                                 }
+                                             } else {
+                                                AsyncImage(
+                                                    model = ImageRequest.Builder(LocalContext.current)
+                                                        .data(photo.uri)
+                                                        .crossfade(true)
+                                                        .build(),
+                                                    contentDescription = photo.name,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
                                                 )
+                                            }
+
+                                            if (isSelectionMode) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(6.dp),
+                                                    contentAlignment = Alignment.TopStart
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(20.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                if (isSelected) TelePhotosTheme.AccentBlue else Color.Black.copy(alpha = 0.35f)
+                                                            )
+                                                            .border(1.5.dp, Color.White, CircleShape),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        if (isSelected) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Check,
+                                                                contentDescription = null,
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(12.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                if (!isSynced && !isCloud) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .padding(6.dp),
+                                                        contentAlignment = Alignment.BottomEnd
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .size(20.dp)
+                                                                .clip(CircleShape)
+                                                                .background(Color.Black.copy(alpha = 0.35f)),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.CloudUpload,
+                                                                contentDescription = "Not Synced",
+                                                                tint = Color.White.copy(alpha = 0.9f),
+                                                                modifier = Modifier.size(11.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    // --- Custom Premium Google Photos-style Scrollbar ---
+                    val totalItems = groupedPhotosList.size
+                    if (totalItems > 5) {
+                        val monthSections = remember(groupedPhotosList) {
+                            val sections = mutableListOf<Int>()
+                            val seenMonths = mutableSetOf<String>()
+                            val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
+                            val sdfMonthYear = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.US)
+                            
+                            for (index in groupedPhotosList.indices) {
+                                val item = groupedPhotosList[index]
+                                val dateMs = when (item) {
+                                    is GalleryItem.Header -> {
+                                        try {
+                                            sdfHeader.parse(item.date)?.time ?: 0L
+                                        } catch (e: Exception) {
+                                            0L
+                                        }
+                                    }
+                                    is GalleryItem.PhotoItem -> item.photo.dateTaken
+                                }
+                                
+                                if (dateMs > 0L) {
+                                    val monthKey = sdfMonthYear.format(java.util.Date(dateMs))
+                                    if (seenMonths.add(monthKey)) {
+                                        sections.add(index)
+                                    }
+                                }
+                            }
+                            if (sections.isEmpty()) sections.add(0)
+                            sections
+                        }
+
+                        val firstVisibleIndex = gridState.firstVisibleItemIndex
+                        val firstVisibleOffset = gridState.firstVisibleItemScrollOffset
+
+                        val scrollFraction = remember(firstVisibleIndex, firstVisibleOffset, totalItems) {
+                            if (totalItems <= 1) 0f
+                            else {
+                                val itemFraction = firstVisibleIndex.toFloat() / totalItems.toFloat()
+                                val detailOffset = if (gridState.layoutInfo.visibleItemsInfo.isNotEmpty()) {
+                                    val itemHeight = gridState.layoutInfo.visibleItemsInfo.first().size.height
+                                    if (itemHeight > 0) {
+                                        (firstVisibleOffset.toFloat() / itemHeight.toFloat()) / totalItems.toFloat()
+                                    } else 0f
+                                } else 0f
+                                (itemFraction + detailOffset).coerceIn(0f, 1f)
+                            }
+                        }
+
+                        var isDragging by remember { mutableStateOf(false) }
+                        var dragOffsetFraction by remember { mutableStateOf(0f) }
+
+                        // Auto-fade scrollbar logic matching Telegram/Google Photos
+                        var scrollbarAlpha by remember { mutableStateOf(0f) }
+                        LaunchedEffect(gridState.isScrollInProgress, isDragging) {
+                            if (gridState.isScrollInProgress || isDragging) {
+                                scrollbarAlpha = 1f
+                            } else {
+                                // Wait 1.5s then fade out
+                                kotlinx.coroutines.delay(1500)
+                                scrollbarAlpha = 0f
+                            }
+                        }
+
+                        // Haptic feedback when transitioning to a new month section during scroll or drag
+                        val currentMonthKey = remember(firstVisibleIndex, monthSections) {
+                            var activeSectionIdx = 0
+                            for (i in monthSections.indices) {
+                                if (monthSections[i] <= firstVisibleIndex) {
+                                    activeSectionIdx = i
                                 } else {
-                                    if (!isSynced && !isCloud) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(6.dp),
-                                            contentAlignment = Alignment.BottomEnd
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(20.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color.Black.copy(alpha = 0.35f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.CloudUpload,
-                                                    contentDescription = "Not Synced",
-                                                    tint = Color.White.copy(alpha = 0.9f),
-                                                    modifier = Modifier.size(11.dp)
-                                                )
+                                    break
+                                }
+                            }
+                            activeSectionIdx
+                        }
+                        LaunchedEffect(currentMonthKey) {
+                            if (gridState.isScrollInProgress || isDragging) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                        }
+
+                        val animatedAlpha by animateFloatAsState(
+                            targetValue = scrollbarAlpha,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "scrollbar_alpha"
+                        )
+
+                        if (animatedAlpha > 0f) {
+                            val density = androidx.compose.ui.platform.LocalDensity.current
+                            val paddingPx = with(density) { 32.dp.toPx() }
+                            val trackHeightPx = containerHeightPx - (paddingPx * 2)
+
+                            val thumbHeightDp = 36.dp
+                            val thumbHeightPx = with(density) { thumbHeightDp.toPx() }
+                            val scrollableRangePx = trackHeightPx - thumbHeightPx
+
+                            val activeFraction = if (isDragging) dragOffsetFraction else scrollFraction
+                            val thumbYPx = paddingPx + (activeFraction * scrollableRangePx)
+
+                            val thumbY = with(density) { thumbYPx.toDp() }
+
+                            // Drag & Touch Area Overlay
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .fillMaxHeight()
+                                    .width(36.dp)
+                                    .graphicsLayer { alpha = animatedAlpha }
+                                    .pointerInput(containerHeightPx, scrollableRangePx) {
+                                        detectVerticalDragGestures(
+                                            onDragStart = { startPosition ->
+                                                isDragging = true
+                                                val relativeY = (startPosition.y - paddingPx - (thumbHeightPx / 2))
+                                                dragOffsetFraction = (relativeY / scrollableRangePx).coerceIn(0f, 1f)
+                                                coroutineScope.launch {
+                                                    val targetSectionIndex = (dragOffsetFraction * monthSections.size).toInt().coerceIn(0, monthSections.size - 1)
+                                                    val targetGridIndex = monthSections[targetSectionIndex]
+                                                    gridState.scrollToItem(targetGridIndex)
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                isDragging = false
+                                            },
+                                            onDragCancel = {
+                                                isDragging = false
+                                            },
+                                            onVerticalDrag = { change, dragAmount ->
+                                                change.consume()
+                                                val currentY = paddingPx + (dragOffsetFraction * scrollableRangePx)
+                                                val newY = currentY + dragAmount
+                                                dragOffsetFraction = ((newY - paddingPx) / scrollableRangePx).coerceIn(0f, 1f)
+                                                
+                                                coroutineScope.launch {
+                                                    val targetSectionIndex = (dragOffsetFraction * monthSections.size).toInt().coerceIn(0, monthSections.size - 1)
+                                                    val targetGridIndex = monthSections[targetSectionIndex]
+                                                    gridState.scrollToItem(targetGridIndex)
+                                                }
+                                            }
+                                        )
+                                    }
+                            ) {
+                                // Track line
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .fillMaxHeight()
+                                        .padding(vertical = 32.dp)
+                                        .width(2.dp)
+                                        .background(
+                                            color = if (isDragging) TelePhotosTheme.TextSecondary.copy(alpha = 0.3f)
+                                            else TelePhotosTheme.TextSecondary.copy(alpha = 0.1f),
+                                            shape = RoundedCornerShape(1.dp)
+                                        )
+                                )
+                                
+                                // Handle Thumb
+                                Box(
+                                    modifier = Modifier
+                                        .offset(y = thumbY)
+                                        .align(Alignment.TopEnd)
+                                        .padding(end = 4.dp)
+                                        .size(36.dp)
+                                        .shadow(
+                                            elevation = if (isDragging) 8.dp else 4.dp,
+                                            shape = CircleShape
+                                        )
+                                        .background(
+                                            color = Color.White,
+                                            shape = CircleShape
+                                        )
+                                        .border(
+                                            width = 0.5.dp,
+                                            color = Color.LightGray.copy(alpha = 0.5f),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.UnfoldMore,
+                                        contentDescription = "Scroll handle",
+                                        tint = Color.DarkGray,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            // Floating Date Bubble
+                            val activeSectionIndex = (activeFraction * (monthSections.size - 1)).toInt().coerceIn(0, monthSections.size - 1)
+                            val activeItemIndex = monthSections.getOrNull(activeSectionIndex) ?: 0
+                            val activeItem = groupedPhotosList.getOrNull(activeItemIndex)
+
+                            val bubbleText = remember(activeItem) {
+                                if (activeItem == null) ""
+                                else {
+                                    when (activeItem) {
+                                        is GalleryItem.Header -> activeItem.date
+                                        is GalleryItem.PhotoItem -> {
+                                            try {
+                                                val sdfMonth = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+                                                sdfMonth.format(java.util.Date(activeItem.photo.dateTaken))
+                                            } catch (e: Exception) {
+                                                ""
                                             }
                                         }
                                     }
+                                }
+                            }
+
+                            if (isDragging && bubbleText.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .offset(y = thumbY - 8.dp)
+                                        .align(Alignment.TopEnd)
+                                        .padding(end = 48.dp)
+                                        .background(
+                                            color = TelePhotosTheme.AccentBlue,
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = bubbleText,
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
@@ -656,4 +1062,27 @@ fun SearchScreen(
             }
         }
     }
+
+    if (showTelegramShareDialog) {
+        TelegramShareDialog(
+            photosToShare = selectedPhotos.toList(),
+            onDismissRequest = { showTelegramShareDialog = false },
+            onShareComplete = {
+                showTelegramShareDialog = false
+                selectedPhotos.clear()
+                isSelectionMode = false
+            }
+        )
+    }
+}
+
+private fun androidx.compose.foundation.lazy.grid.LazyGridState.getItemIndexAt(offset: androidx.compose.ui.geometry.Offset): Int? {
+    val itemsInfo = layoutInfo.visibleItemsInfo
+    val matched = itemsInfo.find { item ->
+        val x = offset.x.toInt()
+        val y = offset.y.toInt()
+        x >= item.offset.x && x <= item.offset.x + item.size.width &&
+        y >= item.offset.y && y <= item.offset.y + item.size.height
+    }
+    return matched?.index
 }
