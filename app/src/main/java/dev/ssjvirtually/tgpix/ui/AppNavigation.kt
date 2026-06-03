@@ -26,6 +26,7 @@ import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.*
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
+import dev.ssjvirtually.tgpix.update.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -41,6 +42,15 @@ fun AppNavigation() {
 
     val selectedChatId = remember { mutableStateOf(PreferencesManager.getChatId(context)) }
     val selectedChatTitle = remember { mutableStateOf(PreferencesManager.getChatTitle(context)) }
+
+    var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+
+    LaunchedEffect(Unit) {
+        val update = UpdateManager.checkForUpdates()
+        if (update != null) {
+            activeUpdateInfo = update
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -98,6 +108,13 @@ fun AppNavigation() {
                     )
                 }
             }
+        }
+
+        activeUpdateInfo?.let { updateInfo ->
+            UpdateDialog(
+                updateInfo = updateInfo,
+                onDismiss = { activeUpdateInfo = null }
+            )
         }
     }
 }
