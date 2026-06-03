@@ -27,6 +27,8 @@ import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.*
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.update.*
+import android.widget.Toast
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,11 +46,20 @@ fun AppNavigation() {
     val selectedChatTitle = remember { mutableStateOf(PreferencesManager.getChatTitle(context)) }
 
     var activeUpdateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var updateState by remember { mutableStateOf(UpdateState.IDLE) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+    var downloadedFile by remember { mutableStateOf<File?>(null) }
+    var isBackgroundDownloading by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val update = UpdateManager.checkForUpdates()
         if (update != null) {
             activeUpdateInfo = update
+            showUpdateDialog = true
         }
     }
 
@@ -110,10 +121,59 @@ fun AppNavigation() {
             }
         }
 
-        activeUpdateInfo?.let { updateInfo ->
+        if (activeUpdateInfo != null && showUpdateDialog) {
             UpdateDialog(
-                updateInfo = updateInfo,
-                onDismiss = { activeUpdateInfo = null }
+                updateInfo = activeUpdateInfo!!,
+                updateState = updateState,
+                downloadProgress = downloadProgress,
+                downloadedFile = downloadedFile,
+                errorMessage = errorMessage,
+                onStartDownload = {
+                    updateState = UpdateState.DOWNLOADING
+                    downloadProgress = 0f
+                    errorMessage = null
+                    coroutineScope.launch {
+                        val file = UpdateManager.downloadApk(context, activeUpdateInfo!!.apkUrl) { progress ->
+                            downloadProgress = progress
+                        }
+                        if (file != null) {
+                            downloadedFile = file
+                            if (UpdateManager.canInstallPackages(context)) {
+                                UpdateManager.installApk(context, file)
+                                if (isBackgroundDownloading) {
+                                    Toast.makeText(context, "Update downloaded. Launching installer...", Toast.LENGTH_LONG).show()
+                                }
+                                if (!activeUpdateInfo!!.forceUpdate) {
+                                    activeUpdateInfo = null
+                                    showUpdateDialog = false
+                                } else {
+                                    updateState = UpdateState.READY_TO_INSTALL
+                                }
+                            } else {
+                                updateState = UpdateState.PERMISSION_REQUIRED
+                                if (isBackgroundDownloading) {
+                                    showUpdateDialog = true
+                                    Toast.makeText(context, "TGPix update downloaded. Permission required to install.", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        } else {
+                            updateState = UpdateState.ERROR
+                            errorMessage = "Failed to download update. Please try again."
+                            if (isBackgroundDownloading) {
+                                showUpdateDialog = true
+                            }
+                        }
+                    }
+                },
+                onRunInBackground = {
+                    isBackgroundDownloading = true
+                    showUpdateDialog = false
+                    Toast.makeText(context, "Downloading update in background...", Toast.LENGTH_SHORT).show()
+                },
+                onDismiss = {
+                    activeUpdateInfo = null
+                    showUpdateDialog = false
+                }
             )
         }
     }

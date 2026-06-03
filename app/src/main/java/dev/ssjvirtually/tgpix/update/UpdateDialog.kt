@@ -30,44 +30,16 @@ import java.io.File
 @Composable
 fun UpdateDialog(
     updateInfo: UpdateInfo,
+    updateState: UpdateState,
+    downloadProgress: Float,
+    downloadedFile: File?,
+    errorMessage: String?,
+    onStartDownload: () -> Unit,
+    onRunInBackground: () -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
-    
-    var downloadProgress by remember { mutableStateOf(0f) }
-    var updateState by remember { mutableStateOf(UpdateState.IDLE) }
-    var downloadedFile by remember { mutableStateOf<File?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // Helper function to start the download
-    val startDownload = {
-        updateState = UpdateState.DOWNLOADING
-        downloadProgress = 0f
-        errorMessage = null
-        coroutineScope.launch {
-            val file = UpdateManager.downloadApk(context, updateInfo.apkUrl) { progress ->
-                downloadProgress = progress
-            }
-            if (file != null) {
-                downloadedFile = file
-                if (UpdateManager.canInstallPackages(context)) {
-                    UpdateManager.installApk(context, file)
-                    if (!updateInfo.forceUpdate) {
-                        onDismiss()
-                    } else {
-                        updateState = UpdateState.READY_TO_INSTALL
-                    }
-                } else {
-                    updateState = UpdateState.PERMISSION_REQUIRED
-                }
-            } else {
-                updateState = UpdateState.ERROR
-                errorMessage = "Failed to download update. Please try again."
-            }
-        }
-    }
 
     // Automatically check permission state when returning to the app
     DisposableEffect(lifecycleOwner, updateState) {
@@ -79,8 +51,6 @@ fun UpdateDialog(
                             UpdateManager.installApk(context, it)
                             if (!updateInfo.forceUpdate) {
                                 onDismiss()
-                            } else {
-                                updateState = UpdateState.READY_TO_INSTALL
                             }
                         }
                     }
@@ -208,7 +178,7 @@ fun UpdateDialog(
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
                             Button(
-                                onClick = { startDownload() },
+                                onClick = { onStartDownload() },
                                 colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
@@ -235,6 +205,19 @@ fun UpdateDialog(
                             color = TelePhotosTheme.TextSecondary,
                             textAlign = TextAlign.Center
                         )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        if (!updateInfo.forceUpdate) {
+                            Button(
+                                onClick = onRunInBackground,
+                                colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.SurfaceVariant),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Run in Background", color = TelePhotosTheme.TextPrimary)
+                            }
+                        }
                     }
 
                     UpdateState.PERMISSION_REQUIRED -> {
@@ -304,7 +287,7 @@ fun UpdateDialog(
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
                             Button(
-                                onClick = { startDownload() },
+                                onClick = { onStartDownload() },
                                 colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
