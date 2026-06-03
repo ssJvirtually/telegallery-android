@@ -881,24 +881,16 @@ fun AlbumDetailsView(
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(4.dp))
-                                .combinedClickable(
-                                    onClick = {
-                                        if (isSelectionMode) {
-                                            if (isSelected) selectedPhotos.remove(photo) else selectedPhotos.add(photo)
-                                            if (selectedPhotos.isEmpty()) isSelectionMode = false
-                                        } else {
-                                            // Tap opens in our main full-screen viewer
-                                            val indexInAlbum = albumPhotos.indexOf(photo)
-                                            onPhotoSelected(indexInAlbum, albumPhotos)
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!isSelectionMode) {
-                                            isSelectionMode = true
-                                            selectedPhotos.add(photo)
-                                        }
+                                .clickable {
+                                    if (isSelectionMode) {
+                                        if (isSelected) selectedPhotos.remove(photo) else selectedPhotos.add(photo)
+                                        if (selectedPhotos.isEmpty()) isSelectionMode = false
+                                    } else {
+                                        // Tap opens in our main full-screen viewer
+                                        val indexInAlbum = albumPhotos.indexOf(photo)
+                                        onPhotoSelected(indexInAlbum, albumPhotos)
                                     }
-                                )
+                                }
                         ) {
                             val isCloud = isCloudPhoto(photo.uri)
                             if (isCloud) {

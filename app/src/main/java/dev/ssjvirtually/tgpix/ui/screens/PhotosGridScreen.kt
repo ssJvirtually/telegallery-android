@@ -855,33 +855,24 @@ fun PhotosGridScreen(
                                                 modifier = Modifier
                                                     .aspectRatio(1f)
                                                     .background(TelePhotosTheme.SurfaceVariant)
-                                                    .combinedClickable(
-                                                        onClick = {
-                                                            if (isSelectionMode) {
-                                                                if (isSelected) {
+                                                    .clickable {
+                                                        if (isSelectionMode) {
+                                                            if (isSelected) {
                                                                     selectedPhotos.remove(photo)
                                                                     if (selectedPhotos.isEmpty()) {
                                                                         isSelectionMode = false
                                                                     }
-                                                                } else {
-                                                                    selectedPhotos.add(photo)
-                                                                }
                                                             } else {
-                                                                // Determine global index in local photos list
-                                                                val index = mergedPhotosList.indexOf(photo)
-                                                                if (index != -1) {
-                                                                    onPhotoSelected(index, mergedPhotosList)
-                                                                }
-                                                            }
-                                                        },
-                                                        onLongClick = {
-                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                            if (!isSelectionMode) {
-                                                                isSelectionMode = true
                                                                 selectedPhotos.add(photo)
                                                             }
+                                                        } else {
+                                                            // Determine global index in local photos list
+                                                            val index = mergedPhotosList.indexOf(photo)
+                                                            if (index != -1) {
+                                                                onPhotoSelected(index, mergedPhotosList)
+                                                            }
                                                         }
-                                                    )
+                                                    }
                                             ) {
                                                  // Handle loading thumbnails for cloud-only vs local assets
                                                  if (isCloud) {

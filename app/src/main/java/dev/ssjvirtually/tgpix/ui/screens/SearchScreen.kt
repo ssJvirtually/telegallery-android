@@ -699,33 +699,24 @@ fun SearchScreen(
                                             modifier = Modifier
                                                 .aspectRatio(1f)
                                                 .background(TelePhotosTheme.SurfaceVariant)
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        if (isSelectionMode) {
-                                                            if (isSelected) {
-                                                                selectedPhotos.remove(photo)
-                                                                if (selectedPhotos.isEmpty()) {
-                                                                    isSelectionMode = false
-                                                                }
-                                                            } else {
-                                                                selectedPhotos.add(photo)
+                                                .clickable {
+                                                    if (isSelectionMode) {
+                                                        if (isSelected) {
+                                                            selectedPhotos.remove(photo)
+                                                            if (selectedPhotos.isEmpty()) {
+                                                                isSelectionMode = false
                                                             }
                                                         } else {
-                                                            val plainPhotos = groupedPhotosList.filterIsInstance<GalleryItem.PhotoItem>().map { it.photo }
-                                                            val index = plainPhotos.indexOf(photo)
-                                                            if (index != -1) {
-                                                                onPhotoSelected(index, plainPhotos)
-                                                            }
-                                                        }
-                                                    },
-                                                    onLongClick = {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                        if (!isSelectionMode) {
-                                                            isSelectionMode = true
                                                             selectedPhotos.add(photo)
                                                         }
+                                                    } else {
+                                                        val plainPhotos = groupedPhotosList.filterIsInstance<GalleryItem.PhotoItem>().map { it.photo }
+                                                        val index = plainPhotos.indexOf(photo)
+                                                        if (index != -1) {
+                                                            onPhotoSelected(index, plainPhotos)
+                                                        }
                                                     }
-                                                )
+                                                }
                                         ) {
                                             if (isCloud) {
                                                  val localThumbnailPath = rememberCloudThumbnailPath(
