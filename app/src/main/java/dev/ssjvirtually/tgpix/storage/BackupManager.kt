@@ -207,7 +207,7 @@ object BackupManager {
                         TdlibManager.addLog("Backup downloaded successfully. Restoring local database...")
                         
                         // Close current Room database so we can overwrite its files
-                        db.close()
+                        UploadDatabase.closeDatabase()
                         
                         val dbFile = context.getDatabasePath("upload_database")
                         
@@ -241,7 +241,6 @@ object BackupManager {
 
     suspend fun restoreDatabaseForce(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
-            val db = UploadDatabase.getDatabase(context)
             val targetChatId = resolveBackupChatId(context)
             if (targetChatId == 0L) {
                 return@withContext false
@@ -288,7 +287,7 @@ object BackupManager {
                         TdlibManager.addLog("Backup downloaded successfully. Force restoring local database...")
                         
                         // Close current Room database so we can overwrite its files
-                        db.close()
+                        UploadDatabase.closeDatabase()
                         
                         val dbFile = context.getDatabasePath("upload_database")
                         
