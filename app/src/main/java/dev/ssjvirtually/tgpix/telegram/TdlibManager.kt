@@ -49,6 +49,7 @@ object TdlibManager {
         return client ?: throw IllegalStateException("TDLib Client not initialized!")
     }
 
+    @Synchronized
     fun initialize(context: Context) {
         if (client != null) return
         addLog("Initializing TDLib library...")

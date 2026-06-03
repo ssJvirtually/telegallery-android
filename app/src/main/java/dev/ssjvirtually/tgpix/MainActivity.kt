@@ -178,14 +178,19 @@ class MainActivity : ComponentActivity() {
                 request
             )
 
-        // 2. Enqueue an immediate One-Time Work Request to start sync right away!
         val oneTimeRequest = OneTimeWorkRequestBuilder<UploadWorker>()
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(networkType)
                     .build()
             ).build()
-        WorkManager.getInstance(applicationContext).enqueue(oneTimeRequest)
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(
+                "upload_worker_one_time",
+                ExistingWorkPolicy.REPLACE,
+                oneTimeRequest
+            )
         
         val dataMsg = if (wifiOnly) "Wi-Fi Only (Data Saver Active)" else "Wi-Fi + Mobile Data allowed"
         runOnUiThread {
