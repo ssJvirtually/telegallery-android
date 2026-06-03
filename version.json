@@ -1,7 +1,7 @@
 {
-  "versionCode": 4,
-  "versionName": "1.0.3",
-  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v1.0.3/TGPix.apk",
+  "versionCode": 5,
+  "versionName": "1.0.4",
+  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v1.0.4/TGPix.apk",
   "forceUpdate": false,
-  "releaseNotes": "Clean build version 1.0.3. Fully purged legacy caches."
+  "releaseNotes": "Added 'Run in Background' option to the auto-update download flow."
 }
