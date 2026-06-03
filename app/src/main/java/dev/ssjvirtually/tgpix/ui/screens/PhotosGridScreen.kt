@@ -255,6 +255,7 @@ fun PhotosGridScreen(
             val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
             
             val matchedLocalKeys = mutableSetOf<String>()
+            val addedUris = mutableSetOf<String>()
 
             // 1. Process cloud vault files
             for (cloud in cloudLogs) {
@@ -293,26 +294,34 @@ fun PhotosGridScreen(
                 
                 if (matchingLocal != null) {
                     // Match found: Display local photo as the verified copy
-                    list.add(matchingLocal)
+                    if (!addedUris.contains(matchingLocal.uri)) {
+                        list.add(matchingLocal)
+                        addedUris.add(matchingLocal.uri)
+                    }
                     matchedLocalKeys.add(matchingLocal.name.lowercase())
                 } else {
                     // Cloud only asset
-                    list.add(
-                        LocalPhoto(
-                            id = -cloud.messageId, // Negative IDs strictly delineate cloud-only assets
-                            uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
-                            name = cloud.fileName,
-                            size = cloud.fileSize,
-                            dateTaken = displayDate
+                    val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
+                    if (!addedUris.contains(cloudUri)) {
+                        list.add(
+                            LocalPhoto(
+                                id = -cloud.messageId, // Negative IDs strictly delineate cloud-only assets
+                                uri = cloudUri,
+                                name = cloud.fileName,
+                                size = cloud.fileSize,
+                                dateTaken = displayDate
+                            )
                         )
-                    )
+                        addedUris.add(cloudUri)
+                    }
                 }
             }
 
             // 2. Inject unsynced local device photos
             for (local in localPhotos) {
-                if (!matchedLocalKeys.contains(local.name.lowercase())) {
+                if (!matchedLocalKeys.contains(local.name.lowercase()) && !addedUris.contains(local.uri)) {
                     list.add(local)
+                    addedUris.add(local.uri)
                 }
             }
 

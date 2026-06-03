@@ -131,6 +131,7 @@ fun SearchScreen(
         val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
         
         val matchedLocalKeys = mutableSetOf<String>()
+        val addedUris = mutableSetOf<String>()
         
         for (cloud in cloudLogs) {
             val cloudNormName = cloud.fileName.normalize()
@@ -167,24 +168,32 @@ fun SearchScreen(
             }
             
             if (matchingLocal != null) {
-                list.add(matchingLocal)
+                if (!addedUris.contains(matchingLocal.uri)) {
+                    list.add(matchingLocal)
+                    addedUris.add(matchingLocal.uri)
+                }
                 matchedLocalKeys.add(matchingLocal.name.lowercase())
             } else {
-                list.add(
-                    LocalPhoto(
-                        id = -cloud.messageId,
-                        uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
-                        name = cloud.fileName,
-                        size = cloud.fileSize,
-                        dateTaken = displayDate
+                val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
+                if (!addedUris.contains(cloudUri)) {
+                    list.add(
+                        LocalPhoto(
+                            id = -cloud.messageId,
+                            uri = cloudUri,
+                            name = cloud.fileName,
+                            size = cloud.fileSize,
+                            dateTaken = displayDate
+                        )
                     )
-                )
+                    addedUris.add(cloudUri)
+                }
             }
         }
         
         for (local in localPhotos) {
-            if (!matchedLocalKeys.contains(local.name.lowercase())) {
+            if (!matchedLocalKeys.contains(local.name.lowercase()) && !addedUris.contains(local.uri)) {
                 list.add(local)
+                addedUris.add(local.uri)
             }
         }
         list.sortedByDescending { it.dateTaken }
