@@ -80,6 +80,7 @@ fun SearchScreen(
     
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+    var lastLongPressedPhoto by remember { mutableStateOf<LocalPhoto?>(null) }
     var showTelegramShareDialog by remember { mutableStateOf(false) }
     var dragStartPhotoIndex by remember { mutableStateOf<Int?>(null) }
     var dragCurrentPhotoIndex by remember { mutableStateOf<Int?>(null) }
@@ -582,6 +583,7 @@ fun SearchScreen(
                                                 selectedPhotos.remove(startItem.photo)
                                             }
                                             isSelectionMode = true
+                                            lastLongPressedPhoto = startItem.photo
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             
                                             // Start Auto-Scroll loop
@@ -590,13 +592,13 @@ fun SearchScreen(
                                                     val currentY = dragCurrentPosition.y
                                                     val containerHeight = containerHeightPx
                                                     var scrollDelta = 0f
-                                                    
+                                                     
                                                     if (currentY < 150f) {
                                                         scrollDelta = -30f
                                                     } else if (currentY > containerHeight - 150f) {
                                                         scrollDelta = 30f
                                                     }
-                                                    
+                                                     
                                                     if (scrollDelta != 0f) {
                                                         try {
                                                             gridState.scrollBy(scrollDelta)
@@ -630,11 +632,17 @@ fun SearchScreen(
                                     },
                                     onDragEnd = {
                                         isDraggingToSelect = false
+                                        if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                            lastLongPressedPhoto = null
+                                        }
                                         dragStartPhotoIndex = null
                                         dragCurrentPhotoIndex = null
                                     },
                                     onDragCancel = {
                                         isDraggingToSelect = false
+                                        if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                            lastLongPressedPhoto = null
+                                        }
                                         dragStartPhotoIndex = null
                                         dragCurrentPhotoIndex = null
                                     },
@@ -700,6 +708,12 @@ fun SearchScreen(
                                                 .aspectRatio(1f)
                                                 .background(TelePhotosTheme.SurfaceVariant)
                                                 .clickable {
+                                                    if (lastLongPressedPhoto == photo) {
+                                                        lastLongPressedPhoto = null
+                                                        return@clickable
+                                                    }
+                                                    lastLongPressedPhoto = null
+
                                                     if (isSelectionMode) {
                                                         if (isSelected) {
                                                             selectedPhotos.remove(photo)

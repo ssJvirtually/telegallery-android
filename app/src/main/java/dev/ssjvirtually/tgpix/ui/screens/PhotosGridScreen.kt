@@ -169,6 +169,7 @@ fun PhotosGridScreen(
         var isScanningLocal by remember { mutableStateOf(true) }
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+        var lastLongPressedPhoto by remember { mutableStateOf<LocalPhoto?>(null) }
         var dragStartPhotoIndex by remember { mutableStateOf<Int?>(null) }
         var dragCurrentPhotoIndex by remember { mutableStateOf<Int?>(null) }
         var isDraggingToSelect by remember { mutableStateOf(false) }
@@ -738,6 +739,7 @@ fun PhotosGridScreen(
                                                     selectedPhotos.remove(startItem.photo)
                                                 }
                                                 isSelectionMode = true
+                                                lastLongPressedPhoto = startItem.photo
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 
                                                 // Start Auto-Scroll loop
@@ -786,11 +788,17 @@ fun PhotosGridScreen(
                                         },
                                         onDragEnd = {
                                             isDraggingToSelect = false
+                                            if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                                lastLongPressedPhoto = null
+                                            }
                                             dragStartPhotoIndex = null
                                             dragCurrentPhotoIndex = null
                                         },
                                         onDragCancel = {
                                             isDraggingToSelect = false
+                                            if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                                lastLongPressedPhoto = null
+                                            }
                                             dragStartPhotoIndex = null
                                             dragCurrentPhotoIndex = null
                                         },
@@ -856,6 +864,12 @@ fun PhotosGridScreen(
                                                     .aspectRatio(1f)
                                                     .background(TelePhotosTheme.SurfaceVariant)
                                                     .clickable {
+                                                        if (lastLongPressedPhoto == photo) {
+                                                            lastLongPressedPhoto = null
+                                                            return@clickable
+                                                        }
+                                                        lastLongPressedPhoto = null
+
                                                         if (isSelectionMode) {
                                                             if (isSelected) {
                                                                     selectedPhotos.remove(photo)

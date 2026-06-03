@@ -610,6 +610,7 @@ fun AlbumDetailsView(
     // Selection mode within the album for removing photos
     var isSelectionMode by remember { mutableStateOf(false) }
     val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
+    var lastLongPressedPhoto by remember { mutableStateOf<LocalPhoto?>(null) }
     val haptic = LocalHapticFeedback.current
     val gridState = rememberLazyGridState()
     var dragStartPhotoIndex by remember { mutableStateOf<Int?>(null) }
@@ -788,6 +789,7 @@ fun AlbumDetailsView(
                                             selectedPhotos.remove(startPhoto)
                                         }
                                         isSelectionMode = true
+                                        lastLongPressedPhoto = startPhoto
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         
                                         // Start Auto-Scroll loop
@@ -836,11 +838,17 @@ fun AlbumDetailsView(
                                 },
                                 onDragEnd = {
                                     isDraggingToSelect = false
+                                    if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                        lastLongPressedPhoto = null
+                                    }
                                     dragStartPhotoIndex = null
                                     dragCurrentPhotoIndex = null
                                 },
                                 onDragCancel = {
                                     isDraggingToSelect = false
+                                    if (dragCurrentPhotoIndex != dragStartPhotoIndex) {
+                                        lastLongPressedPhoto = null
+                                    }
                                     dragStartPhotoIndex = null
                                     dragCurrentPhotoIndex = null
                                 },
@@ -882,6 +890,12 @@ fun AlbumDetailsView(
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(4.dp))
                                 .clickable {
+                                    if (lastLongPressedPhoto == photo) {
+                                        lastLongPressedPhoto = null
+                                        return@clickable
+                                    }
+                                    lastLongPressedPhoto = null
+
                                     if (isSelectionMode) {
                                         if (isSelected) selectedPhotos.remove(photo) else selectedPhotos.add(photo)
                                         if (selectedPhotos.isEmpty()) isSelectionMode = false
