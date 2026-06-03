@@ -34,7 +34,7 @@ object TdlibManager {
     val logs: StateFlow<List<String>> = _logs
 
     // Active upload tracking
-    val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, kotlinx.coroutines.CancellableContinuation<TdApi.Object>>()
+    val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
 
     fun addLog(msg: String) {
         val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
@@ -113,17 +113,17 @@ object TdlibManager {
             }
             is TdApi.UpdateMessageSendSucceeded -> {
                 val oldId = obj.oldMessageId
-                val continuation = pendingUploads.remove(oldId)
-                if (continuation != null && continuation.isActive) {
-                    continuation.resume(obj.message)
+                val callback = pendingUploads.remove(oldId)
+                if (callback != null) {
+                    callback(obj.message)
                 }
                 cleanupSentMessageFile(context, obj.message)
             }
             is TdApi.UpdateMessageSendFailed -> {
                 val oldId = obj.oldMessageId
-                val continuation = pendingUploads.remove(oldId)
-                if (continuation != null && continuation.isActive) {
-                    continuation.resume(obj.error)
+                val callback = pendingUploads.remove(oldId)
+                if (callback != null) {
+                    callback(obj.error)
                 }
             }
             is TdApi.UpdateNewChat -> {

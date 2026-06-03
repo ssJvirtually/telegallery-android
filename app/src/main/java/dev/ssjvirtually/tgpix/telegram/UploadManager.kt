@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.CompletableDeferred
 import org.drinkless.tdlib.TdApi
 import java.io.File
 import java.io.FileOutputStream
@@ -200,7 +201,9 @@ object UploadManager {
                         TdlibManager.getClient().send(request) { result ->
                             if (result is TdApi.Message) {
                                 // Register continuation to resume when UpdateMessageSendSucceeded fires
-                                TdlibManager.pendingUploads[result.id] = continuation
+                                TdlibManager.pendingUploads[result.id] = { res ->
+                                    continuation.resume(res)
+                                }
                                 val modeStr = if (isHd) "HD Lossless" else "Compressed"
                                 TdlibManager.addLog("Upload queued for '${fileName}' ($modeStr) (Msg ID: ${result.id}). Sending to Telegram...")
                             } else if (result is TdApi.Error) {
@@ -345,7 +348,9 @@ object UploadManager {
                         val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
                             TdlibManager.getClient().send(request) { result ->
                                 if (result is TdApi.Message) {
-                                    TdlibManager.pendingUploads[result.id] = cont
+                                    TdlibManager.pendingUploads[result.id] = { res ->
+                                        cont.resume(res)
+                                    }
                                 } else {
                                     cont.resume(result)
                                 }
@@ -359,25 +364,26 @@ object UploadManager {
                             this.chatId = targetChatId
                             this.inputMessageContents = inputMessageContents.toTypedArray()
                         }
+                        val deferreds = mutableListOf<CompletableDeferred<TdApi.Object>>()
                         val messagesResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
                             TdlibManager.getClient().send(request) { result ->
+                                if (result is TdApi.Messages) {
+                                    for (msg in result.messages) {
+                                        val deferred = CompletableDeferred<TdApi.Object>()
+                                        deferreds.add(deferred)
+                                        TdlibManager.pendingUploads[msg.id] = { res ->
+                                            deferred.complete(res)
+                                        }
+                                    }
+                                }
                                 cont.resume(result)
                             }
                         }
                         
                         if (messagesResult is TdApi.Messages) {
-                            coroutineScope {
-                                val jobs = messagesResult.messages.map { msg ->
-                                    async {
-                                        suspendCancellableCoroutine<TdApi.Object> { cont ->
-                                            TdlibManager.pendingUploads[msg.id] = cont
-                                        }
-                                    }
-                                }
-                                val results = jobs.map { it.await() }
-                                if (results.any { it is TdApi.Error }) {
-                                    allSuccess = false
-                                }
+                            val results = deferreds.map { it.await() }
+                            if (results.any { it is TdApi.Error }) {
+                                allSuccess = false
                             }
                         } else {
                             allSuccess = false

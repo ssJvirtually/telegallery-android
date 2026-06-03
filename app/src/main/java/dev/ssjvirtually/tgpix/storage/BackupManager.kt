@@ -362,7 +362,9 @@ object BackupManager {
             
             TdlibManager.getClient().send(request) { result ->
                 if (result is TdApi.Message) {
-                    TdlibManager.pendingUploads[result.id] = continuation
+                    TdlibManager.pendingUploads[result.id] = { res ->
+                        continuation.resume(res)
+                    }
                 } else if (result is TdApi.Error) {
                     continuation.resume(result)
                 } else {
