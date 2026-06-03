@@ -20,12 +20,17 @@ import dev.ssjvirtually.tgpix.telegram.UploadManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
 import org.drinkless.tdlib.TdApi
 
 class UploadWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
+
+    companion object {
+        private val uploadMutex = Mutex()
+    }
 
     private val notificationId = 999
     private val channelId = "tgpix_backup_channel"
@@ -78,6 +83,12 @@ class UploadWorker(
         if (chatId == 0L) {
             TdlibManager.addLog("Worker: No target chat configured. Skipping backup.")
             return Result.failure()
+        }
+
+        // Concurrency Guard: Skip if another backup process is already active
+        if (!uploadMutex.tryLock()) {
+            TdlibManager.addLog("Worker: Another backup sync task is already running. Skipping this instance.")
+            return Result.success()
         }
 
         // 3. Promote worker to foreground service to prevent OS termination & bypass 10-minute timeout
@@ -203,6 +214,7 @@ class UploadWorker(
             TdlibManager.addLog("Worker: Execution failed with error: ${e.message}")
             return Result.failure()
         } finally {
+            uploadMutex.unlock()
             // 10. Always release WakeLock and WifiLock under all circumstances to prevent battery drain
             if (wifiLock.isHeld) {
                 wifiLock.release()
