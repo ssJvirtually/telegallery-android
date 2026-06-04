@@ -4,6 +4,17 @@ This changelog documents the version releases, features, bug fixes, and architec
 
 ---
 
+## 🚀 Release v2.3.0 — Document Uploads with Auto-Rotated Thumbnails
+* **Features & Technical Updates:**
+  * **Auto-Rotated Document Thumbnails:** Added automated JPEG thumbnail generation for photos uploaded in HD (Document) mode.
+  * **EXIF Orientation Support:** Used Android's native `ExifInterface` to parse and apply proper rotation to scaled thumbnails, ensuring portrait images are displayed upright in Telegram chats.
+  * **Strict Size and Dimension Compliance:** Scaled thumbnails to target max 320x320 dimensions and applied a dynamic compression loop to guarantee files are under Telegram's strict 200KB limits.
+  * **Graceful Backward Compatibility:** Supported older Android versions (API 26+) by gracefully fallback-uploading documents without thumbnails in case of unsupported format decoding errors (e.g. HEIC on older platforms) rather than crashing.
+  * **HD Share Previews:** Automatically generates and attaches thumbnails when sharing images in HD mode.
+  * **Zero Leak File Cleanup:** Enforced immediate cleanup of temp files in `finally` blocks.
+
+---
+
 ## 🚀 Release v2.2.0 — Custom Premium Launcher Icon & Density Mipmaps
 * **Features & Technical Updates:**
   * **Custom Premium Icon:** Replaced the default application launcher icon with a custom-designed, gorgeous premium branding asset blending Telegram's paper airplane and Google Photos pinwheel colors.

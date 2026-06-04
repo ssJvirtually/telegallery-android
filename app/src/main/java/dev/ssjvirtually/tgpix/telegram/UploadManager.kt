@@ -18,10 +18,14 @@ import kotlinx.coroutines.CompletableDeferred
 import org.drinkless.tdlib.TdApi
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import kotlin.coroutines.resume
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 
 object UploadManager {
     suspend fun uploadPhoto(
@@ -34,6 +38,7 @@ object UploadManager {
         val uploadCacheDir = File(context.cacheDir, "tgpix_uploads")
         uploadCacheDir.mkdirs()
         val tempFile = File(uploadCacheDir, fileName)
+        var thumbFile: File? = null
         
         try {
             // 1. Copy photo from system MediaStore content resolver to internally-accessible cache file
@@ -183,8 +188,17 @@ object UploadManager {
                         """.trimIndent()
 
                         val inputMessageContent = if (isHd) {
+                            val thumbResult = createThumbnail(context, tempFile)
                             TdApi.InputMessageDocument().apply {
                                 this.document = inputFile
+                                if (thumbResult != null) {
+                                    thumbFile = thumbResult.file
+                                    this.thumbnail = TdApi.InputThumbnail(
+                                        TdApi.InputFileLocal(thumbResult.file.absolutePath),
+                                        thumbResult.width,
+                                        thumbResult.height
+                                    )
+                                }
                                 caption = TdApi.FormattedText(captionText, emptyArray())
                             }
                         } else {
@@ -226,6 +240,15 @@ object UploadManager {
                 if (tempFile.exists()) {
                     tempFile.delete()
                     TdlibManager.addLog("Cleaned up temp upload file: ${tempFile.name}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            try {
+                val f = thumbFile
+                if (f != null && f.exists()) {
+                    f.delete()
+                    TdlibManager.addLog("Cleaned up temp thumbnail file: ${f.name}")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -331,6 +354,7 @@ object UploadManager {
                 // Send each photo individually as a Document
                 for (photo in photos) {
                     val tempFile = File(uploadCacheDir, photo.name)
+                    var thumbFile: File? = null
                     try {
                         if (photo.uri.startsWith("cloud://")) {
                             val downloaded = downloadCloudPhoto(context, photo.uri)
@@ -351,9 +375,18 @@ object UploadManager {
                             continue
                         }
                         
+                        val thumbResult = createThumbnail(context, tempFile)
                         val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
                         val inputMessageContent = TdApi.InputMessageDocument().apply {
                             this.document = inputFile
+                            if (thumbResult != null) {
+                                thumbFile = thumbResult.file
+                                this.thumbnail = TdApi.InputThumbnail(
+                                    TdApi.InputFileLocal(thumbResult.file.absolutePath),
+                                    thumbResult.width,
+                                    thumbResult.height
+                                )
+                            }
                             caption = TdApi.FormattedText("Shared via TGPix", emptyArray())
                         }
                         
@@ -382,6 +415,12 @@ object UploadManager {
                         allSuccess = false
                     } finally {
                         try { if (tempFile.exists()) tempFile.delete() } catch (e: Exception) {}
+                        try {
+                            val f = thumbFile
+                            if (f != null && f.exists()) {
+                                f.delete()
+                            }
+                        } catch (e: Exception) {}
                     }
                 }
             } else {
@@ -548,5 +587,116 @@ object UploadManager {
                 }
             }
         }
+    }
+
+    private data class ThumbnailResult(
+        val file: File,
+        val width: Int,
+        val height: Int
+    )
+
+    private fun createThumbnail(context: Context, imageFile: File): ThumbnailResult? {
+        try {
+            val bounds = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(imageFile.absolutePath, bounds)
+            
+            val originalWidth = bounds.outWidth
+            val originalHeight = bounds.outHeight
+            if (originalWidth <= 0 || originalHeight <= 0) return null
+
+            var rotationAngle = 0f
+            try {
+                val exif = androidx.exifinterface.media.ExifInterface(imageFile.absolutePath)
+                val orientation = exif.getAttributeInt(
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+                )
+                when (orientation) {
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> rotationAngle = 90f
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> rotationAngle = 180f
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotationAngle = 270f
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            val maxTargetSize = 320
+            val sampleSize = calculateInSampleSize(bounds, maxTargetSize, maxTargetSize)
+
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+            }
+            val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath, options) ?: return null
+
+            val scaledBitmap = scaleAndRotateBitmap(bitmap, maxTargetSize, rotationAngle)
+            if (scaledBitmap != bitmap) {
+                bitmap.recycle()
+            }
+
+            val thumbFile = File(context.cacheDir, "thumb_${System.currentTimeMillis()}.jpg")
+            var quality = 80
+            var compressSuccess: Boolean
+            do {
+                try {
+                    FileOutputStream(thumbFile).use { out ->
+                        compressSuccess = scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    compressSuccess = false
+                }
+                quality -= 10
+            } while (compressSuccess && thumbFile.length() > 200 * 1024 && quality > 10)
+
+            val finalWidth = scaledBitmap.width
+            val finalHeight = scaledBitmap.height
+            scaledBitmap.recycle()
+
+            return if (compressSuccess && thumbFile.exists() && thumbFile.length() > 0) {
+                ThumbnailResult(thumbFile, finalWidth, finalHeight)
+            } else {
+                try { thumbFile.delete() } catch (e: Exception) {}
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    private fun scaleAndRotateBitmap(bitmap: Bitmap, maxSize: Int, rotationAngle: Float): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        
+        val ratio = minOf(
+            maxSize.toFloat() / width,
+            maxSize.toFloat() / height
+        )
+        val newWidth = maxOf(1, (width * ratio).toInt())
+        val newHeight = maxOf(1, (height * ratio).toInt())
+        
+        val matrix = Matrix()
+        matrix.postScale(newWidth.toFloat() / width, newHeight.toFloat() / height)
+        if (rotationAngle != 0f) {
+            matrix.postRotate(rotationAngle)
+        }
+        
+        return Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true)
+    }
+
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
 }

@@ -1,7 +1,7 @@
 {
-  "versionCode": 8,
-  "versionName": "1.0.7",
-  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v1.0.7/TGPix.apk",
+  "versionCode": 9,
+  "versionName": "2.3.0",
+  "apkUrl": "https://github.com/ssJvirtually/TGPix/releases/download/v2.3.0/TGPix.apk",
   "forceUpdate": false,
-  "releaseNotes": "Fixes duplicated photos in the timeline grid and selection mismatch"
+  "releaseNotes": "Adds EXIF-rotated document thumbnails for HD uploads and sharing"
 }
