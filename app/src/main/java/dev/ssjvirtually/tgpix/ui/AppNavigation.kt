@@ -41,6 +41,7 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
@@ -276,6 +277,18 @@ fun MainAppLayout(
         }
     }
 
+    var scanJob by remember { mutableStateOf<Job?>(null) }
+    val triggerScan = {
+        scanJob?.cancel()
+        scanJob = coroutineScope.launch(Dispatchers.IO) {
+            delay(1000) // 1 second debounce to completely prevent multiple scans during fast camera snaps or multiple events
+            val scanned = MediaStoreScanner.scan(context)
+            withContext(Dispatchers.Main) {
+                localPhotos = scanned
+            }
+        }
+    }
+
     // Real-time updates via ContentObserver (detects new images instantly) and LifecycleObserver (detects photos taken while app was minimized)
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, hasPermission) {
@@ -285,22 +298,18 @@ fun MainAppLayout(
         val contentObserver = object : android.database.ContentObserver(handler) {
             override fun onChange(selfChange: Boolean, uri: android.net.Uri?) {
                 super.onChange(selfChange, uri)
-                coroutineScope.launch(Dispatchers.IO) {
-                    val scanned = MediaStoreScanner.scan(context)
-                    withContext(Dispatchers.Main) {
-                        localPhotos = scanned
-                    }
-                }
+                triggerScan()
             }
         }
 
+        var wasPaused = false
         val lifecycleObserver = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                coroutineScope.launch(Dispatchers.IO) {
-                    val scanned = MediaStoreScanner.scan(context)
-                    withContext(Dispatchers.Main) {
-                        localPhotos = scanned
-                    }
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                wasPaused = true
+            } else if (event == Lifecycle.Event.ON_RESUME) {
+                if (wasPaused) {
+                    wasPaused = false
+                    triggerScan()
                 }
             }
         }
@@ -316,6 +325,7 @@ fun MainAppLayout(
         onDispose {
             context.contentResolver.unregisterContentObserver(contentObserver)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+            scanJob?.cancel()
         }
     }
     
