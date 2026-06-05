@@ -263,11 +263,32 @@ object UploadManager {
                 continuation.resume(emptyList())
                 return@suspendCancellableCoroutine
             }
-            val image = InputImage.fromFilePath(context, Uri.fromFile(file))
+            
+            // Explicitly request ARGB_8888 configuration to avoid hardware/RGB_565 decoding on some devices
+            val options = BitmapFactory.Options().apply {
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            var bitmap = BitmapFactory.decodeFile(cacheFilePath, options)
+            if (bitmap == null) {
+                continuation.resume(emptyList())
+                return@suspendCancellableCoroutine
+            }
+            
+            // Convert to ARGB_8888 if the decoder ignored the config preference
+            if (bitmap.config != Bitmap.Config.ARGB_8888) {
+                val converted = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+                if (converted != null) {
+                    bitmap.recycle()
+                    bitmap = converted
+                }
+            }
+            
+            val image = InputImage.fromBitmap(bitmap, 0)
             val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
             
             labeler.process(image)
                 .addOnSuccessListener { labels ->
+                    try { bitmap.recycle() } catch (e: Exception) {}
                     val detectedTags = labels
                         .filter { it.confidence >= 0.60f } // 60% confidence threshold
                         .map { label ->
@@ -278,6 +299,7 @@ object UploadManager {
                     continuation.resume(detectedTags)
                 }
                 .addOnFailureListener { _ ->
+                    try { bitmap.recycle() } catch (e: Exception) {}
                     // Fail silently to keep uploads moving
                     continuation.resume(emptyList())
                 }
