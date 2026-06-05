@@ -131,8 +131,8 @@ class UploadWorker(
                 return Result.retry()
             }
 
-            // 7. Scan all photos on the device and reverse to backup from oldest to newest
-            val photos = MediaStoreScanner.scan(applicationContext).reversed()
+            // 7. Scan all photos on the device and sort to backup from oldest to newest (by date taken)
+            val photos = MediaStoreScanner.scan(applicationContext).sortedBy { it.dateTaken }
             if (photos.isEmpty()) {
                 TdlibManager.addLog("Worker: No photos found on device to sync.")
                 return Result.success()
