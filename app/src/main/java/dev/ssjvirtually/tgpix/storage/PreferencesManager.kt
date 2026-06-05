@@ -167,4 +167,18 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getInt(KEY_GRID_COLUMNS, defaultColumns)
     }
+
+    private const val KEY_IS_MANUAL_LOGOUT = "is_manual_logout"
+
+    fun setManualLogout(context: Context, isManual: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_IS_MANUAL_LOGOUT, isManual)
+            .apply()
+    }
+
+    fun isManualLogout(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_IS_MANUAL_LOGOUT, false)
+    }
 }

@@ -409,6 +409,7 @@ fun SettingsScreen(
             item {
                 OutlinedButton(
                     onClick = {
+                        PreferencesManager.setManualLogout(context, true)
                         AuthManager.logOut {
                             coroutineScope.launch(Dispatchers.Main) {
                                 Toast.makeText(context, "Logged out of Telegram successfully", Toast.LENGTH_LONG).show()

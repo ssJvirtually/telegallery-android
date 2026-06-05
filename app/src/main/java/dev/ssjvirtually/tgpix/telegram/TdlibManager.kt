@@ -15,6 +15,13 @@ import dev.ssjvirtually.tgpix.BuildConfig
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
 import java.io.File
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import dev.ssjvirtually.tgpix.storage.PreferencesManager
 
 data class ChatInfo(val id: Long, val title: String)
 
@@ -118,6 +125,22 @@ object TdlibManager {
                     managerScope.launch {
                         delay(500)
                         initialize(context)
+                    }
+                } else if (state is TdApi.AuthorizationStateWaitPhoneNumber) {
+                    val wasLoggedIn = PreferencesManager.getChatId(context) != 0L
+                    val isManual = PreferencesManager.isManualLogout(context)
+                    addLog("Auth State: WaitPhoneNumber (wasLoggedIn: $wasLoggedIn, isManual: $isManual)")
+                    
+                    if (wasLoggedIn && !isManual) {
+                        addLog("External logout detected. Triggering system notification.")
+                        showSessionExpiredNotification(context)
+                        // Reset credentials locally
+                        PreferencesManager.saveChatId(context, 0L)
+                        PreferencesManager.saveChatTitle(context, "")
+                        PreferencesManager.saveDbChatId(context, 0L)
+                        PreferencesManager.saveDbChatTitle(context, "Private Saved Messages")
+                    } else if (isManual) {
+                        PreferencesManager.setManualLogout(context, false)
                     }
                 }
             }
@@ -415,5 +438,46 @@ object TdlibManager {
             e.printStackTrace()
         }
         return null
+    }
+
+    private fun showSessionExpiredNotification(context: Context) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "tgpix_session_channel"
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "TGPix Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Critical session alerts and logout notices."
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val intent = Intent(context, dev.ssjvirtually.tgpix.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            100,
+            intent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
+        
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setContentTitle("Telegram Session Expired")
+            .setContentText("Your session was terminated or revoked. Please log in again to resume backups.")
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+            
+        notificationManager.notify(888, notification)
     }
 }
