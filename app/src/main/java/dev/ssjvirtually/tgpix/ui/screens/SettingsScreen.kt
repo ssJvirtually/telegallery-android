@@ -32,6 +32,11 @@ import dev.ssjvirtually.tgpix.telegram.AuthManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.worker.UploadWorker
+import androidx.compose.material.icons.filled.QrCode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.barcode.common.Barcode
+import org.drinkless.tdlib.TdApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -351,6 +356,53 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Restore Albums & Database Backup Now", color = Color.White, fontWeight = FontWeight.Bold)
                     }
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val scannerOptions = GmsBarcodeScannerOptions.Builder()
+                            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                            .build()
+                        val scanner = GmsBarcodeScanning.getClient(context, scannerOptions)
+
+                        scanner.startScan()
+                            .addOnSuccessListener { barcode: Barcode ->
+                                val link = barcode.rawValue
+                                if (link != null && link.startsWith("tg://login?token=")) {
+                                    coroutineScope.launch {
+                                        val result = TdlibManager.sendRequest(TdApi.ConfirmQrCodeAuthentication(link))
+                                        withContext(Dispatchers.Main) {
+                                            if (result is TdApi.Ok || result is TdApi.Session) {
+                                                Toast.makeText(context, "Successfully authorized Web Session!", Toast.LENGTH_LONG).show()
+                                            } else if (result is TdApi.Error) {
+                                                Toast.makeText(context, "Web Login failed: [${result.code}] ${result.message}", Toast.LENGTH_LONG).show()
+                                            } else {
+                                                Toast.makeText(context, "Successfully authorized Web Session!", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Invalid QR code. Please scan a Telegram/TGPix Web login QR code.", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                if (e is com.google.android.gms.common.api.ApiException && e.statusCode == 16) {
+                                    // User canceled, do nothing
+                                } else {
+                                    Toast.makeText(context, "Scanning failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Icon(Icons.Default.QrCode, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Link Web Application (Scan QR)", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 

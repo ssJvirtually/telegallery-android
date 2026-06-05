@@ -31,10 +31,10 @@
             </intent-filter>
         </activity>
         
-        <!-- Tell Google Play Services to auto-download the ML Kit Image Labeling model -->
+        <!-- Tell Google Play Services to auto-download the ML Kit Image Labeling and Barcode UI models -->
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="label" />
+            android:value="label,barcode_ui" />
 
         <!-- Register WorkManager Foreground Service to support background uploads on Android 14+ -->
         <service

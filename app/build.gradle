@@ -107,4 +107,7 @@ dependencies {
 
     // Google ML Kit on-device image labeling (Play Services version)
     implementation 'com.google.android.gms:play-services-mlkit-image-labeling:16.0.8'
+    
+    // Google Play services Code Scanner (Privacy-safe QR scanning without CAMERA permission)
+    implementation 'com.google.android.gms:play-services-code-scanner:16.1.0'
 }
