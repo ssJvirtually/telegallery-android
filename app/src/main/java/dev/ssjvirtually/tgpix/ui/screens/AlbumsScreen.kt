@@ -64,101 +64,11 @@ data class AlbumUiModel(
 @Composable
 fun AlbumsScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
-    localPhotos: List<LocalPhoto>
+    mergedPhotosList: List<LocalPhoto>
 ) {
     val context = LocalContext.current
     val db = remember { UploadDatabase.getDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
-
-    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-
-    val mergedPhotosList = remember(localPhotos, cloudLogs) {
-        val list = mutableListOf<LocalPhoto>()
-        
-        val regexTrashed = Regex("""^\.trashed-\d+-""")
-        fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
-        
-        // Build helper maps for multi-layered matching to eliminate duplicates
-        val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }
-        val localByName = localPhotos.groupBy { it.name.normalize() }
-        val localByDateAndSize = localPhotos.associateBy { "${it.dateTaken / 1000}_${it.size}" }
-        val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
-        
-        val matchedLocalKeys = mutableSetOf<String>()
-        val addedUris = mutableSetOf<String>()
-
-        // 1. Process cloud vault files
-        for (cloud in cloudLogs) {
-            val cloudNormName = cloud.fileName.normalize()
-            val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_${cloud.uploadedAt}"
-            val parsedDate = parseDateFromFilename(cloud.fileName)
-            val displayDate = parsedDate ?: cloud.uploadedAt
-            
-            // Try matching cloud photo to local photo in order of specificity:
-            // A. Exact fingerprint (case-insensitive name + size + dateTaken)
-            var matchingLocal = localByFingerprint[cloudFingerprint]
-            
-            // B. Case-insensitive filename match (pick first local photo matching name)
-            if (matchingLocal == null) {
-                matchingLocal = localByName[cloudNormName]?.firstOrNull()
-            }
-            
-            // C. Size and parsed Date Taken match (in seconds)
-            if (matchingLocal == null && parsedDate != null) {
-                matchingLocal = localByDateAndSize["${parsedDate / 1000}_${cloud.fileSize}"]
-            }
-            
-            // D. Closest Date Taken match (within 2 seconds) for similarly named files
-            if (matchingLocal == null && parsedDate != null) {
-                val parsedSeconds = parsedDate / 1000
-                val candidates = (localByDate[parsedSeconds] ?: emptyList()) +
-                                 (localByDate[parsedSeconds - 1] ?: emptyList()) +
-                                 (localByDate[parsedSeconds + 1] ?: emptyList())
-                matchingLocal = candidates.firstOrNull { candidate ->
-                    val cName = candidate.name.normalize()
-                    cName == cloudNormName || 
-                    (cName.startsWith("img_") && cloudNormName.startsWith("img_")) || 
-                    (cName.startsWith("photo_") && cloudNormName.startsWith("photo_"))
-                }
-            }
-            
-            if (matchingLocal != null) {
-                // Match found: Display local photo as the verified copy
-                if (!addedUris.contains(matchingLocal.uri)) {
-                    list.add(matchingLocal.copy(tags = cloud.tags))
-                    addedUris.add(matchingLocal.uri)
-                }
-                matchedLocalKeys.add(matchingLocal.name.lowercase())
-            } else {
-                // Cloud only asset
-                val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
-                if (!addedUris.contains(cloudUri)) {
-                    list.add(
-                        LocalPhoto(
-                            id = -cloud.messageId, // Negative IDs strictly delineate cloud-only assets
-                            uri = cloudUri,
-                            name = cloud.fileName,
-                            size = cloud.fileSize,
-                            dateTaken = displayDate,
-                            tags = cloud.tags
-                        )
-                    )
-                    addedUris.add(cloudUri)
-                }
-            }
-        }
-
-        // 2. Inject unsynced local device photos
-        for (local in localPhotos) {
-            if (!matchedLocalKeys.contains(local.name.lowercase()) && !addedUris.contains(local.uri)) {
-                list.add(local)
-                addedUris.add(local.uri)
-            }
-        }
-
-        // 3. Sort strictly by date taken descending
-        list.sortedByDescending { it.dateTaken }
-    }
 
     // 1. Load albums from DB
     val albums by db.albumDao().getAllAlbumsFlow().collectAsState(initial = emptyList())

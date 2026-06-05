@@ -35,6 +35,8 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
+import dev.ssjvirtually.tgpix.storage.UploadDatabase
+import dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import java.io.File
@@ -247,6 +249,10 @@ fun MainAppLayout(
     var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     var isScanningLocal by remember { mutableStateOf(true) }
 
+    val db = remember { UploadDatabase.getDatabase(context) }
+    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+    var mergedPhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
             isScanningLocal = true
@@ -261,7 +267,6 @@ fun MainAppLayout(
                 val scanned = MediaStoreScanner.scan(context)
                 withContext(Dispatchers.Main) {
                     localPhotos = scanned
-                    isScanningLocal = false
                 }
                 
                 // Trigger background server vault index crawl
@@ -273,6 +278,97 @@ fun MainAppLayout(
                         e.printStackTrace()
                     }
                 }
+            }
+        }
+    }
+
+    // Hoisted background thread merging and deduplication
+    LaunchedEffect(localPhotos, cloudLogs) {
+        isScanningLocal = true
+        withContext(Dispatchers.IO) {
+            val list = mutableListOf<LocalPhoto>()
+            
+            val regexTrashed = Regex("""^\.trashed-\d+-""")
+            fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
+            
+            // Build helper maps for multi-layered matching to eliminate duplicates
+            val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }
+            val localByName = localPhotos.groupBy { it.name.normalize() }
+            val localByDateAndSize = localPhotos.associateBy { "${it.dateTaken / 1000}_${it.size}" }
+            val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
+            
+            val matchedLocalKeys = mutableSetOf<String>()
+            val addedUris = mutableSetOf<String>()
+
+            // 1. Process cloud vault files
+            for (cloud in cloudLogs) {
+                val cloudNormName = cloud.fileName.normalize()
+                val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_${cloud.uploadedAt}"
+                val parsedDate = parseDateFromFilename(cloud.fileName)
+                val displayDate = parsedDate ?: cloud.uploadedAt
+                
+                // Try matching cloud photo to local photo in order of specificity:
+                var matchingLocal = localByFingerprint[cloudFingerprint]
+                
+                if (matchingLocal == null) {
+                    matchingLocal = localByName[cloudNormName]?.firstOrNull()
+                }
+                
+                if (matchingLocal == null && parsedDate != null) {
+                    matchingLocal = localByDateAndSize["${parsedDate / 1000}_${cloud.fileSize}"]
+                }
+                
+                if (matchingLocal == null && parsedDate != null) {
+                    val parsedSeconds = parsedDate / 1000
+                    val candidates = (localByDate[parsedSeconds] ?: emptyList()) +
+                                     (localByDate[parsedSeconds - 1] ?: emptyList()) +
+                                     (localByDate[parsedSeconds + 1] ?: emptyList())
+                    matchingLocal = candidates.firstOrNull { candidate ->
+                        val cName = candidate.name.normalize()
+                        cName == cloudNormName || 
+                        (cName.startsWith("img_") && cloudNormName.startsWith("img_")) || 
+                        (cName.startsWith("photo_") && cloudNormName.startsWith("photo_"))
+                    }
+                }
+                
+                if (matchingLocal != null) {
+                    if (!addedUris.contains(matchingLocal.uri)) {
+                        list.add(matchingLocal.copy(tags = cloud.tags))
+                        addedUris.add(matchingLocal.uri)
+                    }
+                    matchedLocalKeys.add(matchingLocal.name.lowercase())
+                } else {
+                    val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
+                    if (!addedUris.contains(cloudUri)) {
+                        list.add(
+                            LocalPhoto(
+                                id = -cloud.messageId,
+                                uri = cloudUri,
+                                name = cloud.fileName,
+                                size = cloud.fileSize,
+                                dateTaken = displayDate,
+                                tags = cloud.tags
+                            )
+                        )
+                        addedUris.add(cloudUri)
+                    }
+                }
+            }
+
+            // 2. Inject unsynced local device photos
+            for (local in localPhotos) {
+                if (!matchedLocalKeys.contains(local.name.lowercase()) && !addedUris.contains(local.uri)) {
+                    list.add(local)
+                    addedUris.add(local.uri)
+                }
+            }
+
+            // 3. Sort strictly by date taken descending
+            val sortedList = list.sortedByDescending { it.dateTaken }
+            
+            withContext(Dispatchers.Main) {
+                mergedPhotosList = sortedList
+                isScanningLocal = false
             }
         }
     }
@@ -482,7 +578,7 @@ fun MainAppLayout(
                         onSettingsClick = {
                             activeTab = "Settings"
                         },
-                        localPhotos = localPhotos,
+                        mergedPhotosList = mergedPhotosList,
                         isScanningLocal = isScanningLocal,
                         hasPermission = hasPermission,
                         onRequestPermission = {
@@ -496,7 +592,7 @@ fun MainAppLayout(
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
                         },
-                        localPhotos = localPhotos,
+                        mergedPhotosList = mergedPhotosList,
                         isScanning = isScanningLocal
                     )
                 }
@@ -506,7 +602,7 @@ fun MainAppLayout(
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
                         },
-                        localPhotos = localPhotos
+                        mergedPhotosList = mergedPhotosList
                     )
                 }
                 "Settings" -> {
