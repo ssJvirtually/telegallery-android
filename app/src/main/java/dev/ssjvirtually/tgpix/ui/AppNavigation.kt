@@ -35,6 +35,8 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -240,6 +242,7 @@ fun MainAppLayout(
         hasPermission = storageGranted
     }
 
+    val coroutineScope = rememberCoroutineScope()
     var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     var isScanningLocal by remember { mutableStateOf(true) }
 
@@ -270,6 +273,49 @@ fun MainAppLayout(
                     }
                 }
             }
+        }
+    }
+
+    // Real-time updates via ContentObserver (detects new images instantly) and LifecycleObserver (detects photos taken while app was minimized)
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, hasPermission) {
+        if (!hasPermission) return@DisposableEffect onDispose {}
+
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val contentObserver = object : android.database.ContentObserver(handler) {
+            override fun onChange(selfChange: Boolean, uri: android.net.Uri?) {
+                super.onChange(selfChange, uri)
+                coroutineScope.launch(Dispatchers.IO) {
+                    val scanned = MediaStoreScanner.scan(context)
+                    withContext(Dispatchers.Main) {
+                        localPhotos = scanned
+                    }
+                }
+            }
+        }
+
+        val lifecycleObserver = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                coroutineScope.launch(Dispatchers.IO) {
+                    val scanned = MediaStoreScanner.scan(context)
+                    withContext(Dispatchers.Main) {
+                        localPhotos = scanned
+                    }
+                }
+            }
+        }
+
+        // Register both observers
+        context.contentResolver.registerContentObserver(
+            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            true,
+            contentObserver
+        )
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+
+        onDispose {
+            context.contentResolver.unregisterContentObserver(contentObserver)
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
         }
     }
     
