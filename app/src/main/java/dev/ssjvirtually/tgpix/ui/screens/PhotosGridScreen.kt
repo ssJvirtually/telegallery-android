@@ -87,42 +87,13 @@ import org.drinkless.tdlib.TdApi
 fun PhotosGridScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
     profilePhotoPath: String?,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    localPhotos: List<LocalPhoto>,
+    isScanningLocal: Boolean,
+    hasPermission: Boolean,
+    onRequestPermission: () -> Unit
 ) {
     val context = LocalContext.current
-    var hasPermission by remember {
-        mutableStateOf(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
-            } else {
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-            }
-        )
-    }
-
-    val permissionsToRequest = remember {
-        val list = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            list.add(Manifest.permission.READ_MEDIA_IMAGES)
-        } else {
-            list.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            list.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
-        }
-        list.toTypedArray()
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val storageGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions[Manifest.permission.READ_MEDIA_IMAGES] == true
-        } else {
-            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
-        }
-        hasPermission = storageGranted
-    }
 
     if (!hasPermission) {
         Column(
@@ -154,9 +125,7 @@ fun PhotosGridScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
-                onClick = {
-                    launcher.launch(permissionsToRequest)
-                },
+                onClick = onRequestPermission,
                 colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -165,8 +134,6 @@ fun PhotosGridScreen(
         }
     } else {
         // Load Photos and show grid
-        var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
-        var isScanningLocal by remember { mutableStateOf(true) }
         var isSelectionMode by remember { mutableStateOf(false) }
         val selectedPhotos = remember { mutableStateListOf<LocalPhoto>() }
         var lastLongPressedPhoto by remember { mutableStateOf<LocalPhoto?>(null) }
@@ -209,31 +176,7 @@ fun PhotosGridScreen(
         val coroutineScope = rememberCoroutineScope()
         val chatId = remember { PreferencesManager.getChatId(context) }
 
-        LaunchedEffect(Unit) {
-            coroutineScope.launch(Dispatchers.IO) {
-                // 1. Attempt to restore local database from remote Telegram backup if cache is empty
-                try {
-                    dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
 
-                val scanned = MediaStoreScanner.scan(context)
-                withContext(Dispatchers.Main) {
-                    localPhotos = scanned
-                    isScanningLocal = false
-                }
-                
-                // Trigger background server vault index crawl
-                if (chatId != 0L) {
-                    try {
-                        TdlibManager.syncCloudHistory(context, chatId)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-        }
 
         // 2. Event-driven debounced backup synchronization (checks every 5 minutes after last idle state change)
         val totalRecords = cloudLogs.size + uploadedLogs.size

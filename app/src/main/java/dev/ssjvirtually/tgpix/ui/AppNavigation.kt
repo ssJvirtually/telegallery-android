@@ -28,6 +28,13 @@ import dev.ssjvirtually.tgpix.ui.screens.*
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.update.*
 import android.widget.Toast
+import android.Manifest
+import android.os.Build
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -188,6 +195,7 @@ fun MainAppLayout(
     selectedChatTitle: String,
     onResetChat: () -> Unit
 ) {
+    val context = LocalContext.current
     var activeTab by remember { mutableStateOf("Photos") }
     
     // Manage which photo is currently opened in full screen
@@ -196,6 +204,74 @@ fun MainAppLayout(
 
     var telegramProfilePhotoPath by remember { mutableStateOf<String?>(null) }
     val authState by TdlibManager.authState.collectAsState()
+
+    // HOISTED STATES FOR PHOTOS GRID, SEARCH, AND ALBUMS
+    var hasPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+            } else {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+            }
+        )
+    }
+
+    val permissionsToRequest = remember {
+        val list = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            list.add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            list.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            list.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+        }
+        list.toTypedArray()
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val storageGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions[Manifest.permission.READ_MEDIA_IMAGES] == true
+        } else {
+            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] == true
+        }
+        hasPermission = storageGranted
+    }
+
+    var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+    var isScanningLocal by remember { mutableStateOf(true) }
+
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            isScanningLocal = true
+            withContext(Dispatchers.IO) {
+                // 1. Attempt to restore local database from remote Telegram backup if cache is empty
+                try {
+                    dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                val scanned = MediaStoreScanner.scan(context)
+                withContext(Dispatchers.Main) {
+                    localPhotos = scanned
+                    isScanningLocal = false
+                }
+                
+                // Trigger background server vault index crawl
+                val chatId = PreferencesManager.getChatId(context)
+                if (chatId != 0L) {
+                    try {
+                        TdlibManager.syncCloudHistory(context, chatId)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
     
     LaunchedEffect(authState) {
         if (authState is TdApi.AuthorizationStateReady) {
@@ -349,6 +425,12 @@ fun MainAppLayout(
                         profilePhotoPath = telegramProfilePhotoPath,
                         onSettingsClick = {
                             activeTab = "Settings"
+                        },
+                        localPhotos = localPhotos,
+                        isScanningLocal = isScanningLocal,
+                        hasPermission = hasPermission,
+                        onRequestPermission = {
+                            permissionLauncher.launch(permissionsToRequest)
                         }
                     )
                 }
@@ -357,7 +439,9 @@ fun MainAppLayout(
                         onPhotoSelected = { index, photos ->
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
-                        }
+                        },
+                        localPhotos = localPhotos,
+                        isScanning = isScanningLocal
                     )
                 }
                 "Albums" -> {
@@ -365,7 +449,8 @@ fun MainAppLayout(
                         onPhotoSelected = { index, photos ->
                             fullScreenPhotoIndex = index
                             devicePhotosList = photos
-                        }
+                        },
+                        localPhotos = localPhotos
                     )
                 }
                 "Settings" -> {

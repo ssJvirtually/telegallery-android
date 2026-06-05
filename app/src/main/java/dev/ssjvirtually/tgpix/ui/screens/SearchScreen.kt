@@ -71,7 +71,9 @@ data class SearchItem(val photo: LocalPhoto, val keywords: String)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchScreen(
-    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
+    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
+    localPhotos: List<LocalPhoto>,
+    isScanning: Boolean
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -115,24 +117,11 @@ fun SearchScreen(
         searchQuery = typedQuery
     }
     
-    var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
-    var isScanning by remember { mutableStateOf(true) }
-    
     val db = remember { UploadDatabase.getDatabase(context) }
     val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
-
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val scanned = dev.ssjvirtually.tgpix.storage.MediaStoreScanner.scan(context)
-            withContext(kotlinx.coroutines.Dispatchers.Main) {
-                localPhotos = scanned
-                isScanning = false
-            }
-        }
-    }
 
     // Merge, deduplicate and sort
     val unifiedPhotos = remember(localPhotos, uploadedLogs, cloudLogs) {

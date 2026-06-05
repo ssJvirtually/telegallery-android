@@ -63,24 +63,14 @@ data class AlbumUiModel(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumsScreen(
-    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit
+    onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
+    localPhotos: List<LocalPhoto>
 ) {
     val context = LocalContext.current
     val db = remember { UploadDatabase.getDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Standalone MediaStore and Cloud matching to avoid parent lifting complexity
-    var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-
-    LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.IO) {
-            val scanned = MediaStoreScanner.scan(context)
-            withContext(Dispatchers.Main) {
-                localPhotos = scanned
-            }
-        }
-    }
 
     val mergedPhotosList = remember(localPhotos, cloudLogs) {
         val list = mutableListOf<LocalPhoto>()
