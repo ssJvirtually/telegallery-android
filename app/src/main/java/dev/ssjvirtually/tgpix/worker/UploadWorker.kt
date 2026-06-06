@@ -15,6 +15,7 @@ import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
+import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
 import kotlinx.coroutines.delay
@@ -165,7 +166,7 @@ class UploadWorker(
                     }
 
                     // Prevent duplicate upload if already in cloud database from another device
-                    val fingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}"
+                    val fingerprint = photo.getFingerprint(applicationContext)
                     val existingInCloud = db.cloudDao().findByFingerprint(fingerprint)
                         ?: db.cloudDao().findByFileName(photo.name)
                     

@@ -53,6 +53,7 @@ import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
+import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
@@ -430,7 +431,7 @@ fun PhotoViewerScreen(
                                             UploadEntity(
                                                 mediaStoreId = photo.id,
                                                 path = photo.uri,
-                                                contentFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}",
+                                                contentFingerprint = photo.getFingerprint(context),
                                                 uploadedAt = System.currentTimeMillis(),
                                                 telegramMessageId = resultMsg.id
                                             )

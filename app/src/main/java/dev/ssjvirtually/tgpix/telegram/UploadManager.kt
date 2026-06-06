@@ -6,6 +6,7 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
+import dev.ssjvirtually.tgpix.storage.getPartialHash
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -156,9 +157,14 @@ object UploadManager {
                         val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
                         val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
                         
+                        val partialHash = photo.getPartialHash(context)
                         // Prepare tags for JSON storage (comma separated)
                         val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
-                        val metadataJson = """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"tags":[$tagsJsonArray]}"""
+                        val metadataJson = if (partialHash.isNotEmpty()) {
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"hash":"$partialHash","tags":[$tagsJsonArray]}"""
+                        } else {
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"tags":[$tagsJsonArray]}"""
+                        }
 
                         val captionText = """
                             📷 **Photo Metadata**

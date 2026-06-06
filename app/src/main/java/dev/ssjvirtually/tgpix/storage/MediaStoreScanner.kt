@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
+import java.security.MessageDigest
 
 data class LocalPhoto(
     val id: Long,
@@ -74,5 +75,33 @@ object MediaStoreScanner {
 
         TdlibManager.addLog("MediaStoreScanner: scanned ${photos.size} photos.")
         return photos
+    }
+}
+
+fun LocalPhoto.getPartialHash(context: Context): String {
+    return try {
+        context.contentResolver.openInputStream(Uri.parse(uri))?.use { stream ->
+            val buffer = ByteArray(65536) // 64KB
+            val bytesRead = stream.read(buffer)
+            if (bytesRead > 0) {
+                val digest = MessageDigest.getInstance("MD5")
+                digest.update(buffer, 0, bytesRead)
+                digest.digest().joinToString("") { String.format("%02x", it) }
+            } else {
+                ""
+            }
+        } ?: ""
+    } catch (e: Exception) {
+        android.util.Log.e("TGPix", "Failed to compute partial hash for $name", e)
+        ""
+    }
+}
+
+fun LocalPhoto.getFingerprint(context: Context): String {
+    val partialHash = getPartialHash(context)
+    return if (partialHash.isNotEmpty()) {
+        "${name}_${size}_${dateTaken}_$partialHash"
+    } else {
+        "${name}_${size}_${dateTaken}"
     }
 }

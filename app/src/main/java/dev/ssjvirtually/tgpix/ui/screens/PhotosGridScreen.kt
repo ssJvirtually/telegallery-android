@@ -70,6 +70,7 @@ import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.AlbumEntity
 import dev.ssjvirtually.tgpix.storage.AlbumPhotoEntity
+import dev.ssjvirtually.tgpix.storage.getFingerprint
 import android.app.AlertDialog
 import android.widget.EditText
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
@@ -333,7 +334,7 @@ fun PhotosGridScreen(
                                                     UploadEntity(
                                                         mediaStoreId = photo.id,
                                                         path = photo.uri,
-                                                        contentFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}",
+                                                        contentFingerprint = photo.getFingerprint(context),
                                                         uploadedAt = System.currentTimeMillis(),
                                                         telegramMessageId = res.id
                                                     )

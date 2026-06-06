@@ -287,6 +287,7 @@ object TdlibManager {
                     var isDoc = false
                     var uploadedAt = msg.date.toLong() * 1000L
                     var tags = ""
+                    var metadata: ParsedMetadata? = null
                     
                     if (content is TdApi.MessagePhoto) {
                         val sizes = content.photo.sizes
@@ -300,7 +301,7 @@ object TdlibManager {
                             thumbFileId = sizes.first().photo.id
                             
                             val captionText = content.caption.text
-                            val metadata = parseMetadataFromCaption(captionText)
+                            metadata = parseMetadataFromCaption(captionText)
                             if (metadata != null) {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
@@ -336,7 +337,7 @@ object TdlibManager {
                             thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
                             
                             val captionText = content.caption.text
-                            val metadata = parseMetadataFromCaption(captionText)
+                            metadata = parseMetadataFromCaption(captionText)
                             if (metadata != null) {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
@@ -349,6 +350,11 @@ object TdlibManager {
                     }
                     
                     if (fileId != 0 && fileName.isNotEmpty()) {
+                        val computedFingerprint = if (metadata != null && metadata.hash.isNotEmpty()) {
+                            "${fileName}_${fileSize}_${uploadedAt}_${metadata.hash}"
+                        } else {
+                            "${fileName}_${fileSize}_${uploadedAt}"
+                        }
                         entities.add(
                             CloudPhotoEntity(
                                 messageId = msg.id,
@@ -358,7 +364,7 @@ object TdlibManager {
                                 uploadedAt = uploadedAt,
                                 fileSize = fileSize,
                                 isDocument = isDoc,
-                                contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}",
+                                contentFingerprint = computedFingerprint,
                                 telegramThumbnailFileId = thumbFileId,
                                 tags = tags,
                                 fileIdCachedAt = System.currentTimeMillis()
@@ -411,7 +417,8 @@ object TdlibManager {
         val name: String,
         val size: Long,
         val dateTaken: Long,
-        val tags: List<String> = emptyList()
+        val tags: List<String> = emptyList(),
+        val hash: String = ""
     )
 
     private fun parseMetadataFromCaption(caption: String): ParsedMetadata? {
@@ -433,7 +440,8 @@ object TdlibManager {
                 name = jsonObj.optString("name", ""),
                 size = jsonObj.optLong("size", 0L),
                 dateTaken = jsonObj.optLong("dateTaken", 0L),
-                tags = tagsList
+                tags = tagsList,
+                hash = jsonObj.optString("hash", "")
             )
         } catch (e: Exception) {
             e.printStackTrace()
