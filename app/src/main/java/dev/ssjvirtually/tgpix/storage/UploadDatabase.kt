@@ -45,7 +45,15 @@ interface UploadDao {
     suspend fun delete(path: String)
 }
 
-@Entity(tableName = "cloud_photos")
+@Entity(
+    tableName = "cloud_photos",
+    indices = [
+        Index(value = ["uploadedAt"], name = "idx_cloud_photos_uploadedAt"),
+        Index(value = ["contentFingerprint"], unique = true, name = "idx_cloud_photos_contentFingerprint"),
+        Index(value = ["uniqueRemoteId"], unique = true, name = "idx_cloud_photos_uniqueRemoteId"),
+        Index(value = ["fileName"], name = "idx_cloud_photos_fileName")
+    ]
+)
 data class CloudPhotoEntity(
     @PrimaryKey val messageId: Long,
     val telegramFileId: Int,
@@ -103,7 +111,13 @@ data class AlbumEntity(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "album_photos", primaryKeys = ["albumId", "photoUri"])
+@Entity(
+    tableName = "album_photos",
+    primaryKeys = ["albumId", "photoUri"],
+    indices = [
+        Index(value = ["photoUri"], name = "idx_album_photos_photoUri")
+    ]
+)
 data class AlbumPhotoEntity(
     val albumId: Long,
     val photoUri: String
@@ -135,7 +149,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -242,6 +256,16 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_uploadedAt` ON `cloud_photos` (`uploadedAt`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `idx_cloud_photos_contentFingerprint` ON `cloud_photos` (`contentFingerprint`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `idx_cloud_photos_uniqueRemoteId` ON `cloud_photos` (`uniqueRemoteId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_fileName` ON `cloud_photos` (`fileName`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `idx_album_photos_photoUri` ON `album_photos` (`photoUri`)")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -256,7 +280,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
-                    MIGRATION_7_8
+                    MIGRATION_7_8,
+                    MIGRATION_8_9
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
