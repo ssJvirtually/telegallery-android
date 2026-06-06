@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Entity(
     tableName = "uploads",
-    indices = [Index(value = ["contentFingerprint"], unique = true)]
+    indices = [Index(value = ["contentFingerprint"], unique = true, name = "idx_uploads_fingerprint")]
 )
 data class UploadEntity(
     @PrimaryKey val mediaStoreId: Long,
