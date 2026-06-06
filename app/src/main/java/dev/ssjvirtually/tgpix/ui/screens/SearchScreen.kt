@@ -274,8 +274,11 @@ fun SearchScreen(
                                         if (res is TdApi.Message) {
                                             db.dao().insert(
                                                 UploadEntity(
+                                                    mediaStoreId = photo.id,
                                                     path = photo.uri,
-                                                    uploadedAt = System.currentTimeMillis()
+                                                    contentFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}",
+                                                    uploadedAt = System.currentTimeMillis(),
+                                                    telegramMessageId = res.id
                                                 )
                                             )
                                             successCount++

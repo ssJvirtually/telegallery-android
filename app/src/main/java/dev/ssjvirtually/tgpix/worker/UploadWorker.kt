@@ -172,8 +172,11 @@ class UploadWorker(
                     if (existingInCloud != null) {
                         dao.insert(
                             UploadEntity(
+                                mediaStoreId = photo.id,
                                 path = fileKey,
-                                uploadedAt = existingInCloud.uploadedAt
+                                contentFingerprint = fingerprint,
+                                uploadedAt = existingInCloud.uploadedAt,
+                                telegramMessageId = existingInCloud.messageId
                             )
                         )
                         TdlibManager.addLog("Worker: '${photo.name}' already exists in cloud history. Skipping and marking as synced.")
@@ -190,8 +193,11 @@ class UploadWorker(
                         TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
                         dao.insert(
                             UploadEntity(
+                                mediaStoreId = photo.id,
                                 path = fileKey,
-                                uploadedAt = System.currentTimeMillis()
+                                contentFingerprint = fingerprint,
+                                uploadedAt = System.currentTimeMillis(),
+                                telegramMessageId = uploadResult.id
                             )
                         )
                         uploadedCount++

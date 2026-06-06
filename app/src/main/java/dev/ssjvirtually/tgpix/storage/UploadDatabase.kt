@@ -10,15 +10,21 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.Index
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
-@Entity(tableName = "uploads")
+@Entity(
+    tableName = "uploads",
+    indices = [Index(value = ["contentFingerprint"], unique = true)]
+)
 data class UploadEntity(
-    @PrimaryKey
+    @PrimaryKey val mediaStoreId: Long,
     val path: String,
-    val uploadedAt: Long
+    val contentFingerprint: String,
+    val uploadedAt: Long,
+    val telegramMessageId: Long
 )
 
 @Dao
@@ -125,7 +131,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -192,6 +198,40 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `uploads_new` (
+                        `mediaStoreId` INTEGER PRIMARY KEY NOT NULL, 
+                        `path` TEXT NOT NULL, 
+                        `contentFingerprint` TEXT NOT NULL, 
+                        `uploadedAt` INTEGER NOT NULL, 
+                        `telegramMessageId` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `uploads_new` (`mediaStoreId`, `path`, `contentFingerprint`, `uploadedAt`, `telegramMessageId`)
+                    SELECT 
+                        CASE 
+                            WHEN CAST(substr(path, 39) AS INTEGER) > 0 THEN CAST(substr(path, 39) AS INTEGER)
+                            ELSE -rowid
+                        END as mediaStoreId,
+                        path,
+                        'migrated_' || path as contentFingerprint,
+                        uploadedAt,
+                        0 as telegramMessageId
+                    FROM `uploads`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `uploads`")
+                db.execSQL("ALTER TABLE `uploads_new` RENAME TO `uploads`")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `idx_uploads_fingerprint` ON `uploads` (`contentFingerprint`)")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -199,7 +239,14 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6,
+                    MIGRATION_6_7
+                )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
                         android.util.Log.e(

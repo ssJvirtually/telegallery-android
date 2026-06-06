@@ -142,8 +142,11 @@ class ShareWorker(
                     if (backupResult is TdApi.Message) {
                         db.dao().insert(
                             UploadEntity(
+                                mediaStoreId = photo.id,
                                 path = photo.uri,
-                                uploadedAt = System.currentTimeMillis()
+                                contentFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}",
+                                uploadedAt = System.currentTimeMillis(),
+                                telegramMessageId = backupResult.id
                             )
                         )
                         TdlibManager.addLog("ShareWorker: Successfully backed up '${photo.name}' to main vault.")

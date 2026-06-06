@@ -428,8 +428,11 @@ fun PhotoViewerScreen(
                                     if (resultMsg is TdApi.Message) {
                                         db.dao().insert(
                                             UploadEntity(
+                                                mediaStoreId = photo.id,
                                                 path = photo.uri,
-                                                uploadedAt = System.currentTimeMillis()
+                                                contentFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}",
+                                                uploadedAt = System.currentTimeMillis(),
+                                                telegramMessageId = resultMsg.id
                                             )
                                         )
                                         Toast.makeText(context, "Asset successfully synchronized to secure Telegram vault!", Toast.LENGTH_SHORT).show()
