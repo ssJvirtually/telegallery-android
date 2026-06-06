@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Collections
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -561,81 +562,142 @@ fun MainAppLayout(
             }
         }
     ) { paddingValues ->
+        val connectionStatus by TdlibManager.connectionStatus.collectAsState()
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Android System Back Button Handlers
-            if (fullScreenPhotoIndex != null && devicePhotosList.isNotEmpty()) {
-                BackHandler {
-                    fullScreenPhotoIndex = null
-                    devicePhotosList = emptyList()
-                }
-            } else if (activeTab == "Search") {
-                BackHandler {
-                    activeTab = "Photos"
-                }
-            } else if (activeTab == "Albums") {
-                BackHandler {
-                    activeTab = "Photos"
-                }
-            } else if (activeTab == "Settings") {
-                BackHandler {
-                    activeTab = "Photos"
-                }
-            }
-
-            when (activeTab) {
-                "Photos" -> {
-                    PhotosGridScreen(
-                        onPhotoSelected = { index, photos ->
-                            fullScreenPhotoIndex = index
-                            devicePhotosList = photos
-                        },
-                        profilePhotoPath = telegramProfilePhotoPath,
-                        onSettingsClick = {
-                            activeTab = "Settings"
-                        },
-                        mergedPhotosList = mergedPhotosList,
-                        isScanningLocal = isScanningLocal,
-                        isSyncingCloud = isSyncingCloud,
-                        hasPermission = hasPermission,
-                        onRequestPermission = {
-                            permissionLauncher.launch(permissionsToRequest)
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Display connection status banner if NOT connected
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = connectionStatus != TdlibManager.ConnectionStatus.CONNECTED,
+                    enter = androidx.compose.animation.expandVertically(),
+                    exit = androidx.compose.animation.shrinkVertically()
+                ) {
+                    val (bgColor, textColor, iconPair) = when (connectionStatus) {
+                        TdlibManager.ConnectionStatus.WAITING_FOR_NETWORK -> {
+                            Triple(
+                                Color(0xFF8C1D18), // Google Red Container
+                                Color(0xFFF9DEDC),
+                                Icons.Default.Cloud to "No internet connection — waiting for network..."
+                            )
                         }
-                    )
+                        else -> { // CONNECTING
+                            Triple(
+                                Color(0xFFFFF3CD), // Warn Yellow
+                                Color(0xFF856404),
+                                Icons.Default.Warning to "Connecting to Telegram servers..."
+                            )
+                        }
+                    }
+                    val icon = iconPair.first
+                    val text = iconPair.second
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(bgColor)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = textColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = text,
+                            color = textColor,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
-                "Search" -> {
-                    SearchScreen(
-                        onPhotoSelected = { index, photos ->
-                            fullScreenPhotoIndex = index
-                            devicePhotosList = photos
-                        },
-                        mergedPhotosList = mergedPhotosList,
-                        isScanning = isScanningLocal
-                    )
-                }
-                "Albums" -> {
-                    AlbumsScreen(
-                        onPhotoSelected = { index, photos ->
-                            fullScreenPhotoIndex = index
-                            devicePhotosList = photos
-                        },
-                        mergedPhotosList = mergedPhotosList
-                    )
-                }
-                "Settings" -> {
-                    SettingsScreen(
-                        selectedChatTitle = selectedChatTitle,
-                        onResetChat = onResetChat,
-                        onBack = { activeTab = "Photos" }
-                    )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                ) {
+                    // Android System Back Button Handlers
+                    if (fullScreenPhotoIndex != null && devicePhotosList.isNotEmpty()) {
+                        BackHandler {
+                            fullScreenPhotoIndex = null
+                            devicePhotosList = emptyList()
+                        }
+                    } else if (activeTab == "Search") {
+                        BackHandler {
+                            activeTab = "Photos"
+                        }
+                    } else if (activeTab == "Albums") {
+                        BackHandler {
+                            activeTab = "Photos"
+                        }
+                    } else if (activeTab == "Settings") {
+                        BackHandler {
+                            activeTab = "Photos"
+                        }
+                    }
+
+                    when (activeTab) {
+                        "Photos" -> {
+                            PhotosGridScreen(
+                                onPhotoSelected = { index, photos ->
+                                    fullScreenPhotoIndex = index
+                                    devicePhotosList = photos
+                                },
+                                profilePhotoPath = telegramProfilePhotoPath,
+                                onSettingsClick = {
+                                    activeTab = "Settings"
+                                },
+                                mergedPhotosList = mergedPhotosList,
+                                isScanningLocal = isScanningLocal,
+                                isSyncingCloud = isSyncingCloud,
+                                hasPermission = hasPermission,
+                                onRequestPermission = {
+                                    permissionLauncher.launch(permissionsToRequest)
+                                }
+                            )
+                        }
+                        "Search" -> {
+                            SearchScreen(
+                                onPhotoSelected = { index, photos ->
+                                    fullScreenPhotoIndex = index
+                                    devicePhotosList = photos
+                                },
+                                mergedPhotosList = mergedPhotosList,
+                                isScanning = isScanningLocal
+                            )
+                        }
+                        "Albums" -> {
+                            AlbumsScreen(
+                                onPhotoSelected = { index, photos ->
+                                    fullScreenPhotoIndex = index
+                                    devicePhotosList = photos
+                                },
+                                mergedPhotosList = mergedPhotosList
+                            )
+                        }
+                        "Settings" -> {
+                            SettingsScreen(
+                                selectedChatTitle = selectedChatTitle,
+                                onResetChat = onResetChat,
+                                onBack = { activeTab = "Photos" }
+                            )
+                        }
+                    }
                 }
             }
 
             // Animate Full Screen Photo Viewer
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = fullScreenPhotoIndex != null && devicePhotosList.isNotEmpty(),
                 enter = fadeIn(),
                 exit = fadeOut()

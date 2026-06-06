@@ -27,12 +27,17 @@ data class ChatInfo(val id: Long, val title: String)
 
 object TdlibManager {
 
+    enum class ConnectionStatus { CONNECTED, CONNECTING, WAITING_FOR_NETWORK }
+
     private var client: Client? = null
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @Volatile var myUserId: Long = 0L
     
     private val _authState = MutableStateFlow<TdApi.AuthorizationState?>(null)
     val authState: StateFlow<TdApi.AuthorizationState?> = _authState
+
+    private val _connectionStatus = MutableStateFlow(ConnectionStatus.CONNECTED)
+    val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus
 
     private val _chats = MutableStateFlow<List<ChatInfo>>(emptyList())
     val chats: StateFlow<List<ChatInfo>> = _chats
@@ -181,7 +186,20 @@ object TdlibManager {
                     if (it.id == obj.chatId) it.copy(title = obj.title) else it 
                 }
             }
+            is TdApi.UpdateConnectionState -> {
+                handleConnectionState(obj.state)
+            }
         }
+    }
+
+    private fun handleConnectionState(state: TdApi.ConnectionState) {
+        val newStatus = when (state) {
+            is TdApi.ConnectionStateReady -> ConnectionStatus.CONNECTED
+            is TdApi.ConnectionStateWaitingForNetwork -> ConnectionStatus.WAITING_FOR_NETWORK
+            else -> ConnectionStatus.CONNECTING
+        }
+        _connectionStatus.value = newStatus
+        addLog("Telegram connection status changed to: $newStatus (${state::class.java.simpleName})")
     }
 
     private fun setParameters(context: Context) {
