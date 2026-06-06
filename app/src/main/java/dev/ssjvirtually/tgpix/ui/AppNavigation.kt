@@ -315,6 +315,16 @@ fun MainAppLayout(
     // merge in cloud data in the background without flashing the spinner.
     LaunchedEffect(localPhotos, cloudLogs) {
         if (mergedPhotosList.isEmpty()) isScanningLocal = true
+        if (cloudLogs.isEmpty()) {
+            val sortedList = withContext(Dispatchers.Default) {
+                localPhotos.sortedByDescending { it.dateTaken }
+            }
+            withContext(Dispatchers.Main) {
+                mergedPhotosList = sortedList
+                isScanningLocal = false
+            }
+            return@LaunchedEffect
+        }
         withContext(Dispatchers.IO) {
             val list = mutableListOf<LocalPhoto>()
             

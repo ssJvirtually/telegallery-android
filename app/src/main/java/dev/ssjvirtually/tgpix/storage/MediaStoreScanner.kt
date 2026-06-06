@@ -22,49 +22,47 @@ data class LocalPhoto(
 )
 
 object MediaStoreScanner {
-    private fun parseDateFromFilename(name: String): Long? {
+    private val waRegex = Regex("""IMG[-_](\d{8})[-_]WA""")
+    private val dtRegex = Regex("""(\d{8})[-_](\d{6})""")
+    private val hyphenDtRegex = Regex("""(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})""")
+    private val underscoreDtRegex = Regex("""(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})""")
+    private val dateOnlyRegex = Regex("""(\d{4})-(\d{2})-(\d{2})""")
+
+    private fun parseDateFromFilename(
+        name: String,
+        waFormat: java.text.SimpleDateFormat,
+        dtFormat: java.text.SimpleDateFormat,
+        hyphenFormat: java.text.SimpleDateFormat,
+        underscoreFormat: java.text.SimpleDateFormat,
+        dateOnlyFormat: java.text.SimpleDateFormat
+    ): Long? {
         try {
             // WhatsApp format: IMG-YYYYMMDD-WAxxxx
-            val waRegex = Regex("""IMG[-_](\d{8})[-_]WA""")
             waRegex.find(name)?.let { match ->
                 val dateStr = match.groupValues[1] // YYYYMMDD
-                val sdf = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US)
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                return sdf.parse(dateStr)?.time
+                return waFormat.parse(dateStr)?.time
             }
 
             // Timestamp format with date and time: YYYYMMDD_HHMMSS or YYYYMMDD-HHMMSS
-            val dtRegex = Regex("""(\d{8})[-_](\d{6})""")
             dtRegex.find(name)?.let { match ->
                 val dateStr = match.groupValues[1] // YYYYMMDD
                 val timeStr = match.groupValues[2] // HHMMSS
-                val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                return sdf.parse("${dateStr}_${timeStr}")?.time
+                return dtFormat.parse("${dateStr}_${timeStr}")?.time
             }
 
             // Hyphenated date and time: YYYY-MM-DD-HH-MM-SS
-            val hyphenDtRegex = Regex("""(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})""")
             hyphenDtRegex.find(name)?.let { match ->
-                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", java.util.Locale.US)
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                return sdf.parse(match.value)?.time
+                return hyphenFormat.parse(match.value)?.time
             }
 
             // Underscored date and time: YYYY_MM_DD_HH_MM_SS
-            val underscoreDtRegex = Regex("""(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})""")
             underscoreDtRegex.find(name)?.let { match ->
-                val sdf = java.text.SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", java.util.Locale.US)
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                return sdf.parse(match.value)?.time
+                return underscoreFormat.parse(match.value)?.time
             }
 
             // Just YYYY-MM-DD
-            val dateOnlyRegex = Regex("""(\d{4})-(\d{2})-(\d{2})""")
             dateOnlyRegex.find(name)?.let { match ->
-                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                return sdf.parse(match.value)?.time
+                return dateOnlyFormat.parse(match.value)?.time
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -80,14 +78,29 @@ object MediaStoreScanner {
             MediaStore.Images.Media.SIZE,
             MediaStore.Images.Media.DATE_TAKEN,
             MediaStore.Images.Media.DATE_ADDED,     // set when file first added to media library ("file created")
-            MediaStore.Images.Media.DATE_MODIFIED,   // filesystem last-modified (always present)
-            MediaStore.Images.Media.DATA             // file path on disk (deprecated but queryable for fallback)
+            MediaStore.Images.Media.DATE_MODIFIED    // filesystem last-modified (always present)
         )
 
         // Sort by date taken descending (newest first)
         val sortOrder = "${MediaStore.Images.Media.DATE_TAKEN} DESC"
 
         val queryUri: Uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+
+        val waFormat = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
+        val dtFormat = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
+        val hyphenFormat = java.text.SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
+        val underscoreFormat = java.text.SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
+        val dateOnlyFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getDefault()
+        }
 
         try {
             context.contentResolver.query(
@@ -104,8 +117,6 @@ object MediaStoreScanner {
                 val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
                 val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
 
-                val dataColumn = cursor.getColumnIndex(MediaStore.Images.Media.DATA)
-
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
                     val name = cursor.getString(nameColumn) ?: "photo_$id.jpg"
@@ -114,46 +125,14 @@ object MediaStoreScanner {
                     }
                     val size = cursor.getLong(sizeColumn)
 
-                    val filePath = if (dataColumn != -1) cursor.getString(dataColumn) else null
-
-                    // Determine filesystem creation/modification time if file exists on disk
-                    var fsTime: Long? = null
-                    try {
-                        if (!filePath.isNullOrEmpty()) {
-                            val file = java.io.File(filePath)
-                            if (file.exists()) {
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                    val attrs = java.nio.file.Files.readAttributes(
-                                        file.toPath(),
-                                        java.nio.file.attribute.BasicFileAttributes::class.java
-                                    )
-                                    val creationTime = attrs.creationTime().toMillis()
-                                    if (creationTime > 0L) {
-                                        fsTime = creationTime
-                                    }
-                                }
-                                if (fsTime == null || fsTime <= 0L) {
-                                    val lastModified = file.lastModified()
-                                    if (lastModified > 0L) {
-                                        fsTime = lastModified
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-
                     // Resolve the best available date for this photo using a multi-level fallback:
                     //   Level 1: DATE_TAKEN — EXIF-based capture time. Present in camera photos.
                     //            Null/0 for screenshots, WhatsApp images, Snapchat, downloads.
                     //   Level 2: Filename date — for WhatsApp/Snapchat/Screenshots with no EXIF data.
-                    //   Level 3: Filesystem creation/modification time (if file exists).
-                    //   Level 4: DATE_ADDED — when the file first appeared in the media library (seconds * 1000).
-                    //   Level 5: DATE_MODIFIED — filesystem last-modified (seconds * 1000).
+                    //   Level 3: DATE_ADDED — when the file first appeared in the media library (seconds * 1000).
+                    //   Level 4: DATE_MODIFIED — filesystem last-modified (seconds * 1000).
                     val dateTaken: Long = cursor.getLong(dateTakenColumn).takeIf { it > 0L }
-                        ?: parseDateFromFilename(name)
-                        ?: fsTime
+                        ?: parseDateFromFilename(name, waFormat, dtFormat, hyphenFormat, underscoreFormat, dateOnlyFormat)
                         ?: (cursor.getLong(dateAddedColumn) * 1000L).takeIf { it > 0L }
                         ?: (cursor.getLong(dateModifiedColumn) * 1000L)
 
