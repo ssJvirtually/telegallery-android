@@ -380,6 +380,9 @@ object TdlibManager {
                         }
                         val isHdValue = metadata?.isHd ?: !isDoc
                         val originalSizeValue = metadata?.originalSizeBytes ?: fileSize
+                        
+                        val extension = fileName.substringAfterLast('.', "").lowercase()
+                        val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
 
                         entities.add(
                             CloudPhotoEntity(
@@ -396,7 +399,8 @@ object TdlibManager {
                                 fileIdCachedAt = System.currentTimeMillis(),
                                 isHd = isHdValue,
                                 originalSizeBytes = originalSizeValue,
-                                dateTaken = dateTaken
+                                dateTaken = dateTaken,
+                                mimeType = mime
                             )
                         )
                     }

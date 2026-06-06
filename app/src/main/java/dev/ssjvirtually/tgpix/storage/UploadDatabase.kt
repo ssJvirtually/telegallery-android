@@ -72,7 +72,8 @@ data class CloudPhotoEntity(
     val fileIdCachedAt: Long = 0L,
     val isHd: Boolean = true,
     val originalSizeBytes: Long = 0L,
-    val dateTaken: Long = 0L
+    val dateTaken: Long = 0L,
+    val mimeType: String = "image/jpeg"
 )
 
 @Dao
@@ -154,7 +155,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -333,6 +334,12 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `cloud_photos` ADD COLUMN `mimeType` TEXT NOT NULL DEFAULT 'image/jpeg'")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -351,7 +358,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
-                    MIGRATION_11_12
+                    MIGRATION_11_12,
+                    MIGRATION_12_13
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
