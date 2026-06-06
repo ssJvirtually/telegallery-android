@@ -104,9 +104,20 @@ fun PhotoViewerScreen(
     
     val activeCloudPhoto = remember(activePhoto, cloudLogs) {
         if (activePhoto == null) null
-        else {
-            val finger = activePhoto.getFingerprint(context)
-            cloudLogs.firstOrNull { it.contentFingerprint == finger }
+        else if (isCloudPhoto(activePhoto.uri)) {
+            // Cloud-only photo: already IS a cloud entry — match it directly by messageId encoded in URI
+            val messageId = activePhoto.uri.removePrefix("cloud://").substringBefore("/").toLongOrNull()
+            if (messageId != null) {
+                cloudLogs.firstOrNull { it.messageId == messageId }
+            } else {
+                cloudLogs.firstOrNull { it.fileName == activePhoto.name }
+            }
+        } else {
+            // Local photo: match by fingerprint (name+size+date) first, then fallback to filename.
+            // NOTE: Do NOT call getFingerprint() here — it reads file bytes on the main thread.
+            // Use a lightweight in-memory fingerprint key instead.
+            val lightKey = "${activePhoto.name.lowercase()}_${activePhoto.size}"
+            cloudLogs.firstOrNull { "${it.fileName.lowercase()}_${it.fileSize}" == lightKey }
                 ?: cloudLogs.firstOrNull { it.fileName == activePhoto.name }
         }
     }
@@ -446,6 +457,8 @@ fun PhotoViewerScreen(
                             val isHd = PreferencesManager.isHdMode(context)
                             coroutineScope.launch(Dispatchers.IO) {
                                 val resultMsg = UploadManager.uploadPhoto(context, photo, chatId, isHd)
+                                // Compute fingerprint on IO thread (reads 64KB of file bytes)
+                                val fingerprint = photo.getFingerprint(context)
                                 withContext(Dispatchers.Main) {
                                     isUploading = false
                                     if (resultMsg is TdApi.Message) {
@@ -453,7 +466,7 @@ fun PhotoViewerScreen(
                                             UploadEntity(
                                                 mediaStoreId = photo.id,
                                                 path = photo.uri,
-                                                contentFingerprint = photo.getFingerprint(context),
+                                                contentFingerprint = fingerprint,
                                                 uploadedAt = System.currentTimeMillis(),
                                                 telegramMessageId = resultMsg.id
                                             )
