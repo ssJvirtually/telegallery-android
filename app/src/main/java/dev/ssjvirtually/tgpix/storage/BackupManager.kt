@@ -278,6 +278,7 @@ object BackupManager {
                             
                             // Re-initialize/open database to trigger updates
                             val newDb = UploadDatabase.getDatabase(context)
+                            newDb.cloudDao().clearAllCachedPaths()
                             val restoredCount = newDb.cloudDao().getRecordCountDirect()
                             PreferencesManager.setLastBackupRecordCount(context, restoredCount)
                             
@@ -366,6 +367,7 @@ object BackupManager {
                             
                             // Re-initialize/open database to trigger updates
                             val newDb = UploadDatabase.getDatabase(context)
+                            newDb.cloudDao().clearAllCachedPaths()
                             val restoredCount = newDb.cloudDao().getRecordCountDirect()
                             PreferencesManager.setLastBackupRecordCount(context, restoredCount)
                             

@@ -107,6 +107,9 @@ interface CloudPhotoDao {
     @Query("DELETE FROM cloud_photos WHERE fileName LIKE '%.db' OR fileName LIKE 'tgpix_backup%'")
     suspend fun deleteBackupDbFiles()
 
+    @Query("UPDATE cloud_photos SET localCachedThumbnailPath = NULL, localCachedLargePath = NULL")
+    suspend fun clearAllCachedPaths()
+
     @Query("SELECT * FROM cloud_photos WHERE messageId = :messageId LIMIT 1")
     suspend fun findByMessageId(messageId: Long): CloudPhotoEntity?
 }
