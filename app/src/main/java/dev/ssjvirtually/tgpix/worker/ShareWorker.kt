@@ -168,6 +168,11 @@ class ShareWorker(
                                 telegramMessageId = backupResult.id
                             )
                         )
+                        try {
+                            TdlibManager.parseAndIndexUploadedMessage(applicationContext, backupResult)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         TdlibManager.addLog("ShareWorker: Successfully backed up '${photo.name}' to main vault.")
                     } else {
                         TdlibManager.addLog("ShareWorker: Failed to back up '${photo.name}' before sharing. Continuing.")

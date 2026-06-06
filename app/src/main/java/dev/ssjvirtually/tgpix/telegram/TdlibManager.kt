@@ -289,6 +289,16 @@ object TdlibManager {
             if (result is TdApi.Messages && result.messages.isNotEmpty()) {
                 val entities = mutableListOf<CloudPhotoEntity>()
                 for (msg in result.messages) {
+                    val content = msg.content
+                    if (content is TdApi.MessageDocument && content.caption.text.contains("#tgpix_album")) {
+                        try {
+                            dev.ssjvirtually.tgpix.storage.BackupManager.reconstructAlbum(context, msg)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        continue
+                    }
+
                     // Check if this message already exists in the local database
                     if (cloudDao.exists(msg.id)) {
                         addLog("Found existing message index in database. Terminating crawl.")
@@ -296,7 +306,6 @@ object TdlibManager {
                         break
                     }
 
-                    val content = msg.content
                     var fileName = ""
                     var fileId = 0
                     var thumbFileId = 0
@@ -450,6 +459,124 @@ object TdlibManager {
             if (result is TdApi.StorageStatistics) {
                 addLog("File cache optimized successfully.")
             }
+        }
+    }
+
+    suspend fun parseAndIndexUploadedMessage(context: Context, msg: TdApi.Message) {
+        val database = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(context)
+        val cloudDao = database.cloudDao()
+        
+        val content = msg.content
+        var fileName = ""
+        var fileId = 0
+        var thumbFileId = 0
+        var remoteId = ""
+        var fileSize = 0L
+        var isDoc = false
+        var uploadedAt = msg.date.toLong() * 1000L
+        var dateTaken = msg.date.toLong() * 1000L
+        var tags = ""
+        var metadata: ParsedMetadata? = null
+        var width = 0
+        var height = 0
+        
+        if (content is TdApi.MessagePhoto) {
+            val sizes = content.photo.sizes
+            if (sizes.isNotEmpty()) {
+                val largest = sizes.last()
+                fileId = largest.photo.id
+                remoteId = largest.photo.remote.id
+                fileSize = largest.photo.size.toLong()
+                thumbFileId = sizes.first().photo.id
+                width = largest.width
+                height = largest.height
+                
+                val captionText = content.caption.text
+                metadata = parseMetadataFromCaption(captionText)
+                if (metadata != null) {
+                    fileName = metadata.name
+                    uploadedAt = metadata.dateTaken
+                    dateTaken = metadata.dateTaken
+                    fileSize = metadata.size
+                    tags = metadata.tags.joinToString(" ")
+                } else {
+                    fileName = if (captionText.isNotEmpty()) {
+                        captionText.substringBefore("\n").trim()
+                    } else {
+                        "photo_${msg.id}.jpg"
+                    }
+                    dateTaken = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(fileName) ?: (msg.date.toLong() * 1000L)
+                }
+            }
+        } else if (content is TdApi.MessageDocument) {
+            val doc = content.document
+            val docName = if (doc.fileName.isNotEmpty()) doc.fileName else {
+                val captionText = content.caption.text
+                if (captionText.isNotEmpty()) captionText.substringBefore("\n").trim() else "doc_${msg.id}"
+            }
+            
+            val imageExtensions = setOf("jpg", "jpeg", "png", "webp", "heic", "heif", "gif")
+            val extension = docName.substringAfterLast('.', "").lowercase()
+            val isImage = imageExtensions.contains(extension)
+            
+            if (isImage && !docName.startsWith("tgpix_backup", ignoreCase = true)) {
+                fileId = doc.document.id
+                remoteId = doc.document.remote.id
+                fileSize = doc.document.size
+                isDoc = true
+                thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                width = doc.thumbnail?.width ?: 0
+                height = doc.thumbnail?.height ?: 0
+                
+                val captionText = content.caption.text
+                metadata = parseMetadataFromCaption(captionText)
+                if (metadata != null) {
+                    fileName = metadata.name
+                    uploadedAt = metadata.dateTaken
+                    dateTaken = metadata.dateTaken
+                    fileSize = metadata.size
+                    tags = metadata.tags.joinToString(" ")
+                } else {
+                    fileName = docName
+                    dateTaken = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(fileName) ?: (msg.date.toLong() * 1000L)
+                }
+            }
+        }
+        
+        if (fileId != 0 && fileName.isNotEmpty()) {
+            val computedFingerprint = if (metadata != null && metadata.hash.isNotEmpty()) {
+                "${fileName}_${fileSize}_${dateTaken}_${metadata.hash}"
+            } else {
+                "${fileName}_${fileSize}_${dateTaken}"
+            }
+            val isHdValue = metadata?.isHd ?: !isDoc
+            val originalSizeValue = metadata?.originalSizeBytes ?: fileSize
+            
+            val extension = fileName.substringAfterLast('.', "").lowercase()
+            val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
+            
+            val entity = dev.ssjvirtually.tgpix.storage.CloudPhotoEntity(
+                messageId = msg.id,
+                telegramFileId = fileId,
+                uniqueRemoteId = remoteId,
+                fileName = fileName,
+                uploadedAt = uploadedAt,
+                fileSize = fileSize,
+                isDocument = isDoc,
+                contentFingerprint = computedFingerprint,
+                telegramThumbnailFileId = thumbFileId,
+                tags = tags,
+                fileIdCachedAt = System.currentTimeMillis(),
+                isHd = isHdValue,
+                originalSizeBytes = originalSizeValue,
+                dateTaken = dateTaken,
+                mimeType = mime,
+                width = width,
+                height = height
+            )
+            
+            cloudDao.insertBatch(listOf(entity))
+            addLog("Indexed uploaded photo '${fileName}' into database in real-time.")
         }
     }
 

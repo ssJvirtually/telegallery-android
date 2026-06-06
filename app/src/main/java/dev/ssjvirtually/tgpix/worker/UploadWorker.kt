@@ -201,6 +201,11 @@ class UploadWorker(
                                 telegramMessageId = uploadResult.id
                             )
                         )
+                        try {
+                            TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         uploadedCount++
                     } else if (uploadResult is TdApi.Error) {
                         TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")

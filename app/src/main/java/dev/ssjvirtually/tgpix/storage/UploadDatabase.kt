@@ -118,8 +118,11 @@ interface CloudPhotoDao {
 data class AlbumEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val uuid: String = java.util.UUID.randomUUID().toString(),
     val name: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val telegramMessageId: Long? = null,
+    val coverPhotoMessageId: Long? = null
 )
 
 @Entity(
@@ -156,11 +159,26 @@ interface AlbumDao {
 
     @Query("SELECT * FROM album_photos WHERE albumId = :albumId")
     suspend fun getAlbumPhotosDirect(albumId: Long): List<AlbumPhotoEntity>
+
+    @Query("SELECT telegramMessageId FROM albums WHERE id = :albumId")
+    suspend fun getTelegramMessageId(albumId: Long): Long?
+
+    @Query("UPDATE albums SET telegramMessageId = :messageId WHERE id = :albumId")
+    suspend fun updateTelegramMessageId(albumId: Long, messageId: Long)
+
+    @Query("SELECT * FROM albums WHERE uuid = :uuid LIMIT 1")
+    suspend fun findByUuid(uuid: String): AlbumEntity?
+
+    @Query("SELECT * FROM albums WHERE id = :albumId LIMIT 1")
+    suspend fun getAlbumById(albumId: Long): AlbumEntity?
+
+    @Query("DELETE FROM album_photos WHERE albumId = :albumId")
+    suspend fun deleteAlbumPhotos(albumId: Long)
 }
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -352,6 +370,15 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `albums` ADD COLUMN `uuid` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("UPDATE `albums` SET `uuid` = lower(hex(randomblob(16))) WHERE `uuid` = ''")
+                db.execSQL("ALTER TABLE `albums` ADD COLUMN `telegramMessageId` INTEGER")
+                db.execSQL("ALTER TABLE `albums` ADD COLUMN `coverPhotoMessageId` INTEGER")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -372,7 +399,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
-                    MIGRATION_13_14
+                    MIGRATION_13_14,
+                    MIGRATION_14_15
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {

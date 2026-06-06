@@ -276,8 +276,9 @@ fun MainAppLayout(
             isSyncingCloud = true
             coroutineScope.launch(Dispatchers.IO) {
                 // 2a. Restore local Room DB from remote Telegram backup (network call)
+                var restored = false
                 try {
-                    dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
+                    restored = dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -287,6 +288,15 @@ fun MainAppLayout(
                 if (chatId != 0L) {
                     try {
                         TdlibManager.syncCloudHistory(context, chatId)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+                // 2c. Crawl fallback: If database backup was not restored, reconstruct the albums from manifest files
+                if (!restored) {
+                    try {
+                        dev.ssjvirtually.tgpix.storage.BackupManager.reconstructAlbumsFromBackupChannel(context)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

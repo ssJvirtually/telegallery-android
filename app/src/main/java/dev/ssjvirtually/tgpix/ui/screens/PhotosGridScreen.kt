@@ -1174,6 +1174,7 @@ fun PhotosGridScreen(
                                                 AlbumPhotoEntity(albumId = newAlbumId, photoUri = photo.name)
                                             }
                                             db.albumDao().insertAlbumPhotos(albumPhotos)
+                                            dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, newAlbumId)
                                             
                                             withContext(Dispatchers.Main) {
                                                 Toast.makeText(context, "Added to new album '$name'!", Toast.LENGTH_SHORT).show()
@@ -1218,6 +1219,7 @@ fun PhotosGridScreen(
                                                     AlbumPhotoEntity(albumId = album.id, photoUri = photo.name)
                                                 }
                                                 db.albumDao().insertAlbumPhotos(albumPhotos)
+                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, album.id)
                                                 
                                                 withContext(Dispatchers.Main) {
                                                     Toast.makeText(context, "Added to '${album.name}'!", Toast.LENGTH_SHORT).show()

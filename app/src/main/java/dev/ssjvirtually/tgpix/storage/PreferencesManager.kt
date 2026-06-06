@@ -130,6 +130,32 @@ object PreferencesManager {
     private const val KEY_LAST_BACKUP_MSG_ID = "last_backup_msg_id"
     private const val KEY_LAST_BACKUP_RECORD_COUNT = "last_backup_record_count"
     private const val KEY_BACKUP_MSG_IDS = "backup_msg_ids"
+    private const val KEY_LAST_DAILY_BACKUP_TIME = "last_daily_backup_time"
+    private const val KEY_LAST_MASTER_BACKUP_MSG_ID = "last_master_backup_msg_id"
+
+    fun getLastDailyBackupTime(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_LAST_DAILY_BACKUP_TIME, 0L)
+    }
+
+    fun setLastDailyBackupTime(context: Context, time: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_LAST_DAILY_BACKUP_TIME, time)
+            .apply()
+    }
+
+    fun getLastMasterBackupMessageId(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_LAST_MASTER_BACKUP_MSG_ID, 0L)
+    }
+
+    fun setLastMasterBackupMessageId(context: Context, messageId: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_LAST_MASTER_BACKUP_MSG_ID, messageId)
+            .apply()
+    }
 
     fun getBackupMessageIds(context: Context): List<Long> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

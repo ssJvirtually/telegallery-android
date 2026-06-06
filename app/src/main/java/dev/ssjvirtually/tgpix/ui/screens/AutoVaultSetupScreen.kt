@@ -90,12 +90,51 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                // Step 0: Check for existing TGPix channel and verify key signature in pinned message
+                // Local helper to create database channel
+                suspend fun createDatabaseChannel(signature: String): Long? {
+                    withContext(Dispatchers.Main) {
+                        progressText = "Creating private database channel 'TGPix_database'..."
+                    }
+                    
+                    val createDbRequest = TdApi.CreateNewSupergroupChat().apply {
+                        title = "TGPix_database"
+                        isChannel = true
+                        description = "TGPix secure database backup repository. Please do not delete. Vault Signature: TG-SIG-$signature"
+                    }
+                    
+                    val dbChatResult = sendRequest(createDbRequest)
+                    if (dbChatResult is TdApi.Chat) {
+                        val newDbChatId = dbChatResult.id
+                        
+                        // Send welcome message
+                        val welcomeDbText = "🔑 TGPix Secure Database Backup Repository Initialized!\n\n" +
+                                "Vault Signature: `TG-SIG-$signature`\n\n" +
+                                "This private channel is used exclusively by your TGPix app to securely back up your SQLite database snapshots and album manifests. " +
+                                "Please do not delete or modify this pinned message."
+                        
+                        val welcomeMsg = sendMessageAndWait(newDbChatId, welcomeDbText)
+                        if (welcomeMsg is TdApi.Message) {
+                            val pinRequest = TdApi.PinChatMessage().apply {
+                                chatId = newDbChatId
+                                messageId = welcomeMsg.id
+                                disableNotification = true
+                                onlyForSelf = false
+                            }
+                            sendRequest(pinRequest)
+                        }
+                        
+                        return newDbChatId
+                    }
+                    return null
+                }
+
+                // Step 0: Check for existing TGPix and TGPix_database channels and verify key signature
                 withContext(Dispatchers.Main) {
-                    progressText = "Searching for existing 'TGPix' vault..."
+                    progressText = "Searching for existing 'TGPix' and 'TGPix_database' vaults..."
                 }
                 
                 var existingChatId: Long? = null
+                var existingDbChatId: Long? = null
                 
                 // Get current user to compute expected signature
                 val meResult = sendRequest(TdApi.GetMe())
@@ -139,16 +178,17 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                     if (chatsResult is TdApi.Chats) {
                         for (chatId in chatsResult.chatIds) {
                             val chat = sendRequest(TdApi.GetChat(chatId))
-                            if (chat is TdApi.Chat && chat.title.equals("TGPix", ignoreCase = true)) {
-                                if (isChatVerified(chat, expectedSignature)) {
+                            if (chat is TdApi.Chat) {
+                                if (chat.title.equals("TGPix", ignoreCase = true) && isChatVerified(chat, expectedSignature)) {
                                     existingChatId = chat.id
-                                    break
+                                } else if (chat.title.equals("TGPix_database", ignoreCase = true) && isChatVerified(chat, expectedSignature)) {
+                                    existingDbChatId = chat.id
                                 }
                             }
                         }
                     }
                     
-                    // If not found in recent chats, perform a server-side search
+                    // If not found in recent chats, perform a server-side search for TGPix
                     if (existingChatId == null) {
                         val searchRequest = TdApi.SearchChatsOnServer().apply {
                             query = "TGPix"
@@ -167,24 +207,54 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                             }
                         }
                     }
-                }
-                
-                if (existingChatId != null) {
-                    withContext(Dispatchers.Main) {
-                        progressText = "Existing 'TGPix' vault verified! Linking..."
+
+                    // If not found in recent chats, perform a server-side search for TGPix_database
+                    if (existingDbChatId == null) {
+                        val searchDbRequest = TdApi.SearchChatsOnServer().apply {
+                            query = "TGPix_database"
+                            limit = 10
+                        }
+                        val searchDbResult = sendRequest(searchDbRequest)
+                        if (searchDbResult is TdApi.Chats) {
+                            for (chatId in searchDbResult.chatIds) {
+                                val chat = sendRequest(TdApi.GetChat(chatId))
+                                if (chat is TdApi.Chat && chat.title.equals("TGPix_database", ignoreCase = true)) {
+                                    if (isChatVerified(chat, expectedSignature)) {
+                                        existingDbChatId = chat.id
+                                        break
+                                    }
+                                }
+                            }
+                        }
                     }
                     
-                    PreferencesManager.saveChatId(context, existingChatId)
-                    PreferencesManager.saveChatTitle(context, "TGPix (Private Vault)")
-                    
-                    context.scheduleSyncWorker()
-                    
-                    withContext(Dispatchers.Main) {
-                        progressText = "Vault linked successfully! Opening gallery..."
-                        kotlinx.coroutines.delay(1000)
-                        onSetupComplete(existingChatId, "TGPix (Private Vault)")
+                    // Check if both exist
+                    if (existingChatId != null) {
+                        // If TGPix exists but TGPix_database doesn't, create TGPix_database
+                        if (existingDbChatId == null) {
+                            existingDbChatId = createDatabaseChannel(expectedSignature)
+                        }
+                        
+                        if (existingDbChatId != null) {
+                            withContext(Dispatchers.Main) {
+                                progressText = "Existing vaults verified! Linking..."
+                            }
+                            
+                            PreferencesManager.saveChatId(context, existingChatId)
+                            PreferencesManager.saveChatTitle(context, "TGPix (Private Vault)")
+                            PreferencesManager.saveDbChatId(context, existingDbChatId)
+                            PreferencesManager.saveDbChatTitle(context, "TGPix_database (Private Backup)")
+                            
+                            context.scheduleSyncWorker()
+                            
+                            withContext(Dispatchers.Main) {
+                                progressText = "Vaults linked successfully! Opening gallery..."
+                                kotlinx.coroutines.delay(1000)
+                                onSetupComplete(existingChatId, "TGPix (Private Vault)")
+                            }
+                            return@launch
+                        }
                     }
-                    return@launch
                 }
                 
                 // Generate a secure vault backup key and compute signature *before* supergroup creation
@@ -242,20 +312,31 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                         sendRequest(pinRequest)
                     }
                     
-                    // Step 5: Save target chat preferences
-                    withContext(Dispatchers.Main) {
-                        progressText = "Finalizing secure integration..."
-                    }
-                    PreferencesManager.saveChatId(context, newChatId)
-                    PreferencesManager.saveChatTitle(context, "TGPix (Private Vault)")
+                    // Create TGPix_database channel as well
+                    val newDbChatId = createDatabaseChannel(signature)
                     
-                    // Schedule background sync worker
-                    context.scheduleSyncWorker()
-                    
-                    withContext(Dispatchers.Main) {
-                        progressText = "Vault ready! Opening your gallery..."
-                        kotlinx.coroutines.delay(1000)
-                        onSetupComplete(newChatId, "TGPix (Private Vault)")
+                    if (newDbChatId != null) {
+                        // Step 5: Save target chat preferences
+                        withContext(Dispatchers.Main) {
+                            progressText = "Finalizing secure integration..."
+                        }
+                        PreferencesManager.saveChatId(context, newChatId)
+                        PreferencesManager.saveChatTitle(context, "TGPix (Private Vault)")
+                        PreferencesManager.saveDbChatId(context, newDbChatId)
+                        PreferencesManager.saveDbChatTitle(context, "TGPix_database (Private Backup)")
+                        
+                        // Schedule background sync worker
+                        context.scheduleSyncWorker()
+                        
+                        withContext(Dispatchers.Main) {
+                            progressText = "Vaults ready! Opening your gallery..."
+                            kotlinx.coroutines.delay(1000)
+                            onSetupComplete(newChatId, "TGPix (Private Vault)")
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            errorText = "Failed to create database backup channel."
+                        }
                     }
                 } else if (chatResult is TdApi.Error) {
                     withContext(Dispatchers.Main) {

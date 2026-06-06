@@ -126,7 +126,8 @@ fun AlbumsScreen(
                     onClick = {
                         showCreateAlbumDialog(context) { name ->
                             coroutineScope.launch(Dispatchers.IO) {
-                                db.albumDao().insertAlbum(AlbumEntity(name = name))
+                                val newId = db.albumDao().insertAlbum(AlbumEntity(name = name))
+                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, newId)
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Album '$name' created!", Toast.LENGTH_SHORT).show()
                                 }
@@ -309,7 +310,11 @@ fun AlbumsScreen(
                                         val albumName = selectedAlbumForActions!!.name
                                         selectedAlbumForActions = null
                                         coroutineScope.launch(Dispatchers.IO) {
+                                            val album = db.albumDao().getAlbumById(albumId)
                                             db.albumDao().deleteAlbum(albumId)
+                                            if (album != null) {
+                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumDeleted(context, album.telegramMessageId)
+                                            }
                                             withContext(Dispatchers.Main) {
                                                 Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
                                             }
@@ -572,6 +577,7 @@ fun AlbumDetailsView(
                                     db.albumDao().removePhotoFromAlbum(albumId, photo.name)
                                     db.albumDao().removePhotoFromAlbum(albumId, photo.uri)
                                 }
+                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, albumId)
                                 withContext(Dispatchers.Main) {
                                     Toast.makeText(context, "Removed ${selectedPhotos.size} photos from '$albumName'", Toast.LENGTH_SHORT).show()
                                     selectedPhotos.clear()
@@ -607,7 +613,11 @@ fun AlbumDetailsView(
                                     onClick = {
                                         showMenu = false
                                         coroutineScope.launch(Dispatchers.IO) {
+                                            val album = db.albumDao().getAlbumById(albumId)
                                             db.albumDao().deleteAlbum(albumId)
+                                            if (album != null) {
+                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumDeleted(context, album.telegramMessageId)
+                                            }
                                             withContext(Dispatchers.Main) {
                                                 Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
                                                 onBack()

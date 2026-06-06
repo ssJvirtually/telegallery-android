@@ -147,14 +147,21 @@ fun SettingsScreen(
                         HorizontalDivider(color = TelePhotosTheme.SurfaceVariant)
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Database Backup Target
+                        // Dedicated Backup Channel (Database & Albums)
                         Column {
                             Text(
-                                text = "Database Backup Target",
+                                text = "Dedicated Backup Channel",
                                 color = TelePhotosTheme.TextSecondary,
                                 fontSize = 12.sp
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Routes SQLite snapshots and album manifests to this channel. A master database backup is still updated once every 24 hours in Saved Messages for safety.",
+                                color = TelePhotosTheme.TextSecondary,
+                                fontSize = 11.sp,
+                                lineHeight = 14.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
