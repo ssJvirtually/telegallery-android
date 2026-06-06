@@ -12,6 +12,11 @@ data class LocalPhoto(
     val uri: String,
     val name: String,
     val size: Long,
+    // Best available capture/creation date for this photo. Resolution order:
+    // 1. DATE_TAKEN  — EXIF capture time (present in camera photos)
+    // 2. DATE_ADDED  — when the file first appeared in the media library
+    //                  (closest to "file created" for screenshots, WhatsApp, Snapchat, downloads)
+    // 3. DATE_MODIFIED — filesystem last-modified time (always present, last resort)
     val dateTaken: Long,
     val tags: String = ""
 )
@@ -24,7 +29,8 @@ object MediaStoreScanner {
             MediaStore.Images.Media.DISPLAY_NAME,
             MediaStore.Images.Media.SIZE,
             MediaStore.Images.Media.DATE_TAKEN,
-            MediaStore.Images.Media.DATE_MODIFIED
+            MediaStore.Images.Media.DATE_ADDED,     // set when file first added to media library ("file created")
+            MediaStore.Images.Media.DATE_MODIFIED   // filesystem last-modified (always present)
         )
 
         // Sort by date taken descending (newest first)
@@ -44,6 +50,7 @@ object MediaStoreScanner {
                 val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
                 val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE)
                 val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
+                val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
                 val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
 
                 while (cursor.moveToNext()) {
@@ -53,13 +60,19 @@ object MediaStoreScanner {
                         continue
                     }
                     val size = cursor.getLong(sizeColumn)
-                    
-                    var dateTaken = cursor.getLong(dateTakenColumn)
-                    if (dateTaken == 0L) {
-                        // fallback to date modified (which is in seconds, convert to milliseconds)
-                        dateTaken = cursor.getLong(dateModifiedColumn) * 1000
-                    }
-                    
+
+                    // Resolve the best available date for this photo using a 3-level fallback:
+                    //   Level 1: DATE_TAKEN — EXIF-based capture time. Present in camera photos.
+                    //            Null/0 for screenshots, WhatsApp images, Snapchat, downloads.
+                    //   Level 2: DATE_ADDED — when the file first appeared in the media library.
+                    //            This is the closest to "file created" for non-camera media.
+                    //            Stored in seconds, so must be multiplied by 1000.
+                    //   Level 3: DATE_MODIFIED — filesystem last-modified. Always present.
+                    //            Last resort; less stable since edits update it.
+                    val dateTaken: Long = cursor.getLong(dateTakenColumn).takeIf { it > 0L }
+                        ?: (cursor.getLong(dateAddedColumn) * 1000L).takeIf { it > 0L }
+                        ?: (cursor.getLong(dateModifiedColumn) * 1000L)
+
                     val contentUri = ContentUris.withAppendedId(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         id

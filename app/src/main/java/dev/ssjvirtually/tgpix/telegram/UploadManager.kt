@@ -81,18 +81,22 @@ object UploadManager {
                         var flashStr = "Unknown"
                         var flashFired = false
                         
+                        // Track whether EXIF capture date was found (absent for screenshots/WhatsApp/Snapchat)
+                        var hasExifDate = false
+                        var exifDateTakenMs = 0L
+
                         try {
                             val exif = androidx.exifinterface.media.ExifInterface(tempFile.absolutePath)
                             width = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH, 0)
                             height = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH, 0)
-                            
+
                             make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE)?.trim() ?: "Unknown"
                             model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL)?.trim() ?: "Unknown"
                             lens = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL)?.trim() ?: "Unknown"
-                            
+
                             val apertureVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER, 0.0)
                             aperture = if (apertureVal > 0.0) "f/$apertureVal" else "Unknown"
-                            
+
                             val shutterVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME, 0.0)
                             shutter = if (shutterVal > 0.0) {
                                 if (shutterVal < 1.0) {
@@ -104,25 +108,47 @@ object UploadManager {
                             } else {
                                 "Unknown"
                             }
-                            
+
                             val isoVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0)
                             iso = if (isoVal > 0) "$isoVal" else "Unknown"
-                            
+
                             val focalVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH, 0.0)
                             focal = if (focalVal > 0.0) "${focalVal}mm" else "Unknown"
-                            
+
                             val flashVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_FLASH, -1)
                             if (flashVal >= 0) {
                                 flashFired = (flashVal and 1) == 1
                                 flashStr = if (flashFired) "Flash fired ($flashVal)" else "Flash did not fire ($flashVal)"
                             }
+
+                            // Read the EXIF capture timestamp (TAG_DATETIME_ORIGINAL is the shutter-press time)
+                            // This is the most accurate capture date for camera photos.
+                            // Screenshots, WhatsApp, Snapchat and downloads do NOT set this tag.
+                            val exifDateStr = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL)
+                                ?: exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME)
+                            if (!exifDateStr.isNullOrBlank()) {
+                                try {
+                                    val sdf = java.text.SimpleDateFormat("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
+                                    val parsed = sdf.parse(exifDateStr)
+                                    if (parsed != null && parsed.time > 0L) {
+                                        exifDateTakenMs = parsed.time
+                                        hasExifDate = true
+                                    }
+                                } catch (_: Exception) {}
+                            }
                         } catch (exifEx: Exception) {
                             exifEx.printStackTrace()
                         }
 
+                        // Best available date for this photo:
+                        //   EXIF TAG_DATETIME_ORIGINAL  — most accurate for camera photos
+                        //   photo.dateTaken             — MediaStore DATE_TAKEN → DATE_ADDED → DATE_MODIFIED
+                        //                                 (see MediaStoreScanner for fallback chain)
+                        val resolvedDateTaken = if (hasExifDate) exifDateTakenMs else photo.dateTaken
+
                         // Dynamically generate search hashtags
                         val tags = mutableListOf<String>()
-                        
+
                         // Inject our on-device AI classification tags!
                         tags.addAll(aiTags)
 
@@ -138,9 +164,13 @@ object UploadManager {
                         if (ext.isNotEmpty()) {
                             tags.add("#$ext")
                         }
+                        // Tag non-EXIF media (screenshots, WhatsApp, Snapchat, downloads) so they are searchable
+                        if (!hasExifDate) {
+                            tags.add("#no_exif")
+                        }
                         try {
                             val takenCal = java.util.Calendar.getInstance()
-                            takenCal.timeInMillis = photo.dateTaken
+                            takenCal.timeInMillis = resolvedDateTaken
                             val yr = takenCal.get(java.util.Calendar.YEAR)
                             val mth = takenCal.get(java.util.Calendar.MONTH) + 1
                             tags.add("#year_$yr")
@@ -151,19 +181,19 @@ object UploadManager {
                         }
                         val tagsLine = tags.distinct().joinToString(" ")
 
-                        val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(photo.dateTaken))
+                        val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(resolvedDateTaken))
                         val addedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())
                         val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
                         val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
                         val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
-                        
+
                         val partialHash = photo.getPartialHash(context)
                         // Prepare tags for JSON storage (comma separated)
                         val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
                         val metadataJson = if (partialHash.isNotEmpty()) {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"hash":"$partialHash","tags":[$tagsJsonArray]}"""
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"hash":"$partialHash","tags":[$tagsJsonArray]}"""
                         } else {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${photo.dateTaken},"tags":[$tagsJsonArray]}"""
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"tags":[$tagsJsonArray]}"""
                         }
 
                         val captionText = """
