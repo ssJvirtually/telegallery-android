@@ -35,6 +35,9 @@ interface UploadDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entity: UploadEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBatch(entities: List<UploadEntity>)
+
     @Query("SELECT * FROM uploads ORDER BY uploadedAt DESC")
     suspend fun getAll(): List<UploadEntity>
 
@@ -82,6 +85,9 @@ data class CloudPhotoEntity(
 interface CloudPhotoDao {
     @Query("SELECT * FROM cloud_photos ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<CloudPhotoEntity>>
+
+    @Query("SELECT * FROM cloud_photos")
+    suspend fun getAll(): List<CloudPhotoEntity>
 
     @Query("SELECT EXISTS(SELECT 1 FROM cloud_photos WHERE messageId = :messageId)")
     suspend fun exists(messageId: Long): Boolean

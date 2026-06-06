@@ -143,10 +143,62 @@ class UploadWorker(
             val db = UploadDatabase.getDatabase(applicationContext)
             val dao = db.dao()
 
+            // 8a. Load all local uploads and cloud photos to perform fast in-memory matching
+            val localUploads = dao.getAll()
+            val localUploadedPaths = localUploads.map { it.path }.toSet()
+
+            val cloudPhotos = db.cloudDao().getAll()
+            val cloudByFileName = cloudPhotos.groupBy { it.fileName.lowercase() }
+
+            val unsyncedPhotos = mutableListOf<dev.ssjvirtually.tgpix.storage.LocalPhoto>()
+            val syncedToInsert = mutableListOf<UploadEntity>()
+
+            for (photo in photos) {
+                if (photo.uri in localUploadedPaths) {
+                    continue
+                }
+
+                // Check if already in cloud database (e.g. from another device or prior sync)
+                val candidatesByName = cloudByFileName[photo.name.lowercase()]
+                var existingInCloud: dev.ssjvirtually.tgpix.storage.CloudPhotoEntity? = null
+                if (candidatesByName != null) {
+                    val prefix = "${photo.name}_${photo.size}_"
+                    existingInCloud = candidatesByName.firstOrNull { it.contentFingerprint.startsWith(prefix) }
+                        ?: candidatesByName.firstOrNull() // fallback to first match by filename
+                }
+
+                if (existingInCloud != null) {
+                    syncedToInsert.add(
+                        UploadEntity(
+                            mediaStoreId = photo.id,
+                            path = photo.uri,
+                            contentFingerprint = existingInCloud.contentFingerprint,
+                            uploadedAt = existingInCloud.uploadedAt,
+                            telegramMessageId = existingInCloud.messageId
+                        )
+                    )
+                } else {
+                    unsyncedPhotos.add(photo)
+                }
+            }
+
+            // Batch insert synced files
+            if (syncedToInsert.isNotEmpty()) {
+                dao.insertBatch(syncedToInsert)
+                TdlibManager.addLog("Worker: Marked ${syncedToInsert.size} photos as synced in database (matched with cloud).")
+            }
+
+            if (unsyncedPhotos.isEmpty()) {
+                TdlibManager.addLog("Worker: No unsynced photos to back up.")
+                return Result.success()
+            }
+
+            TdlibManager.addLog("Worker: Found ${unsyncedPhotos.size} unsynced photos out of ${photos.size} total local photos.")
+
             var uploadedCount = 0
 
-            // 9. Loop and upload new photos sequentially (one-by-one)
-            for (photo in photos) {
+            // 9. Loop and upload unsynced photos sequentially (one-by-one)
+            for (photo in unsyncedPhotos) {
                 // Re-verify backup toggle mid-run in case it was switched off during active sequence
                 if (!PreferencesManager.isBackupActive(applicationContext)) {
                     TdlibManager.addLog("Worker: Backup was disabled during execution. Aborting active sync.")
@@ -154,69 +206,48 @@ class UploadWorker(
                 }
 
                 val fileKey = photo.uri
-                val existing = dao.find(fileKey)
 
-                if (existing == null) {
-                    // Update user-visible notification with active upload progress
+                // Update user-visible notification with active upload progress
+                try {
+                    val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${unsyncedPhotos.size})"
+                    setForeground(createForegroundInfo(progressMsg))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                val fingerprint = photo.getFingerprint(applicationContext)
+                val currentIsHd = PreferencesManager.isHdMode(applicationContext)
+                val modeStr = if (currentIsHd) "HD" else "standard quality"
+                TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
+                
+                val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, currentIsHd)
+
+                if (uploadResult is TdApi.Message) {
+                    TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
+                    dao.insert(
+                        UploadEntity(
+                            mediaStoreId = photo.id,
+                            path = fileKey,
+                            contentFingerprint = fingerprint,
+                            uploadedAt = System.currentTimeMillis(),
+                            telegramMessageId = uploadResult.id
+                        )
+                    )
                     try {
-                        val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${photos.size})"
-                        setForeground(createForegroundInfo(progressMsg))
+                        TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-
-                    // Prevent duplicate upload if already in cloud database from another device
-                    val fingerprint = photo.getFingerprint(applicationContext)
-                    val existingInCloud = db.cloudDao().findByFingerprint(fingerprint)
-                        ?: db.cloudDao().findByFileName(photo.name)
-                    
-                    if (existingInCloud != null) {
-                        dao.insert(
-                            UploadEntity(
-                                mediaStoreId = photo.id,
-                                path = fileKey,
-                                contentFingerprint = fingerprint,
-                                uploadedAt = existingInCloud.uploadedAt,
-                                telegramMessageId = existingInCloud.messageId
-                            )
-                        )
-                        TdlibManager.addLog("Worker: '${photo.name}' already exists in cloud history. Skipping and marking as synced.")
-                        continue
-                    }
-
-                    val currentIsHd = PreferencesManager.isHdMode(applicationContext)
-                    val modeStr = if (currentIsHd) "HD" else "standard quality"
-                    TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
-                    
-                    val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, currentIsHd)
-
-                    if (uploadResult is TdApi.Message) {
-                        TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
-                        dao.insert(
-                            UploadEntity(
-                                mediaStoreId = photo.id,
-                                path = fileKey,
-                                contentFingerprint = fingerprint,
-                                uploadedAt = System.currentTimeMillis(),
-                                telegramMessageId = uploadResult.id
-                            )
-                        )
-                        try {
-                            TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                        uploadedCount++
-                    } else if (uploadResult is TdApi.Error) {
-                        TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")
-                    } else {
-                        TdlibManager.addLog("Worker: backup returned unexpected response: ${uploadResult::class.java.simpleName}")
-                    }
-
-                    // Add 5-second throttle delay between uploads to prevent rate limiting (FLOOD_WAIT) on Telegram's servers
-                    TdlibManager.addLog("Worker: waiting 5 seconds before next upload to prevent server flooding...")
-                    delay(5000)
+                    uploadedCount++
+                } else if (uploadResult is TdApi.Error) {
+                    TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")
+                } else {
+                    TdlibManager.addLog("Worker: backup returned unexpected response: ${uploadResult::class.java.simpleName}")
                 }
+
+                // Add 5-second throttle delay between uploads to prevent rate limiting (FLOOD_WAIT) on Telegram's servers
+                TdlibManager.addLog("Worker: waiting 5 seconds before next upload to prevent server flooding...")
+                delay(5000)
             }
 
             TdlibManager.addLog("Worker: backup run completed. Newly backed up: $uploadedCount photos.")

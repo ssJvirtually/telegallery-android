@@ -1,0 +1,267 @@
+{
+  "E:\\telegallery-calude\\app\\build.gradle": {
+    "mtime": 1780666872.9952524,
+    "ast_hash": "128606e16c91add3aafeedcbe7b90691",
+    "semantic_hash": "128606e16c91add3aafeedcbe7b90691"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\MainActivity.kt": {
+    "mtime": 1780474017.4447272,
+    "ast_hash": "034667d50b341890eee70a6a49f6f824",
+    "semantic_hash": "034667d50b341890eee70a6a49f6f824"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\storage\\BackupManager.kt": {
+    "mtime": 1780766738.010594,
+    "ast_hash": "831c6aaa680e60b41ea38f94d7c57b00",
+    "semantic_hash": "831c6aaa680e60b41ea38f94d7c57b00"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\storage\\FolderScanner.kt": {
+    "mtime": 1780425463.3263447,
+    "ast_hash": "34a0a9e969de8be85f69442edcfe4672",
+    "semantic_hash": "34a0a9e969de8be85f69442edcfe4672"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\storage\\MediaStoreScanner.kt": {
+    "mtime": 1780741055.727132,
+    "ast_hash": "7d0b1dab5fd662cfe730d98359bea2cf",
+    "semantic_hash": "7d0b1dab5fd662cfe730d98359bea2cf"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\storage\\PreferencesManager.kt": {
+    "mtime": 1780763952.9289749,
+    "ast_hash": "37b1686148efd4de1178ef1cfae138d7",
+    "semantic_hash": "37b1686148efd4de1178ef1cfae138d7"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\storage\\UploadDatabase.kt": {
+    "mtime": 1780748551.1615353,
+    "ast_hash": "7dbb86cfd1f7f7e40f0e4db6d19f8f3f",
+    "semantic_hash": "7dbb86cfd1f7f7e40f0e4db6d19f8f3f"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\telegram\\AuthManager.kt": {
+    "mtime": 1780425463.327345,
+    "ast_hash": "e6ecf48324df06c1ee7068880bcdf56a",
+    "semantic_hash": "e6ecf48324df06c1ee7068880bcdf56a"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\telegram\\TdlibManager.kt": {
+    "mtime": 1780766614.1176443,
+    "ast_hash": "7aed061f2e1e066aacef96a392173a5b",
+    "semantic_hash": "7aed061f2e1e066aacef96a392173a5b"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\telegram\\UploadManager.kt": {
+    "mtime": 1780742469.390355,
+    "ast_hash": "a00f6211ca518c9c3288a57946b5322b",
+    "semantic_hash": "a00f6211ca518c9c3288a57946b5322b"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\AppNavigation.kt": {
+    "mtime": 1780766616.593151,
+    "ast_hash": "93b36482390ff4b61e300ea303e6ce4e",
+    "semantic_hash": "93b36482390ff4b61e300ea303e6ce4e"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\AlbumsScreen.kt": {
+    "mtime": 1780748661.9615462,
+    "ast_hash": "6525acd96e0483aa0979f0dff6423933",
+    "semantic_hash": "6525acd96e0483aa0979f0dff6423933"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\AutoVaultSetupScreen.kt": {
+    "mtime": 1780764660.2034488,
+    "ast_hash": "3582582af761a09ab819add345f2ac46",
+    "semantic_hash": "3582582af761a09ab819add345f2ac46"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\OtpVerifyScreen.kt": {
+    "mtime": 1780426230.3133397,
+    "ast_hash": "24025d8d1dfe01be55e61201d8647223",
+    "semantic_hash": "24025d8d1dfe01be55e61201d8647223"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\PhoneLoginScreen.kt": {
+    "mtime": 1780426227.276089,
+    "ast_hash": "71cbf15577558eb9178b1276471a1c15",
+    "semantic_hash": "71cbf15577558eb9178b1276471a1c15"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\PhotoViewerScreen.kt": {
+    "mtime": 1780743987.963382,
+    "ast_hash": "8ce76a25eaff12dd5d68f70a88c3deb4",
+    "semantic_hash": "8ce76a25eaff12dd5d68f70a88c3deb4"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\PhotosGridScreen.kt": {
+    "mtime": 1780748593.4813864,
+    "ast_hash": "e54faaeb0ca8e7bc54c499310e889803",
+    "semantic_hash": "e54faaeb0ca8e7bc54c499310e889803"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\SearchScreen.kt": {
+    "mtime": 1780743930.7063444,
+    "ast_hash": "7392b2872298e8465552932d387d4118",
+    "semantic_hash": "7392b2872298e8465552932d387d4118"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\screens\\SettingsScreen.kt": {
+    "mtime": 1780763976.772235,
+    "ast_hash": "82c255b4a55f8e0003538fc49ab189c1",
+    "semantic_hash": "82c255b4a55f8e0003538fc49ab189c1"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\theme\\TelePhotosTheme.kt": {
+    "mtime": 1780425463.3345866,
+    "ast_hash": "cc81e6c4a7089085c2528f8118d8567c",
+    "semantic_hash": "cc81e6c4a7089085c2528f8118d8567c"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\utils\\GalleryUtils.kt": {
+    "mtime": 1780743378.3465185,
+    "ast_hash": "7251b60ab34c66df19812f7e3c01d2ea",
+    "semantic_hash": "7251b60ab34c66df19812f7e3c01d2ea"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\ui\\utils\\TelegramShareDialog.kt": {
+    "mtime": 1780425463.349027,
+    "ast_hash": "c184642d7393fa1de337c746eed11244",
+    "semantic_hash": "c184642d7393fa1de337c746eed11244"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\update\\UpdateDialog.kt": {
+    "mtime": 1780472889.7009194,
+    "ast_hash": "479341ab95dada2dc8d28a978e9d8b89",
+    "semantic_hash": "479341ab95dada2dc8d28a978e9d8b89"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\update\\UpdateManager.kt": {
+    "mtime": 1780469003.7515154,
+    "ast_hash": "4269abe864eb6b3ddc84c6d54723bd94",
+    "semantic_hash": "4269abe864eb6b3ddc84c6d54723bd94"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\worker\\DatabaseBackupWorker.kt": {
+    "mtime": 1780722410.9499154,
+    "ast_hash": "90708f6f0c3b110478954dca85066ee2",
+    "semantic_hash": "90708f6f0c3b110478954dca85066ee2"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\worker\\ShareWorker.kt": {
+    "mtime": 1780765797.202517,
+    "ast_hash": "c4e91588c4ce07e3aaaad8a0292dba48",
+    "semantic_hash": "c4e91588c4ce07e3aaaad8a0292dba48"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\java\\dev\\ssjvirtually\\tgpix\\worker\\UploadWorker.kt": {
+    "mtime": 1780765788.5360448,
+    "ast_hash": "7ccc3d3a208db500870ed635f6e5693f",
+    "semantic_hash": "7ccc3d3a208db500870ed635f6e5693f"
+  },
+  "E:\\telegallery-calude\\build.gradle": {
+    "mtime": 1779982337.7872715,
+    "ast_hash": "9f2e57d81f18ddd13e30d6a9f87c5003",
+    "semantic_hash": "9f2e57d81f18ddd13e30d6a9f87c5003"
+  },
+  "E:\\telegallery-calude\\gradlew": {
+    "mtime": 1780222980.15235,
+    "ast_hash": "780b1d3e23a3b82154795f73df943a14",
+    "semantic_hash": "780b1d3e23a3b82154795f73df943a14"
+  },
+  "E:\\telegallery-calude\\settings.gradle": {
+    "mtime": 1779982063.690937,
+    "ast_hash": "d38f04accf303025c0901dd5fe2764c2",
+    "semantic_hash": "d38f04accf303025c0901dd5fe2764c2"
+  },
+  "E:\\telegallery-calude\\version.json": {
+    "mtime": 1780592357.377276,
+    "ast_hash": "c8d55e0e9146e2077fc6cfdb7e70bf4e",
+    "semantic_hash": "c8d55e0e9146e2077fc6cfdb7e70bf4e"
+  },
+  "E:\\telegallery-calude\\.agents\\rules\\graphify.md": {
+    "mtime": 1780767491.9600346,
+    "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
+    "semantic_hash": "a0e4d192b9e2e17256124dbfc8e24e6a"
+  },
+  "E:\\telegallery-calude\\.agents\\workflows\\graphify.md": {
+    "mtime": 1780767491.9610405,
+    "ast_hash": "637776aa6f7496d069afe7520c845c8a",
+    "semantic_hash": "637776aa6f7496d069afe7520c845c8a"
+  },
+  "E:\\telegallery-calude\\BACKUP_STRATEGY_REVIEW.md": {
+    "mtime": 1780684030.2923305,
+    "ast_hash": "5be7b3de5cae1060a728def29a32806d",
+    "semantic_hash": "5be7b3de5cae1060a728def29a32806d"
+  },
+  "E:\\telegallery-calude\\DATABASE_AND_BACKUP_STRATEGY.md": {
+    "mtime": 1780682830.8918004,
+    "ast_hash": "c247d8d2ce7c427e47ca1064271adb77",
+    "semantic_hash": "c247d8d2ce7c427e47ca1064271adb77"
+  },
+  "E:\\telegallery-calude\\README.md": {
+    "mtime": 1780425462.9985008,
+    "ast_hash": "f44c45262e2d97529e2cea12c3ba61eb",
+    "semantic_hash": "f44c45262e2d97529e2cea12c3ba61eb"
+  },
+  "E:\\telegallery-calude\\RELEASE_CHANGELOG.md": {
+    "mtime": 1780592360.6082914,
+    "ast_hash": "91accfca42512753233f248a50c35b41",
+    "semantic_hash": "91accfca42512753233f248a50c35b41"
+  },
+  "E:\\telegallery-calude\\application_flows.md": {
+    "mtime": 1780467655.1701682,
+    "ast_hash": "b7dc91148249af3b1ffdde2ccd5b6e49",
+    "semantic_hash": "b7dc91148249af3b1ffdde2ccd5b6e49"
+  },
+  "E:\\telegallery-calude\\db and album backup strategy.md": {
+    "mtime": 1780763997.461084,
+    "ast_hash": "b02e179216d636c49871b74574a1d1e4",
+    "semantic_hash": "b02e179216d636c49871b74574a1d1e4"
+  },
+  "E:\\telegallery-calude\\tgpix_implementation_plan.md": {
+    "mtime": 1780425463.0017073,
+    "ast_hash": "42b67bce70419ff46c7faf272d85a145",
+    "semantic_hash": "42b67bce70419ff46c7faf272d85a145"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\drawable\\ic_launcher.png": {
+    "mtime": 1780656852.7867815,
+    "ast_hash": "2af24146fb53e9c7b1f462d4f157b49a",
+    "semantic_hash": "2af24146fb53e9c7b1f462d4f157b49a"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png": {
+    "mtime": 1780656852.689,
+    "ast_hash": "18276859ad1fe15ab7f0da5f5d7df95d",
+    "semantic_hash": "18276859ad1fe15ab7f0da5f5d7df95d"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png": {
+    "mtime": 1780656852.6791613,
+    "ast_hash": "c530513d2e278e6475673d436d84c911",
+    "semantic_hash": "c530513d2e278e6475673d436d84c911"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png": {
+    "mtime": 1780656852.6989248,
+    "ast_hash": "b9e8edb9c50e2656ea94d32262153317",
+    "semantic_hash": "b9e8edb9c50e2656ea94d32262153317"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png": {
+    "mtime": 1780656852.7110016,
+    "ast_hash": "a119adc969c641d2f3696eea5b50ee60",
+    "semantic_hash": "a119adc969c641d2f3696eea5b50ee60"
+  },
+  "E:\\telegallery-calude\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png": {
+    "mtime": 1780656852.7258759,
+    "ast_hash": "2fa8074cddadf9c346da0a724806a3eb",
+    "semantic_hash": "2fa8074cddadf9c346da0a724806a3eb"
+  },
+  "E:\\telegallery-calude\\error-sc\\Screenshot_20260603_192103.png": {
+    "mtime": 1780494706.120543,
+    "ast_hash": "b894024f37f338cb964f0382cb9746cd",
+    "semantic_hash": "b894024f37f338cb964f0382cb9746cd"
+  },
+  "E:\\telegallery-calude\\screenshots\\gallery_timeline.png": {
+    "mtime": 1780215960.3645527,
+    "ast_hash": "28f2ec9b376c9507ce250f0301c87c7f",
+    "semantic_hash": "28f2ec9b376c9507ce250f0301c87c7f"
+  },
+  "E:\\telegallery-calude\\screenshots\\login_screen.png": {
+    "mtime": 1780215987.598279,
+    "ast_hash": "f7278d8a980dd4ba201a0d2c7a8f7d55",
+    "semantic_hash": "f7278d8a980dd4ba201a0d2c7a8f7d55"
+  },
+  "E:\\telegallery-calude\\screenshots\\logo.png": {
+    "mtime": 1780656296.3014684,
+    "ast_hash": "16cbac64d89270ff1b47d60b5618c55b",
+    "semantic_hash": "16cbac64d89270ff1b47d60b5618c55b"
+  },
+  "E:\\telegallery-calude\\screenshots\\photo_viewer.png": {
+    "mtime": 1780216032.306392,
+    "ast_hash": "d432dbc47cd2e9c31106cd0477fdae47",
+    "semantic_hash": "d432dbc47cd2e9c31106cd0477fdae47"
+  },
+  "E:\\telegallery-calude\\screenshots\\settings_screen.png": {
+    "mtime": 1780216009.574502,
+    "ast_hash": "6106d1b2d255cf3960c85acfc5e5544d",
+    "semantic_hash": "6106d1b2d255cf3960c85acfc5e5544d"
+  },
+  "E:\\telegallery-calude\\Screen_recording_20260603_152549.mp4": {
+    "mtime": 1780480567.839068,
+    "ast_hash": "7126b33ff00c5e04ec44767a2e3522eb",
+    "semantic_hash": "7126b33ff00c5e04ec44767a2e3522eb"
+  }
+}

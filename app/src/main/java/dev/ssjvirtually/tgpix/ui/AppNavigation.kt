@@ -309,107 +309,13 @@ fun MainAppLayout(
         }
     }
 
-    // Hoisted background thread merging and deduplication.
-    // isScanningLocal is only set to true here when we have no photos yet (first cold start).
-    // If we already have localPhotos, the grid is already showing them, so we silently
-    // merge in cloud data in the background without flashing the spinner.
+    // Hoisted background thread merging and deduplication via PhotosRepository.
     LaunchedEffect(localPhotos, cloudLogs) {
         if (mergedPhotosList.isEmpty()) isScanningLocal = true
-        if (cloudLogs.isEmpty()) {
-            val sortedList = withContext(Dispatchers.Default) {
-                localPhotos.sortedByDescending { it.dateTaken }
-            }
-            withContext(Dispatchers.Main) {
-                mergedPhotosList = sortedList
-                isScanningLocal = false
-            }
-            return@LaunchedEffect
-        }
-        withContext(Dispatchers.IO) {
-            val list = mutableListOf<LocalPhoto>()
-            
-            val regexTrashed = Regex("""^\.trashed-\d+-""")
-            fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
-            
-            // Build helper maps for multi-layered matching to eliminate duplicates
-            val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }
-            val localByName = localPhotos.groupBy { it.name.normalize() }
-            val localByDateAndSize = localPhotos.associateBy { "${it.dateTaken / 1000}_${it.size}" }
-            val localByDate = localPhotos.groupBy { it.dateTaken / 1000 }
-            
-            val matchedLocalKeys = mutableSetOf<String>()
-            val addedUris = mutableSetOf<String>()
-
-            for (cloud in cloudLogs) {
-                val cloudNormName = cloud.fileName.normalize()
-                val cloudFingerprintDate = if (cloud.dateTaken > 0L) cloud.dateTaken else cloud.uploadedAt
-                val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_$cloudFingerprintDate"
-                val parsedDate = parseDateFromFilename(cloud.fileName)
-                val displayDate = if (cloud.dateTaken > 0L) cloud.dateTaken else (parsedDate ?: cloud.uploadedAt)
-                
-                // Try matching cloud photo to local photo in order of specificity:
-                var matchingLocal = localByFingerprint[cloudFingerprint]
-                
-                if (matchingLocal == null) {
-                    matchingLocal = localByName[cloudNormName]?.firstOrNull()
-                }
-                
-                if (matchingLocal == null && parsedDate != null) {
-                    matchingLocal = localByDateAndSize["${parsedDate / 1000}_${cloud.fileSize}"]
-                }
-                
-                if (matchingLocal == null && parsedDate != null) {
-                    val parsedSeconds = parsedDate / 1000
-                    val candidates = (localByDate[parsedSeconds] ?: emptyList()) +
-                                     (localByDate[parsedSeconds - 1] ?: emptyList()) +
-                                     (localByDate[parsedSeconds + 1] ?: emptyList())
-                    matchingLocal = candidates.firstOrNull { candidate ->
-                        val cName = candidate.name.normalize()
-                        cName == cloudNormName || 
-                        (cName.startsWith("img_") && cloudNormName.startsWith("img_")) || 
-                        (cName.startsWith("photo_") && cloudNormName.startsWith("photo_"))
-                    }
-                }
-                
-                if (matchingLocal != null) {
-                    if (!addedUris.contains(matchingLocal.uri)) {
-                        list.add(matchingLocal.copy(tags = cloud.tags))
-                        addedUris.add(matchingLocal.uri)
-                    }
-                    matchedLocalKeys.add(matchingLocal.name.lowercase())
-                } else {
-                    val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
-                    if (!addedUris.contains(cloudUri)) {
-                        list.add(
-                            LocalPhoto(
-                                id = -cloud.messageId,
-                                uri = cloudUri,
-                                name = cloud.fileName,
-                                size = cloud.fileSize,
-                                dateTaken = displayDate,
-                                tags = cloud.tags
-                            )
-                        )
-                        addedUris.add(cloudUri)
-                    }
-                }
-            }
-
-            // 2. Inject unsynced local device photos
-            for (local in localPhotos) {
-                if (!matchedLocalKeys.contains(local.name.lowercase()) && !addedUris.contains(local.uri)) {
-                    list.add(local)
-                    addedUris.add(local.uri)
-                }
-            }
-
-            // 3. Sort strictly by date taken descending
-            val sortedList = list.sortedByDescending { it.dateTaken }
-            
-            withContext(Dispatchers.Main) {
-                mergedPhotosList = sortedList
-                isScanningLocal = false
-            }
+        val merged = dev.ssjvirtually.tgpix.storage.PhotosRepository.mergeAndDeduplicate(localPhotos, cloudLogs)
+        withContext(Dispatchers.Main) {
+            mergedPhotosList = merged
+            isScanningLocal = false
         }
     }
 

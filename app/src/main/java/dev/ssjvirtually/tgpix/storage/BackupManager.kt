@@ -136,7 +136,7 @@ object BackupManager {
                     return@withContext
                 }
 
-                // Safely lock the database and perform a copy while in a Room transaction
+                // 2. Safely lock the database and perform a copy while in a Room transaction
                 val transactionResult = try {
                     db.withTransaction {
                         // 1. Flush Room's WAL logs and truncate the WAL file size inside transaction
@@ -154,7 +154,9 @@ object BackupManager {
                             TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
                             null
                         } else {
-                            val tempFile = File(context.cacheDir, "tgpix_backup.db")
+                            // Use filesDir (real /data/data/ path) instead of cacheDir (/data/user/0/ symlink).
+                            // TDLib calls realpath() on InputFileLocal paths and rejects symlinked paths.
+                            val tempFile = File(context.filesDir, "tgpix_backup.db")
                             // Perform binary copy while exclusive write lock is held by Room transaction
                             dbFile.copyTo(tempFile, overwrite = true)
                             Pair(tempFile, currentCount)
@@ -186,7 +188,8 @@ object BackupManager {
                 val needMasterBackup = now - lastDailyBackupTime >= 24 * 60 * 60 * 1000L || lastDailyBackupTime == 0L
                 
                 val tempMasterFile = if (needMasterBackup) {
-                    val masterFile = File(context.cacheDir, "tgpix_master_backup.db")
+                    // Use filesDir (real path) to avoid TDLib's realpath() rejecting symlinked cacheDir paths
+                    val masterFile = File(context.filesDir, "tgpix_master_backup.db")
                     try {
                         tempBackupFile.copyTo(masterFile, overwrite = true)
                         masterFile
@@ -716,7 +719,10 @@ object BackupManager {
 
     private suspend fun uploadFile(file: File, chatId: Long, captionText: String): TdApi.Object {
         return suspendCancellableCoroutine { continuation ->
-            val inputFile = TdApi.InputFileLocal(file.absolutePath)
+            // Use canonicalPath to resolve symlinks — TDLib's realpath() rejects /data/user/0/ symlinks.
+            // canonicalPath resolves to the real /data/data/ path on all Android versions.
+            val resolvedPath = try { file.canonicalPath } catch (e: Exception) { file.absolutePath }
+            val inputFile = TdApi.InputFileLocal(resolvedPath)
             val inputMessageContent = TdApi.InputMessageDocument().apply {
                 this.document = inputFile
                 this.caption = TdApi.FormattedText(captionText, emptyArray())

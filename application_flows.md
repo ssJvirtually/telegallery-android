@@ -1,4 +1,4 @@
-m# TGPix Application Flows & Architecture
+# TGPix Application Flows & Architecture
 
 This document provides a detailed breakdown of all the logical flows and architectural designs within the TGPix application. TGPix is a privacy-first, on-device Google Photos-like backup manager that uses **Telegram API (via TDLib)** as a free, encrypted cloud storage vault.
 
@@ -6,7 +6,7 @@ This document provides a detailed breakdown of all the logical flows and archite
 
 ## 1. App Startup & Routing Flow
 
-When the app is opened, `MainActivity` initializes TDLib and decides which screen to show based on two main conditions: **Telegram Authentication State** and **Vault Configuration State**.
+When the app is opened, [MainActivity.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt) initializes TDLib and decides which screen to show based on two main conditions: **Telegram Authentication State** and **Vault Configuration State**.
 
 ```mermaid
 graph TD
@@ -14,17 +14,17 @@ graph TD
     B --> C{TDLib Auth State?}
     C -->|WaitPhoneNumber| D[Phone Login Screen]
     C -->|WaitCode| E[OTP Verification Screen]
-    C -->|Ready| F{Vault Chat Configured?}
-    F -->|No / chatId = 0| G[Auto Vault Setup Screen]
-    F -->|Yes / chatId != 0| H[Main Dashboard / Timeline Grid]
+    C -->|Ready| F{Vault & Backup Configured?}
+    F -->|No / chatId or dbChatId = 0| G[Auto Vault Setup Screen]
+    F -->|Yes| H[Main Dashboard / Timeline Grid]
 ```
 
 ### Flow Steps:
-1. **TDLib Initialization:** [TdlibManager](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt) initializes the TDLib native client database, folders, and logging options.
-2. **Auth Verification:** Reads `authState` flow. If authentication is not complete, users are guided through Phone/OTP login.
-3. **Preferences Lookup:** Checks `PreferencesManager.getChatId()`.
-   * If `0`, redirects user to set up a backup channel.
-   * If a valid ID is present, opens the timeline and schedules the background `UploadWorker` if background syncing is enabled.
+1. **TDLib Initialization:** [TdlibManager.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt) initializes the TDLib native client database, folders, and logging options.
+2. **Auth Verification:** Reads the `authState` flow. If authentication is not complete, users are guided through Phone/OTP login.
+3. **Preferences Lookup:** Checks `PreferencesManager.getChatId()` and `PreferencesManager.getDbChatId()`.
+   * If either is `0`, redirects the user to the [AutoVaultSetupScreen.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AutoVaultSetupScreen.kt).
+   * If both valid IDs are present, opens the timeline and schedules the background `UploadWorker` if background syncing is enabled.
 
 ---
 
@@ -41,13 +41,13 @@ sequenceDiagram
     participant TG as Telegram Servers
 
     User->>UI: Enter Phone Number
-    UI->>Manager: sendPhoneNumber(phone)
+    UI->>Manager: sendPhone(phone)
     Manager->>TDLib: setAuthenticationPhoneNumber
     TDLib->>TG: Request Login OTP
     TG-->>User: SMS or Telegram App Code
 
     User->>UI: Enter OTP Code
-    UI->>Manager: sendCode(code)
+    UI->>Manager: verifyOtp(code)
     Manager->>TDLib: checkAuthenticationCode
     alt 2FA Password Required
         TG-->>UI: Request Password
@@ -67,34 +67,36 @@ sequenceDiagram
 
 ## 3. Auto Vault Setup Flow
 
-Automatically discovers an existing TGPix vault chat on the user's Telegram account or provisions a new one.
+Automatically discovers existing TGPix vault and database backup chats on the user's Telegram account or provisions new ones.
 
-### Verification Criteria:
-To distinguish the TGPix vault from standard chats:
-1. Search public/private channels matching the target name `TGPix Vault`.
-2. Inspect the channel description or verify a pinned setup message to match signature properties.
+### Vault Discovery Verification Criteria:
+1. Search public/private channels matching the target media name `TGPix Vault` and database backup name `TGPix_database`.
+2. Inspect channel descriptions to match signature properties.
 
 ```mermaid
 graph TD
-    A[Start Setup] --> B[Search Telegram Chats for 'TGPix Vault']
-    B --> C{Found candidate chat?}
-    C -->|Yes| D[Verify Chat Description / Pinned Message]
-    D --> E{Valid Signature?}
-    E -->|Yes| F[Pair with existing Chat ID]
-    E -->|No| H[Create New Channel]
+    A[Start Setup] --> B[Search Telegram for 'TGPix Vault' and 'TGPix_database']
+    B --> C{Vault & Backup Chats Found?}
+    C -->|Yes| D[Verify Channel Descriptions & Pinned Signatures]
+    D --> E{Valid Signatures?}
+    E -->|Yes| F[Pair Chat IDs & Save in Preferences]
+    E -->|No| H[Create New Vault Channel & Backup Channel]
     C -->|No| H
-    H --> I[Configure channel description 'TGPix Secure Vault']
-    I --> J[Send Setup Pinned Verification Message]
-    J --> K[Save Chat ID & Title in Preferences]
+    H --> I[Configure Descriptions: 'TGPix Secure Vault' & 'TGPix Secure Backup']
+    I --> J[Send Setup Pinned Verification Messages]
+    J --> K[Save Chat IDs in Preferences]
     F --> K
     K --> L[Start Database Restore check]
 ```
+
+### Key Components:
+* **[AutoVaultSetupScreen.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AutoVaultSetupScreen.kt):** Automatically creates or pairs the user-facing media channel (`chat_id`) and the private backup channel (`db_chat_id`) concurrently during signup.
 
 ---
 
 ## 4. Background Sync & Image Backup Flow
 
-Ensures newly captured photos are automatically uploaded to the Telegram Vault under specific battery and connection constraints.
+Ensures newly captured photos are automatically uploaded to the Telegram Vault under specific battery and connection constraints, updating local indicators in real-time.
 
 ```mermaid
 sequenceDiagram
@@ -104,6 +106,7 @@ sequenceDiagram
     participant MS as MediaStore Scanner
     participant Upload as UploadManager
     participant TG as Telegram Vault
+    participant UI as Composable UI State
 
     OS->>Worker: Trigger Run (Constraints met)
     Worker->>MS: scanLocalPhotos()
@@ -116,8 +119,12 @@ sequenceDiagram
         Worker->>Upload: uploadPhoto(LocalPhoto)
         Upload->>TG: Send Photo Message
         TG-->>Upload: Return Telegram Message ID
-        Upload-->>Worker: Upload Success (msgId)
-        Worker->>DB: insertUploadedPhoto(LocalPhoto + msgId)
+        Upload-->>Worker: Upload Success (msgObj)
+        Worker->>DB: Log Upload (uploads table)
+        Worker->>Worker: parseAndIndexUploadedMessage(msgObj)
+        Worker->>DB: Insert into cloud_photos
+        DB-->>UI: Real-time Live Flow Updates
+        Note over UI: Timeline grid increments counters instantly
     end
     Worker->>OS: Return Result.success()
 ```
@@ -126,32 +133,42 @@ sequenceDiagram
 * **Deduplication:** Queries the database using file criteria (name, size, timestamp) so that files aren't uploaded multiple times if paths or indexes change.
 * **WorkManager Constraints:** Syncing is run selectively based on settings (e.g. only on Wi-Fi, only when charging, or allowed on mobile networks).
 * **HD Backup Mode:** If disabled, uploads are compressed to save cloud space. If enabled, files are sent as uncompressed raw documents (`sendDocument`).
+* **Real-time Indexing:** Uploaded assets are indexed into the local `cloud_photos` cache immediately after upload via `parseAndIndexUploadedMessage` in [TdlibManager.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt). This updates the UI state reactively as uploads proceed, preventing the need to wait for a full scheduled crawl.
 
 ---
 
 ## 5. Catalog Backup & Recovery Flow (Disaster Recovery)
 
-TGPix backs up its metadata catalog (synced history index and album setups) directly to Telegram. This allows full database state recovery when logging in on a new phone.
+TGPix backs up its metadata catalog (synced history index and album setups) directly to Telegram, separating user media, operational database backups, and personal Saved Messages.
 
 ```mermaid
 graph LR
-    subgraph Backup Flow
-    A[Trigger Backup] --> B[Export Room DB File + SharedPrefs]
-    B --> C[Compress into ZIP file tgpix_backup.db]
-    C --> D[Upload Document to Telegram Vault Chat]
-    D --> E[Pin Backup Document Message]
+    subgraph Multi-Channel Backup
+        A[Trigger Backup] --> B[Flush Room WAL via check_point TRUNCATE]
+        B --> C[Copy SQLite Binary & SHA-256 Checksum]
+        C --> D{Upload Targets}
+        D -->|#tgpix_backup rolling last 3| E[Dedicated Backup Channel]
+        D -->|#tgpix_master_backup daily 24h| F[Saved Messages]
+        D -->|#tgpix_album JSON manifests| E
     end
-
-    subgraph Restore Flow
-    F[Scan Vault for Pinned Backup] --> G[Download Backup Document]
-    G --> H[Validate Backup Checksum & Schema]
-    H --> I[Replace Local Room DB File & Restore Prefs]
-    I --> J[Re-initialize Media Scanning]
+    
+    subgraph Prioritized Restoration
+        G[Clean Install / Login] --> H{Restoration Priority Lookup}
+        H -->|1. Try #tgpix_backup| I[Dedicated Backup Channel]
+        H -->|2. Try #tgpix_master_backup| J[Saved Messages]
+        I -->|Found| K[Download & Overwrite DB Binary]
+        J -->|Found| K
+        K --> L[Clear Cached Local Image Paths]
+        L --> M[Force Full Crawl to Update Volatile Session File IDs]
+        H -->|DB Backups Missing| N[Fallback: Scan Vault Chat for Photos + Manifests for Albums]
     end
 ```
 
-* **Safety:** Prevents rebuilding a catalog from scratch, retaining remote file mappings and local album assignments across re-installations.
-* **Location:** Uses [BackupManager.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt) for execution.
+### Core Architecture and Mechanics:
+* **Prioritized Restore:** [BackupManager.kt](file:///E:/telegallery-calude/app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt) searches the Dedicated Backup Channel first for the newest rolling database backup. If unavailable, it searches the user's Saved Messages for the daily master database backup.
+* **Crawl Fallback:** If both database backups are missing, the system crawls the media Vault Channel history to rebuild timeline cache records and crawls the Dedicated Backup Channel for `#tgpix_album` manifest JSON documents to reconstruct custom user albums.
+* **Volatile File ID Resolution:** When a database is successfully restored, the app calls `TdlibManager.syncCloudHistory` with `forceFullCrawl = true`. Because TDLib file reference IDs are volatile and expire across sessions, this forces a complete scan to match channel messages with restored records and update the local volatile `telegramFileId` and `telegramThumbnailFileId` values for the new session.
+* **Thumbnail Path Clean Up:** During restoration, the database cache paths are cleared (`clearAllCachedPaths()`), resetting local thumbnail and large paths to `NULL`. This forces the app to download thumbnails fresh on the new device, preventing cache path collisions and display bugs.
 
 ---
 

@@ -231,11 +231,17 @@ object TdlibManager {
             val content = message.content
             if (content is TdApi.MessageDocument) {
                 val path = content.document.document.local.path
-                if (path.isNotEmpty() && path.contains(context.cacheDir.absolutePath)) {
-                    val file = java.io.File(path)
-                    if (file.exists()) {
-                        file.delete()
-                        addLog("Cleaned up temp upload file: ${file.name}")
+                if (path.isNotEmpty()) {
+                    // Backup files are stored in filesDir; photo uploads are in cacheDir/tgpix_uploads.
+                    // Clean up temp files from either location.
+                    val isInFilesDir = path.contains(context.filesDir.absolutePath)
+                    val isInCacheDir = path.contains(context.cacheDir.absolutePath)
+                    if (isInFilesDir || isInCacheDir) {
+                        val file = java.io.File(path)
+                        if (file.exists()) {
+                            file.delete()
+                            addLog("Cleaned up temp upload file: ${file.name}")
+                        }
                     }
                 }
             }
