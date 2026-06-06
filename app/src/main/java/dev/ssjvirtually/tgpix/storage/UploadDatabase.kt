@@ -49,8 +49,8 @@ interface UploadDao {
     tableName = "cloud_photos",
     indices = [
         Index(value = ["uploadedAt"], name = "idx_cloud_photos_uploadedAt"),
-        Index(value = ["contentFingerprint"], unique = true, name = "idx_cloud_photos_contentFingerprint"),
-        Index(value = ["uniqueRemoteId"], unique = true, name = "idx_cloud_photos_uniqueRemoteId"),
+        Index(value = ["contentFingerprint"], name = "idx_cloud_photos_contentFingerprint"),
+        Index(value = ["uniqueRemoteId"], name = "idx_cloud_photos_uniqueRemoteId"),
         Index(value = ["fileName"], name = "idx_cloud_photos_fileName")
     ]
 )
@@ -259,8 +259,8 @@ abstract class UploadDatabase : RoomDatabase() {
         private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_uploadedAt` ON `cloud_photos` (`uploadedAt`)")
-                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `idx_cloud_photos_contentFingerprint` ON `cloud_photos` (`contentFingerprint`)")
-                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `idx_cloud_photos_uniqueRemoteId` ON `cloud_photos` (`uniqueRemoteId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_contentFingerprint` ON `cloud_photos` (`contentFingerprint`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_uniqueRemoteId` ON `cloud_photos` (`uniqueRemoteId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `idx_cloud_photos_fileName` ON `cloud_photos` (`fileName`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `idx_album_photos_photoUri` ON `album_photos` (`photoUri`)")
             }
