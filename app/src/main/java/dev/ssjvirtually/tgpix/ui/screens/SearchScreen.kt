@@ -119,9 +119,22 @@ fun SearchScreen(
     }
     
     val db = remember { UploadDatabase.getDatabase(context) }
-    val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-    val uploadedUris = remember(uploadedLogs) { uploadedLogs.map { it.path }.toSet() }
+    val uploadedUris = remember(mergedPhotosList, cloudLogs) {
+        val synced = mutableSetOf<String>()
+        val regexTrashed = Regex("""^\.trashed-\d+-""")
+        fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
+        val cloudKeys = cloudLogs.map { "${it.fileName.normalize()}_${it.fileSize}" }.toSet()
+        for (photo in mergedPhotosList) {
+            if (!isCloudPhoto(photo.uri)) {
+                val key = "${photo.name.normalize()}_${photo.size}"
+                if (cloudKeys.contains(key)) {
+                    synced.add(photo.uri)
+                }
+            }
+        }
+        synced
+    }
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
     val unifiedPhotos = mergedPhotosList

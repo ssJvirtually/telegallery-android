@@ -131,7 +131,25 @@ class ShareWorker(
 
             // 5. Backup-Before-Share pipeline loop (upload if local-only and not backed up yet)
             for ((index, photo) in photosToShare.withIndex()) {
-                val isSynced = db.dao().find(photo.uri) != null
+                var isSynced = db.dao().find(photo.uri) != null
+                if (!isSynced && !photo.uri.startsWith("cloud://") && mainChatId != 0L) {
+                    val fingerprint = photo.getFingerprint(applicationContext)
+                    val existingInCloud = db.cloudDao().findByFingerprint(fingerprint)
+                        ?: db.cloudDao().findByFileName(photo.name)
+                    if (existingInCloud != null) {
+                        db.dao().insert(
+                            UploadEntity(
+                                mediaStoreId = photo.id,
+                                path = photo.uri,
+                                contentFingerprint = fingerprint,
+                                uploadedAt = existingInCloud.uploadedAt,
+                                telegramMessageId = existingInCloud.messageId
+                            )
+                        )
+                        TdlibManager.addLog("ShareWorker: '${photo.name}' already exists in cloud history. Skipping backup and marking as synced.")
+                        isSynced = true
+                    }
+                }
                 if (!isSynced && !photo.uri.startsWith("cloud://") && mainChatId != 0L) {
                     try {
                         val backupProgressMsg = "Backing up: ${photo.name} before sharing (${index + 1}/${photosToShare.size})..."
