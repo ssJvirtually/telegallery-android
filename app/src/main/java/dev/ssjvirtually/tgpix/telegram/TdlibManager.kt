@@ -358,6 +358,9 @@ object TdlibManager {
                         } else {
                             "${fileName}_${fileSize}_${dateTaken}"
                         }
+                        val isHdValue = metadata?.isHd ?: !isDoc
+                        val originalSizeValue = metadata?.originalSizeBytes ?: fileSize
+
                         entities.add(
                             CloudPhotoEntity(
                                 messageId = msg.id,
@@ -370,7 +373,9 @@ object TdlibManager {
                                 contentFingerprint = computedFingerprint,
                                 telegramThumbnailFileId = thumbFileId,
                                 tags = tags,
-                                fileIdCachedAt = System.currentTimeMillis()
+                                fileIdCachedAt = System.currentTimeMillis(),
+                                isHd = isHdValue,
+                                originalSizeBytes = originalSizeValue
                             )
                         )
                     }
@@ -421,7 +426,9 @@ object TdlibManager {
         val size: Long,
         val dateTaken: Long,
         val tags: List<String> = emptyList(),
-        val hash: String = ""
+        val hash: String = "",
+        val isHd: Boolean? = null,
+        val originalSizeBytes: Long? = null
     )
 
     private fun parseMetadataFromCaption(caption: String): ParsedMetadata? {
@@ -444,7 +451,9 @@ object TdlibManager {
                 size = jsonObj.optLong("size", 0L),
                 dateTaken = jsonObj.optLong("dateTaken", 0L),
                 tags = tagsList,
-                hash = jsonObj.optString("hash", "")
+                hash = jsonObj.optString("hash", ""),
+                isHd = if (jsonObj.has("isHd")) jsonObj.getBoolean("isHd") else null,
+                originalSizeBytes = if (jsonObj.has("origSize")) jsonObj.getLong("origSize") else null
             )
         } catch (e: Exception) {
             e.printStackTrace()

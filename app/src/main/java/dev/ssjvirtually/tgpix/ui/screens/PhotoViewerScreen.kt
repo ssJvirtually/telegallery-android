@@ -53,6 +53,7 @@ import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
+import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
 import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
@@ -88,6 +89,15 @@ fun PhotoViewerScreen(
     val activePhoto = photosList.getOrNull(pagerState.currentPage)
     val isSynced = activePhoto?.let { uploadedUris.contains(it.uri) } ?: false
     val isCloud = activePhoto?.let { isCloudPhoto(it.uri) } ?: false
+    
+    val activeCloudPhoto = remember(activePhoto, cloudLogs) {
+        if (activePhoto == null) null
+        else {
+            val finger = activePhoto.getFingerprint(context)
+            cloudLogs.firstOrNull { it.contentFingerprint == finger }
+                ?: cloudLogs.firstOrNull { it.fileName == activePhoto.name }
+        }
+    }
     
     // Bottom Sheet sheetState to handle metadata scrolling panel
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -493,14 +503,24 @@ fun PhotoViewerScreen(
                 containerColor = TelePhotosTheme.Surface,
                 dragHandle = { BottomSheetDefaults.DragHandle(color = TelePhotosTheme.TextSecondary.copy(alpha = 0.5f)) }
             ) {
-                PhotoDetailsSheet(photo = activePhoto, isSynced = isSynced, isCloud = isCloud)
+                PhotoDetailsSheet(
+                    photo = activePhoto,
+                    isSynced = isSynced,
+                    isCloud = isCloud,
+                    cloudPhoto = activeCloudPhoto
+                )
             }
         }
     }
 }
 
 @Composable
-fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
+fun PhotoDetailsSheet(
+    photo: LocalPhoto,
+    isSynced: Boolean,
+    isCloud: Boolean,
+    cloudPhoto: CloudPhotoEntity? = null
+) {
     val context = LocalContext.current
     val formattedSize = remember(photo.size) {
         val sizeInMb = photo.size.toDouble() / (1024.0 * 1024.0)
@@ -648,8 +668,24 @@ fun PhotoDetailsSheet(photo: LocalPhoto, isSynced: Boolean, isCloud: Boolean) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                
+                val sourceText = if (isCloud) "Telegram Cloud Only" else if (isSynced) "Synced Local Photo" else "Local Device Storage"
+                val uploadDetails = if (cloudPhoto != null) {
+                    if (cloudPhoto.isHd) {
+                        " • HD Lossless"
+                    } else {
+                        val savedBytes = cloudPhoto.originalSizeBytes - cloudPhoto.fileSize
+                        if (savedBytes > 0) {
+                            val savedMb = savedBytes.toDouble() / (1024.0 * 1024.0)
+                            " • Compressed (Saved %.1f MB)".format(savedMb)
+                        } else {
+                            " • Compressed"
+                        }
+                    }
+                } else ""
+                
                 Text(
-                    text = if (isCloud) "Telegram Cloud Only" else if (isSynced) "Synced Local Photo" else "Local Device Storage",
+                    text = "$sourceText$uploadDetails",
                     color = TelePhotosTheme.TextSecondary,
                     fontSize = 12.sp
                 )

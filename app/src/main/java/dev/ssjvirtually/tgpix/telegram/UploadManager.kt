@@ -42,17 +42,10 @@ object UploadManager {
         var thumbFile: File? = null
         
         try {
-            // 1. Copy photo from system MediaStore content resolver to internally-accessible cache file
-            try {
-                val uri = Uri.parse(photo.uri)
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    FileOutputStream(tempFile).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                return TdApi.Error(400, "Failed to copy photo to local cache: ${e.message}")
+            // 1. Prepare and optionally compress the photo to local cache
+            val prepSuccess = copyAndMaybeCompress(context, photo.uri, null, isHd, tempFile)
+            if (!prepSuccess) {
+                return TdApi.Error(400, "Failed to prepare photo for upload: compression or copy failed")
             }
 
             if (!tempFile.exists() || tempFile.length() == 0L) {
@@ -191,9 +184,9 @@ object UploadManager {
                         // Prepare tags for JSON storage (comma separated)
                         val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
                         val metadataJson = if (partialHash.isNotEmpty()) {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"hash":"$partialHash","tags":[$tagsJsonArray]}"""
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"hash":"$partialHash","tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
                         } else {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"tags":[$tagsJsonArray]}"""
+                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
                         }
 
                         val captionText = """
@@ -414,18 +407,25 @@ object UploadManager {
                     val tempFile = File(uploadCacheDir, photo.name)
                     var thumbFile: File? = null
                     try {
-                        if (photo.uri.startsWith("cloud://")) {
-                            val downloaded = downloadCloudPhoto(context, photo.uri)
-                            if (downloaded != null && downloaded.exists()) {
-                                downloaded.copyTo(tempFile, overwrite = true)
-                            }
-                        } else {
-                            val uri = Uri.parse(photo.uri)
-                            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                FileOutputStream(tempFile).use { outputStream ->
-                                    inputStream.copyTo(outputStream)
-                                }
-                            }
+                        val downloaded = if (photo.uri.startsWith("cloud://")) {
+                            downloadCloudPhoto(context, photo.uri)
+                        } else null
+                        
+                        val prepSuccess = copyAndMaybeCompress(
+                            context,
+                            photo.uri,
+                            downloaded,
+                            true, // HD
+                            tempFile
+                        )
+                        
+                        if (downloaded != null && downloaded.exists()) {
+                            try { downloaded.delete() } catch (e: Exception) {}
+                        }
+                        
+                        if (!prepSuccess) {
+                            allSuccess = false
+                            continue
                         }
                         
                         if (!tempFile.exists() || tempFile.length() == 0L) {
@@ -493,18 +493,25 @@ object UploadManager {
                         val tempFile = File(uploadCacheDir, photo.name)
                         tempFiles.add(tempFile)
                         try {
-                            if (photo.uri.startsWith("cloud://")) {
-                                val downloaded = downloadCloudPhoto(context, photo.uri)
-                                if (downloaded != null && downloaded.exists()) {
-                                    downloaded.copyTo(tempFile, overwrite = true)
-                                }
-                            } else {
-                                val uri = Uri.parse(photo.uri)
-                                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                                    FileOutputStream(tempFile).use { outputStream ->
-                                        inputStream.copyTo(outputStream)
-                                    }
-                                }
+                            val downloaded = if (photo.uri.startsWith("cloud://")) {
+                                downloadCloudPhoto(context, photo.uri)
+                            } else null
+                            
+                            val prepSuccess = copyAndMaybeCompress(
+                                context,
+                                photo.uri,
+                                downloaded,
+                                false, // non-HD
+                                tempFile
+                            )
+                            
+                            if (downloaded != null && downloaded.exists()) {
+                                try { downloaded.delete() } catch (e: Exception) {}
+                            }
+                            
+                            if (!prepSuccess) {
+                                prepareSuccess = false
+                                break
                             }
                             
                             if (!tempFile.exists() || tempFile.length() == 0L) {
@@ -756,5 +763,123 @@ object UploadManager {
             }
         }
         return inSampleSize
+    }
+
+    private suspend fun copyAndMaybeCompress(
+        context: Context,
+        sourceUriString: String,
+        downloadedFile: File?,
+        isHd: Boolean,
+        destFile: File
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            if (isHd) {
+                // Copy original file directly
+                if (downloadedFile != null && downloadedFile.exists()) {
+                    downloadedFile.copyTo(destFile, overwrite = true)
+                } else {
+                    val uri = Uri.parse(sourceUriString)
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        FileOutputStream(destFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+                return@withContext true
+            }
+
+            // Compressed (non-HD) mode: stay under 8MB
+            val TARGET_BYTES = 8 * 1024 * 1024L
+            val options = BitmapFactory.Options()
+            options.inJustDecodeBounds = true
+
+            if (downloadedFile != null && downloadedFile.exists()) {
+                BitmapFactory.decodeFile(downloadedFile.absolutePath, options)
+            } else {
+                val uri = Uri.parse(sourceUriString)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    BitmapFactory.decodeStream(input, null, options)
+                }
+            }
+
+            val width = options.outWidth
+            val height = options.outHeight
+            if (width <= 0 || height <= 0) return@withContext false
+
+            // Downsample if image is huge (larger than 4096px) to avoid OOM
+            var sampleSize = 1
+            var tempW = width
+            var tempH = height
+            while (tempW > 4096 || tempH > 4096) {
+                sampleSize *= 2
+                tempW /= 2
+                tempH /= 2
+            }
+            options.inSampleSize = sampleSize
+            options.inJustDecodeBounds = false
+
+            var bitmap = if (downloadedFile != null && downloadedFile.exists()) {
+                BitmapFactory.decodeFile(downloadedFile.absolutePath, options)
+            } else {
+                val uri = Uri.parse(sourceUriString)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    BitmapFactory.decodeStream(input, null, options)
+                }
+            } ?: return@withContext false
+
+            // Extract orientation and rotate bitmap if necessary
+            var rotationAngle = 0f
+            try {
+                val exif = if (downloadedFile != null && downloadedFile.exists()) {
+                    androidx.exifinterface.media.ExifInterface(downloadedFile.absolutePath)
+                } else {
+                    val uri = Uri.parse(sourceUriString)
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        androidx.exifinterface.media.ExifInterface(input)
+                    }
+                }
+                val orientation = exif?.getAttributeInt(
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+                ) ?: androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+                when (orientation) {
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> rotationAngle = 90f
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> rotationAngle = 180f
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotationAngle = 270f
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            if (rotationAngle != 0f) {
+                val matrix = Matrix()
+                matrix.postRotate(rotationAngle)
+                val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                if (rotatedBitmap != bitmap) {
+                    bitmap.recycle()
+                    bitmap = rotatedBitmap
+                }
+            }
+
+            var quality = 85
+            var success = false
+            do {
+                try {
+                    FileOutputStream(destFile).use { out ->
+                        success = bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    success = false
+                }
+                quality -= 10
+            } while (success && destFile.length() > TARGET_BYTES && quality >= 25)
+
+            bitmap.recycle()
+            return@withContext success && destFile.exists() && destFile.length() > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return@withContext false
+        }
     }
 }
