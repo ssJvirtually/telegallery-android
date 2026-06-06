@@ -51,7 +51,9 @@ interface UploadDao {
         Index(value = ["uploadedAt"], name = "idx_cloud_photos_uploadedAt"),
         Index(value = ["contentFingerprint"], name = "idx_cloud_photos_contentFingerprint"),
         Index(value = ["uniqueRemoteId"], name = "idx_cloud_photos_uniqueRemoteId"),
-        Index(value = ["fileName"], name = "idx_cloud_photos_fileName")
+        Index(value = ["fileName"], name = "idx_cloud_photos_fileName"),
+        Index(value = ["contentFingerprint"], unique = true, name = "idx_cloud_photos_fingerprint"),
+        Index(value = ["uniqueRemoteId"], unique = true, name = "idx_cloud_photos_remote_id")
     ]
 )
 data class CloudPhotoEntity(
@@ -149,7 +151,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -266,6 +268,53 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Step 1 — Clean up legacy empty/null fingerprints and uniqueRemoteIds before adding UNIQUE indexes
+                db.execSQL("""
+                    UPDATE cloud_photos 
+                    SET contentFingerprint = 'legacy_' || messageId 
+                    WHERE contentFingerprint = '' OR contentFingerprint IS NULL
+                """)
+                db.execSQL("""
+                    UPDATE cloud_photos 
+                    SET uniqueRemoteId = 'legacy_remote_' || messageId 
+                    WHERE uniqueRemoteId = '' OR uniqueRemoteId IS NULL
+                """)
+
+                // Step 2 — Remove actual duplicates based on contentFingerprint, keeping the one with the lowest messageId
+                db.execSQL("""
+                    DELETE FROM cloud_photos 
+                    WHERE messageId NOT IN (
+                        SELECT MIN(messageId) 
+                        FROM cloud_photos 
+                        GROUP BY contentFingerprint
+                    )
+                """)
+
+                // Step 2b — Remove actual duplicates based on uniqueRemoteId, keeping the one with the lowest messageId
+                db.execSQL("""
+                    DELETE FROM cloud_photos 
+                    WHERE messageId NOT IN (
+                        SELECT MIN(messageId) 
+                        FROM cloud_photos 
+                        GROUP BY uniqueRemoteId
+                    )
+                """)
+
+                // Step 3 — Now safe to add UNIQUE indexes
+                db.execSQL("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_photos_fingerprint 
+                    ON cloud_photos(contentFingerprint)
+                """)
+
+                db.execSQL("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_cloud_photos_remote_id 
+                    ON cloud_photos(uniqueRemoteId)
+                """)
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -281,7 +330,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
-                    MIGRATION_8_9
+                    MIGRATION_8_9,
+                    MIGRATION_9_10
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {

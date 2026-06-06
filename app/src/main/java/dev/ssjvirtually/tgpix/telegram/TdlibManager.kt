@@ -286,6 +286,7 @@ object TdlibManager {
                     var fileSize = 0L
                     var isDoc = false
                     var uploadedAt = msg.date.toLong() * 1000L
+                    var dateTaken = msg.date.toLong() * 1000L
                     var tags = ""
                     var metadata: ParsedMetadata? = null
                     
@@ -305,6 +306,7 @@ object TdlibManager {
                             if (metadata != null) {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
+                                dateTaken = metadata.dateTaken
                                 fileSize = metadata.size
                                 tags = metadata.tags.joinToString(" ")
                             } else {
@@ -341,6 +343,7 @@ object TdlibManager {
                             if (metadata != null) {
                                 fileName = metadata.name
                                 uploadedAt = metadata.dateTaken
+                                dateTaken = metadata.dateTaken
                                 fileSize = metadata.size
                                 tags = metadata.tags.joinToString(" ")
                             } else {
@@ -351,9 +354,9 @@ object TdlibManager {
                     
                     if (fileId != 0 && fileName.isNotEmpty()) {
                         val computedFingerprint = if (metadata != null && metadata.hash.isNotEmpty()) {
-                            "${fileName}_${fileSize}_${uploadedAt}_${metadata.hash}"
+                            "${fileName}_${fileSize}_${dateTaken}_${metadata.hash}"
                         } else {
-                            "${fileName}_${fileSize}_${uploadedAt}"
+                            "${fileName}_${fileSize}_${dateTaken}"
                         }
                         entities.add(
                             CloudPhotoEntity(
