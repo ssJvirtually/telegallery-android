@@ -333,6 +333,7 @@ object TdlibManager {
                                 } else {
                                     "photo_${msg.id}.jpg"
                                 }
+                                dateTaken = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(fileName) ?: (msg.date.toLong() * 1000L)
                             }
                         }
                     } else if (content is TdApi.MessageDocument) {
@@ -366,6 +367,7 @@ object TdlibManager {
                                 tags = metadata.tags.joinToString(" ")
                             } else {
                                 fileName = docName
+                                dateTaken = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(fileName) ?: (msg.date.toLong() * 1000L)
                             }
                         }
                     }
@@ -393,7 +395,8 @@ object TdlibManager {
                                 tags = tags,
                                 fileIdCachedAt = System.currentTimeMillis(),
                                 isHd = isHdValue,
-                                originalSizeBytes = originalSizeValue
+                                originalSizeBytes = originalSizeValue,
+                                dateTaken = dateTaken
                             )
                         )
                     }

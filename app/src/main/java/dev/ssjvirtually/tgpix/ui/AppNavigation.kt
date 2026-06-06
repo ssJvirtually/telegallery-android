@@ -320,12 +320,12 @@ fun MainAppLayout(
             val matchedLocalKeys = mutableSetOf<String>()
             val addedUris = mutableSetOf<String>()
 
-            // 1. Process cloud vault files
             for (cloud in cloudLogs) {
                 val cloudNormName = cloud.fileName.normalize()
-                val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_${cloud.uploadedAt}"
+                val cloudFingerprintDate = if (cloud.dateTaken > 0L) cloud.dateTaken else cloud.uploadedAt
+                val cloudFingerprint = "${cloudNormName}_${cloud.fileSize}_$cloudFingerprintDate"
                 val parsedDate = parseDateFromFilename(cloud.fileName)
-                val displayDate = parsedDate ?: cloud.uploadedAt
+                val displayDate = if (cloud.dateTaken > 0L) cloud.dateTaken else (parsedDate ?: cloud.uploadedAt)
                 
                 // Try matching cloud photo to local photo in order of specificity:
                 var matchingLocal = localByFingerprint[cloudFingerprint]

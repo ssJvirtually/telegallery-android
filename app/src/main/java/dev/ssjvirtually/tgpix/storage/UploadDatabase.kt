@@ -71,7 +71,8 @@ data class CloudPhotoEntity(
     val tags: String = "",
     val fileIdCachedAt: Long = 0L,
     val isHd: Boolean = true,
-    val originalSizeBytes: Long = 0L
+    val originalSizeBytes: Long = 0L,
+    val dateTaken: Long = 0L
 )
 
 @Dao
@@ -153,7 +154,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -324,6 +325,14 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `cloud_photos` ADD COLUMN `dateTaken` INTEGER NOT NULL DEFAULT 0")
+                // Migrate existing entries by copying their uploadedAt timestamp
+                db.execSQL("UPDATE `cloud_photos` SET `dateTaken` = `uploadedAt` WHERE `dateTaken` = 0")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -341,7 +350,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_7_8,
                     MIGRATION_8_9,
                     MIGRATION_9_10,
-                    MIGRATION_10_11
+                    MIGRATION_10_11,
+                    MIGRATION_11_12
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
