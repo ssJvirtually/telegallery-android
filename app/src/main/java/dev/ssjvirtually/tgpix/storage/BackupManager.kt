@@ -19,6 +19,7 @@ import androidx.work.BackoffPolicy
 import androidx.work.ExistingWorkPolicy
 import java.util.concurrent.TimeUnit
 import dev.ssjvirtually.tgpix.worker.DatabaseBackupWorker
+import androidx.room.withTransaction
 
 object BackupManager {
 
@@ -107,46 +108,54 @@ object BackupManager {
             }
             withContext(Dispatchers.IO) {
                 val db = UploadDatabase.getDatabase(context)
-                
-                // 1. Flush Room's WAL logs to the main database file
-                try {
-                    db.openHelper.writableDatabase.execSQL("PRAGMA wal_checkpoint(FULL)")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                
-                // 2. Locate the database file
                 val dbFile = context.getDatabasePath("upload_database")
                 if (!dbFile.exists()) {
                     isBackupRunning = false
                     return@withContext
                 }
-                
-                // 3. Verify record count - safety checks
-                val currentCount = db.cloudDao().getRecordCountDirect()
-                val lastCount = PreferencesManager.getLastBackupRecordCount(context)
-                
-                // If database is empty but we previously had backups, abort to protect remote
-                if (currentCount == 0 && lastCount > 0) {
-                    TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
+
+                // Safely lock the database and perform a copy while in a Room transaction
+                val transactionResult = try {
+                    db.withTransaction {
+                        // 1. Flush Room's WAL logs and truncate the WAL file size inside transaction
+                        try {
+                            db.openHelper.writableDatabase.execSQL("PRAGMA wal_checkpoint(TRUNCATE)")
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        val currentCount = db.cloudDao().getRecordCountDirect()
+                        val lastCount = PreferencesManager.getLastBackupRecordCount(context)
+
+                        // If database is empty but we previously had backups, abort to protect remote
+                        if (currentCount == 0 && lastCount > 0) {
+                            TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
+                            null
+                        } else {
+                            val tempFile = File(context.cacheDir, "tgpix_backup.db")
+                            // Perform binary copy while exclusive write lock is held by Room transaction
+                            dbFile.copyTo(tempFile, overwrite = true)
+                            Pair(tempFile, currentCount)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+
+                if (transactionResult == null) {
                     isBackupRunning = false
                     return@withContext
                 }
-                
-                // 4. Create local temporary copy in cache
-                val tempBackupFile = File(context.cacheDir, "tgpix_backup.db")
-                FileInputStream(dbFile).use { input ->
-                    FileOutputStream(tempBackupFile).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                
+
+                val (tempBackupFile, currentCount) = transactionResult
+
                 if (!tempBackupFile.exists() || tempBackupFile.length() == 0L) {
                     isBackupRunning = false
                     return@withContext
                 }
                 
-                // 5. Compute integrity checksum and upload document message to Telegram
+                // 5. Compute integrity checksum and upload document message to Telegram (performed outside database transaction)
                 val sha256 = computeSha256(tempBackupFile)
                 val uploadResult = uploadFile(tempBackupFile, targetChatId, "TGPix SQLite Database Backup #tgpix_backup sha256:$sha256")
                 if (uploadResult is TdApi.Message) {
