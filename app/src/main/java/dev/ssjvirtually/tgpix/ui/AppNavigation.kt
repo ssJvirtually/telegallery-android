@@ -287,7 +287,7 @@ fun MainAppLayout(
                 val chatId = PreferencesManager.getChatId(context)
                 if (chatId != 0L) {
                     try {
-                        TdlibManager.syncCloudHistory(context, chatId)
+                        TdlibManager.syncCloudHistory(context, chatId, forceFullCrawl = restored)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

@@ -179,6 +179,23 @@ object BackupManager {
                 
                 // 5. Compute integrity checksum and upload document message to Telegram (performed outside database transaction)
                 val sha256 = computeSha256(tempBackupFile)
+                
+                // Determine if we need to do daily master backup
+                val now = System.currentTimeMillis()
+                val lastDailyBackupTime = PreferencesManager.getLastDailyBackupTime(context)
+                val needMasterBackup = now - lastDailyBackupTime >= 24 * 60 * 60 * 1000L || lastDailyBackupTime == 0L
+                
+                val tempMasterFile = if (needMasterBackup) {
+                    val masterFile = File(context.cacheDir, "tgpix_master_backup.db")
+                    try {
+                        tempBackupFile.copyTo(masterFile, overwrite = true)
+                        masterFile
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        null
+                    }
+                } else null
+
                 val uploadResult = uploadFile(tempBackupFile, targetChatId, "TGPix SQLite Database Backup #tgpix_backup sha256:$sha256")
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
@@ -209,14 +226,15 @@ object BackupManager {
                     
                     TdlibManager.addLog("SQLite backup updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
 
-                    // 6. Daily master backup strategy: Check if 24 hours have elapsed
-                    val now = System.currentTimeMillis()
-                    val lastDailyBackupTime = PreferencesManager.getLastDailyBackupTime(context)
-                    if (now - lastDailyBackupTime >= 24 * 60 * 60 * 1000L || lastDailyBackupTime == 0L) {
-                        performDailyMasterBackup(context, tempBackupFile, sha256)
+                    // 6. Daily master backup strategy
+                    if (tempMasterFile != null && tempMasterFile.exists()) {
+                        performDailyMasterBackup(context, tempMasterFile, sha256)
                     }
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
+                    if (tempMasterFile != null && tempMasterFile.exists()) {
+                        tempMasterFile.delete()
+                    }
                 }
                 
                 // Clean up local temp file
@@ -231,10 +249,18 @@ object BackupManager {
         }
     }
 
-    private suspend fun performDailyMasterBackup(context: Context, tempBackupFile: File, sha256: String) {
+    private suspend fun performDailyMasterBackup(context: Context, tempMasterFile: File, sha256: String) {
         val myUserId = resolveMyUserId()
         if (myUserId == 0L) {
             TdlibManager.addLog("Daily master backup aborted: Unable to resolve myUserId")
+            if (tempMasterFile.exists()) {
+                tempMasterFile.delete()
+            }
+            return
+        }
+
+        if (!tempMasterFile.exists()) {
+            TdlibManager.addLog("Daily master backup aborted: Master backup file does not exist")
             return
         }
 
@@ -249,29 +275,35 @@ object BackupManager {
             e.printStackTrace()
         }
 
-        TdlibManager.addLog("Uploading daily master backup (#tgpix_master_backup) to Saved Messages (Chat ID: $myUserId)...")
-        val caption = "TGPix SQLite Master Database Backup #tgpix_master_backup sha256:$sha256"
-        val uploadResult = uploadFile(tempBackupFile, myUserId, caption)
-        if (uploadResult is TdApi.Message) {
-            val newMasterMsgId = uploadResult.id
-            val oldMasterMsgId = PreferencesManager.getLastMasterBackupMessageId(context)
+        try {
+            TdlibManager.addLog("Uploading daily master backup (#tgpix_master_backup) to Saved Messages (Chat ID: $myUserId)...")
+            val caption = "TGPix SQLite Master Database Backup #tgpix_master_backup sha256:$sha256"
+            val uploadResult = uploadFile(tempMasterFile, myUserId, caption)
+            if (uploadResult is TdApi.Message) {
+                val newMasterMsgId = uploadResult.id
+                val oldMasterMsgId = PreferencesManager.getLastMasterBackupMessageId(context)
 
-            // Delete old master message from Saved Messages
-            if (oldMasterMsgId != 0L) {
-                TdlibManager.getClient().send(TdApi.DeleteMessages(myUserId, longArrayOf(oldMasterMsgId), true)) { deleteResult ->
-                    if (deleteResult is TdApi.Ok) {
-                        TdlibManager.addLog("Old daily master backup message ($oldMasterMsgId) deleted from Saved Messages.")
-                    } else if (deleteResult is TdApi.Error) {
-                        TdlibManager.addLog("Failed to delete old daily master backup message ($oldMasterMsgId): ${deleteResult.message}")
+                // Delete old master message from Saved Messages
+                if (oldMasterMsgId != 0L) {
+                    TdlibManager.getClient().send(TdApi.DeleteMessages(myUserId, longArrayOf(oldMasterMsgId), true)) { deleteResult ->
+                        if (deleteResult is TdApi.Ok) {
+                            TdlibManager.addLog("Old daily master backup message ($oldMasterMsgId) deleted from Saved Messages.")
+                        } else if (deleteResult is TdApi.Error) {
+                            TdlibManager.addLog("Failed to delete old daily master backup message ($oldMasterMsgId): ${deleteResult.message}")
+                        }
                     }
                 }
-            }
 
-            PreferencesManager.setLastMasterBackupMessageId(context, newMasterMsgId)
-            PreferencesManager.setLastDailyBackupTime(context, System.currentTimeMillis())
-            TdlibManager.addLog("Daily master database backup completed successfully (Msg ID: $newMasterMsgId).")
-        } else if (uploadResult is TdApi.Error) {
-            TdlibManager.addLog("Daily master database backup upload failed: ${uploadResult.message}")
+                PreferencesManager.setLastMasterBackupMessageId(context, newMasterMsgId)
+                PreferencesManager.setLastDailyBackupTime(context, System.currentTimeMillis())
+                TdlibManager.addLog("Daily master database backup completed successfully (Msg ID: $newMasterMsgId).")
+            } else if (uploadResult is TdApi.Error) {
+                TdlibManager.addLog("Daily master database backup upload failed: ${uploadResult.message}")
+            }
+        } finally {
+            if (tempMasterFile.exists()) {
+                tempMasterFile.delete()
+            }
         }
     }
 

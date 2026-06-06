@@ -263,7 +263,7 @@ object TdlibManager {
         }
     }
 
-    suspend fun syncCloudHistory(context: Context, chatId: Long) {
+    suspend fun syncCloudHistory(context: Context, chatId: Long, forceFullCrawl: Boolean = false) {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
         
@@ -274,7 +274,7 @@ object TdlibManager {
         
         var lastMessageId = 0L
         var crawling = true
-        addLog("Starting server vault synchronization crawl...")
+        addLog("Starting server vault synchronization crawl (forceFullCrawl=$forceFullCrawl)...")
 
         while (crawling) {
             val getHistory = TdApi.GetChatHistory().apply {
@@ -300,7 +300,7 @@ object TdlibManager {
                     }
 
                     // Check if this message already exists in the local database
-                    if (cloudDao.exists(msg.id)) {
+                    if (!forceFullCrawl && cloudDao.exists(msg.id)) {
                         addLog("Found existing message index in database. Terminating crawl.")
                         crawling = false
                         break
@@ -387,6 +387,14 @@ object TdlibManager {
                         }
                     }
                     
+                    val existing = cloudDao.findByMessageId(msg.id)
+                    val localThumb = if (existing?.localCachedThumbnailPath != null && java.io.File(existing.localCachedThumbnailPath).exists()) {
+                        existing.localCachedThumbnailPath
+                    } else null
+                    val localLarge = if (existing?.localCachedLargePath != null && java.io.File(existing.localCachedLargePath).exists()) {
+                        existing.localCachedLargePath
+                    } else null
+
                     if (fileId != 0 && fileName.isNotEmpty()) {
                         val computedFingerprint = if (metadata != null && metadata.hash.isNotEmpty()) {
                             "${fileName}_${fileSize}_${dateTaken}_${metadata.hash}"
@@ -408,6 +416,8 @@ object TdlibManager {
                                 uploadedAt = uploadedAt,
                                 fileSize = fileSize,
                                 isDocument = isDoc,
+                                localCachedThumbnailPath = localThumb,
+                                localCachedLargePath = localLarge,
                                 contentFingerprint = computedFingerprint,
                                 telegramThumbnailFileId = thumbFileId,
                                 tags = tags,
