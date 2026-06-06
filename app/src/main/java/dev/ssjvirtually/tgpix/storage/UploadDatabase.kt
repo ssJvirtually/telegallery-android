@@ -58,7 +58,8 @@ data class CloudPhotoEntity(
     val localCachedLargePath: String? = null,
     val contentFingerprint: String = "",
     val telegramThumbnailFileId: Int = 0,
-    val tags: String = ""
+    val tags: String = "",
+    val fileIdCachedAt: Long = 0L
 )
 
 @Dao
@@ -89,6 +90,9 @@ interface CloudPhotoDao {
 
     @Query("DELETE FROM cloud_photos WHERE fileName LIKE '%.db' OR fileName LIKE 'tgpix_backup%'")
     suspend fun deleteBackupDbFiles()
+
+    @Query("SELECT * FROM cloud_photos WHERE messageId = :messageId LIMIT 1")
+    suspend fun findByMessageId(messageId: Long): CloudPhotoEntity?
 }
 
 @Entity(tableName = "albums")
@@ -131,7 +135,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -232,6 +236,12 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `cloud_photos` ADD COLUMN `fileIdCachedAt` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -245,7 +255,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_3_4,
                     MIGRATION_4_5,
                     MIGRATION_5_6,
-                    MIGRATION_6_7
+                    MIGRATION_6_7,
+                    MIGRATION_7_8
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {

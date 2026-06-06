@@ -360,7 +360,8 @@ object TdlibManager {
                                 isDocument = isDoc,
                                 contentFingerprint = "${fileName}_${fileSize}_${uploadedAt}",
                                 telegramThumbnailFileId = thumbFileId,
-                                tags = tags
+                                tags = tags,
+                                fileIdCachedAt = System.currentTimeMillis()
                             )
                         )
                     }

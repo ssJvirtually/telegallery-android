@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import androidx.compose.ui.platform.LocalContext
+import dev.ssjvirtually.tgpix.storage.UploadDatabase
 
 sealed class GalleryItem {
     data class Header(val date: String) : GalleryItem()
@@ -82,65 +83,87 @@ fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
         if (chatId == 0L) return@LaunchedEffect
         
         try {
-            android.util.Log.d("TGPix", "Requesting messageId=$messageId (isThumbnail=$isThumbnail) from chatId=$chatId")
-            val messageResult = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
-            if (messageResult is TdApi.Message) {
-                val content = messageResult.content
-                var targetFileId = 0
-                
-                if (content is TdApi.MessagePhoto) {
-                    val sizes = content.photo.sizes
-                    if (sizes.isNotEmpty()) {
-                        targetFileId = if (isThumbnail) {
-                            sizes.first().photo.id
-                        } else {
-                            sizes.last().photo.id
+            val db = UploadDatabase.getDatabase(context)
+            val cachedPhoto = db.cloudDao().findByMessageId(messageId)
+            
+            var targetFileId = 0
+            val isFresh = cachedPhoto != null && 
+                    cachedPhoto.telegramFileId != 0 && 
+                    (System.currentTimeMillis() - cachedPhoto.fileIdCachedAt < 30 * 60 * 1000L)
+            
+            if (isFresh && cachedPhoto != null) {
+                targetFileId = if (isThumbnail) cachedPhoto.telegramThumbnailFileId else cachedPhoto.telegramFileId
+                android.util.Log.d("TGPix", "Using cached fresh targetFileId=$targetFileId for messageId=$messageId")
+            } else {
+                android.util.Log.d("TGPix", "Cache stale or missing for messageId=$messageId. Fetching fresh message...")
+                val messageResult = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+                if (messageResult is TdApi.Message) {
+                    val content = messageResult.content
+                    var fileId = 0
+                    var thumbFileId = 0
+                    
+                    if (content is TdApi.MessagePhoto) {
+                        val sizes = content.photo.sizes
+                        if (sizes.isNotEmpty()) {
+                            fileId = sizes.last().photo.id
+                            thumbFileId = sizes.first().photo.id
+                        }
+                    } else if (content is TdApi.MessageDocument) {
+                        val doc = content.document
+                        fileId = doc.document.id
+                        thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                    }
+                    
+                    if (fileId != 0) {
+                        targetFileId = if (isThumbnail) thumbFileId else fileId
+                        // Update cached photo in database
+                        if (cachedPhoto != null) {
+                            db.cloudDao().insert(
+                                cachedPhoto.copy(
+                                    telegramFileId = fileId,
+                                    telegramThumbnailFileId = thumbFileId,
+                                    fileIdCachedAt = System.currentTimeMillis()
+                                )
+                            )
                         }
                     }
-                } else if (content is TdApi.MessageDocument) {
-                    val doc = content.document
-                    targetFileId = if (isThumbnail) {
-                        doc.thumbnail?.file?.id ?: doc.document.id
+                } else if (messageResult is TdApi.Error) {
+                    android.util.Log.e("TGPix", "GetMessage failed for messageId=$messageId: code=${messageResult.code} message=${messageResult.message}")
+                }
+            }
+            
+            if (targetFileId != 0) {
+                val fileResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
+                if (fileResult is TdApi.File) {
+                    if (fileResult.local.isDownloadingCompleted) {
+                        localPath = fileResult.local.path
+                        android.util.Log.d("TGPix", "File already downloaded: $localPath")
                     } else {
-                        doc.document.id
-                    }
-                }
-                
-                if (targetFileId != 0) {
-                    val fileResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
-                    if (fileResult is TdApi.File) {
-                        if (fileResult.local.isDownloadingCompleted) {
-                            localPath = fileResult.local.path
-                            android.util.Log.d("TGPix", "File already downloaded: $localPath")
-                        } else {
-                            android.util.Log.d("TGPix", "Starting download for targetFileId=$targetFileId")
-                            val downloadResult = TdlibManager.sendRequest(TdApi.DownloadFile(targetFileId, 1, 0, 0, false))
-                            if (downloadResult is TdApi.File) {
-                                var downloaded = false
-                                while (!downloaded) {
-                                    delay(1000)
-                                    val pollResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
-                                    if (pollResult is TdApi.File && pollResult.local.isDownloadingCompleted) {
-                                        localPath = pollResult.local.path
-                                        downloaded = true
-                                        android.util.Log.d("TGPix", "Download completed: $localPath")
-                                    } else if (pollResult is TdApi.Error) {
-                                        android.util.Log.e("TGPix", "Error polling file: code=${pollResult.code} message=${pollResult.message}")
-                                        break
-                                    }
+                        android.util.Log.d("TGPix", "Starting download for targetFileId=$targetFileId")
+                        val downloadResult = TdlibManager.sendRequest(TdApi.DownloadFile(targetFileId, 1, 0, 0, false))
+                        if (downloadResult is TdApi.File) {
+                            var downloaded = false
+                            while (!downloaded) {
+                                delay(1000)
+                                val pollResult = TdlibManager.sendRequest(TdApi.GetFile(targetFileId))
+                                if (pollResult is TdApi.File && pollResult.local.isDownloadingCompleted) {
+                                    localPath = pollResult.local.path
+                                    downloaded = true
+                                    android.util.Log.d("TGPix", "Download completed: $localPath")
+                                } else if (pollResult is TdApi.Error) {
+                                    android.util.Log.e("TGPix", "Error polling file: code=${pollResult.code} message=${pollResult.message}")
+                                    break
                                 }
-                            } else if (downloadResult is TdApi.Error) {
-                                android.util.Log.e("TGPix", "DownloadFile failed for targetFileId=$targetFileId: code=${downloadResult.code} message=${downloadResult.message}")
                             }
+                        } else if (downloadResult is TdApi.Error) {
+                            android.util.Log.e("TGPix", "DownloadFile failed for targetFileId=$targetFileId: code=${downloadResult.code} message=${downloadResult.message}")
                         }
-                    } else if (fileResult is TdApi.Error) {
-                        android.util.Log.e("TGPix", "GetFile failed for targetFileId=$targetFileId: code=${fileResult.code} message=${fileResult.message}")
                     }
-                } else {
-                    android.util.Log.w("TGPix", "No valid targetFileId found in message content")
+                } else if (fileResult is TdApi.Error) {
+                    android.util.Log.e("TGPix", "GetFile failed for targetFileId=$targetFileId: code=${fileResult.code} message=${fileResult.message}")
                 }
-            } else if (messageResult is TdApi.Error) {
-                android.util.Log.e("TGPix", "GetMessage failed for messageId=$messageId: code=${messageResult.code} message=${messageResult.message}")
+            } else {
+                android.util.Log.w("TGPix", "No valid targetFileId resolved")
             }
         } catch (e: Exception) {
             android.util.Log.e("TGPix", "Exception in rememberCloudThumbnailPath: ${e.message}", e)
