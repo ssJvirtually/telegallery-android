@@ -11,6 +11,9 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -91,6 +94,10 @@ fun PhotosGridScreen(
     onSettingsClick: () -> Unit,
     mergedPhotosList: List<LocalPhoto>,
     isScanningLocal: Boolean,
+    // True while DB restore + Telegram cloud crawl are running in the background.
+    // Grid is already visible with local photos at this point; this just shows a
+    // subtle non-blocking pill indicator so the user knows cloud sync is happening.
+    isSyncingCloud: Boolean = false,
     hasPermission: Boolean,
     onRequestPermission: () -> Unit
 ) {
@@ -1088,6 +1095,42 @@ fun PhotosGridScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Cloud sync pill — shows while background DB restore + Telegram crawl are running.
+                // Using animateFloatAsState instead of AnimatedVisibility to avoid ColumnScope
+                // implicit receiver conflict (the outer Column leaks its scope into this Box).
+                val syncPillAlpha by animateFloatAsState(
+                    targetValue = if (isSyncingCloud && mergedPhotosList.isNotEmpty()) 1f else 0f,
+                    animationSpec = tween(300),
+                    label = "syncPillAlpha"
+                )
+                if (syncPillAlpha > 0f) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp)
+                            .graphicsLayer { alpha = syncPillAlpha }
+                            .background(
+                                color = Color(0xCC1A1A2E),
+                                shape = RoundedCornerShape(50)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(12.dp),
+                            strokeWidth = 1.5.dp,
+                            color = Color(0xFF4FC3F7)
+                        )
+                        Text(
+                            text = "Syncing cloud photos…",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }

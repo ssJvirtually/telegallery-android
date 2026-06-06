@@ -248,6 +248,9 @@ fun MainAppLayout(
     val coroutineScope = rememberCoroutineScope()
     var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     var isScanningLocal by remember { mutableStateOf(true) }
+    // Tracks whether a background cloud sync (DB restore + Telegram crawl) is in progress.
+    // Used to show a subtle sync pill indicator — grid is already visible at this point.
+    var isSyncingCloud by remember { mutableStateOf(false) }
 
     val db = remember { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
@@ -255,21 +258,30 @@ fun MainAppLayout(
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
+            // ── Phase 1: Scan local photos immediately and show the grid ──────────────
+            // This runs first and is fast (~100-300ms). The grid will show local
+            // photos as soon as this completes, without waiting for cloud sync.
             isScanningLocal = true
-            withContext(Dispatchers.IO) {
-                // 1. Attempt to restore local database from remote Telegram backup if cache is empty
+            val scanned = withContext(Dispatchers.IO) {
+                MediaStoreScanner.scan(context)
+            }
+            localPhotos = scanned
+            // isScanningLocal will be set to false by the merge LaunchedEffect below
+            // as soon as localPhotos is non-empty.
+
+            // ── Phase 2: DB restore + cloud sync run in background ────────────────────
+            // The grid is already showing local photos at this point. Cloud photos
+            // will be merged in silently when the DB/crawl finishes.
+            isSyncingCloud = true
+            coroutineScope.launch(Dispatchers.IO) {
+                // 2a. Restore local Room DB from remote Telegram backup (network call)
                 try {
                     dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
-                val scanned = MediaStoreScanner.scan(context)
-                withContext(Dispatchers.Main) {
-                    localPhotos = scanned
-                }
-                
-                // Trigger background server vault index crawl
+                // 2b. Crawl Telegram channel history to index cloud photos into Room DB
                 val chatId = PreferencesManager.getChatId(context)
                 if (chatId != 0L) {
                     try {
@@ -278,13 +290,20 @@ fun MainAppLayout(
                         e.printStackTrace()
                     }
                 }
+
+                withContext(Dispatchers.Main) {
+                    isSyncingCloud = false
+                }
             }
         }
     }
 
-    // Hoisted background thread merging and deduplication
+    // Hoisted background thread merging and deduplication.
+    // isScanningLocal is only set to true here when we have no photos yet (first cold start).
+    // If we already have localPhotos, the grid is already showing them, so we silently
+    // merge in cloud data in the background without flashing the spinner.
     LaunchedEffect(localPhotos, cloudLogs) {
-        isScanningLocal = true
+        if (mergedPhotosList.isEmpty()) isScanningLocal = true
         withContext(Dispatchers.IO) {
             val list = mutableListOf<LocalPhoto>()
             
@@ -580,6 +599,7 @@ fun MainAppLayout(
                         },
                         mergedPhotosList = mergedPhotosList,
                         isScanningLocal = isScanningLocal,
+                        isSyncingCloud = isSyncingCloud,
                         hasPermission = hasPermission,
                         onRequestPermission = {
                             permissionLauncher.launch(permissionsToRequest)
