@@ -137,6 +137,26 @@ abstract class UploadDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: UploadDatabase? = null
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `cloud_photos` (
+                        `messageId` INTEGER PRIMARY KEY NOT NULL,
+                        `telegramFileId` INTEGER NOT NULL,
+                        `uniqueRemoteId` TEXT NOT NULL,
+                        `fileName` TEXT NOT NULL,
+                        `uploadedAt` INTEGER NOT NULL,
+                        `fileSize` INTEGER NOT NULL,
+                        `isDocument` INTEGER NOT NULL,
+                        `localCachedThumbnailPath` TEXT,
+                        `localCachedLargePath` TEXT
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -179,7 +199,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     UploadDatabase::class.java,
                     "upload_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
                         android.util.Log.e(
