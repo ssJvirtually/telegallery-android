@@ -185,8 +185,7 @@ fun PhotosGridScreen(
                 val lastBackupCount = PreferencesManager.getLastBackupRecordCount(context)
                 if (totalRecords != lastBackupCount) {
                     try {
-                        dev.ssjvirtually.tgpix.storage.BackupManager.backupDatabase(context)
-                        PreferencesManager.setLastBackupRecordCount(context, totalRecords)
+                        dev.ssjvirtually.tgpix.storage.BackupManager.scheduleBackup(context)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

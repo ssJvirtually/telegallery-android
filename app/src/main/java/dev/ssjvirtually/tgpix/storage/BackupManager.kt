@@ -11,6 +11,14 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.coroutines.resume
+import androidx.work.WorkManager
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingWorkPolicy
+import java.util.concurrent.TimeUnit
+import dev.ssjvirtually.tgpix.worker.DatabaseBackupWorker
 
 object BackupManager {
 
@@ -63,6 +71,28 @@ object BackupManager {
         
         if (myId != 0L) return myId
         return PreferencesManager.getChatId(context)
+    }
+
+    fun scheduleBackup(context: Context) {
+        val workManager = WorkManager.getInstance(context.applicationContext)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<DatabaseBackupWorker>()
+            .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                30,
+                TimeUnit.SECONDS
+            )
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "db_backup",
+            ExistingWorkPolicy.KEEP,
+            request
+        )
     }
 
     suspend fun backupDatabase(context: Context) {
