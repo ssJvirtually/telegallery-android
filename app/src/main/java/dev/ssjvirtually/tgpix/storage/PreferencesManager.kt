@@ -129,6 +129,21 @@ object PreferencesManager {
 
     private const val KEY_LAST_BACKUP_MSG_ID = "last_backup_msg_id"
     private const val KEY_LAST_BACKUP_RECORD_COUNT = "last_backup_record_count"
+    private const val KEY_BACKUP_MSG_IDS = "backup_msg_ids"
+
+    fun getBackupMessageIds(context: Context): List<Long> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val value = prefs.getString(KEY_BACKUP_MSG_IDS, "") ?: ""
+        if (value.isEmpty()) return emptyList()
+        return value.split(",").mapNotNull { it.toLongOrNull() }
+    }
+
+    fun saveBackupMessageIds(context: Context, ids: List<Long>) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_BACKUP_MSG_IDS, ids.joinToString(","))
+            .apply()
+    }
 
     fun setLastBackupMessageId(context: Context, messageId: Long) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

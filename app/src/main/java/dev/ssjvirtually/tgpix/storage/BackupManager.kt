@@ -160,19 +160,31 @@ object BackupManager {
                 val uploadResult = uploadFile(tempBackupFile, targetChatId, "TGPix SQLite Database Backup #tgpix_backup sha256:$sha256")
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
-                    val oldMsgId = PreferencesManager.getLastBackupMessageId(context)
                     
-                    PreferencesManager.setLastBackupMessageId(context, newMsgId)
-                    PreferencesManager.setLastBackupRecordCount(context, currentCount)
+                    // Maintain a rolling list of the last 3 backup message IDs
+                    val backupIds = PreferencesManager.getBackupMessageIds(context).toMutableList()
+                    backupIds.add(newMsgId)
                     
-                    // 6. Delete the old backup message from Telegram history to keep it clean
-                    if (oldMsgId != 0L) {
-                        TdlibManager.getClient().send(TdApi.DeleteMessages(targetChatId, longArrayOf(oldMsgId), true)) { deleteResult ->
-                            if (deleteResult is TdApi.Ok) {
-                                TdlibManager.addLog("Old SQLite backup message ($oldMsgId) pruned successfully from Telegram.")
+                    if (backupIds.size > 3) {
+                        // Prune oldest backups, keeping only the 3 newest
+                        while (backupIds.size > 3) {
+                            val oldestMsgId = backupIds.removeAt(0)
+                            if (oldestMsgId != 0L) {
+                                TdlibManager.getClient().send(TdApi.DeleteMessages(targetChatId, longArrayOf(oldestMsgId), true)) { deleteResult ->
+                                    if (deleteResult is TdApi.Ok) {
+                                        TdlibManager.addLog("Old SQLite backup message ($oldestMsgId) pruned successfully from Telegram.")
+                                    } else if (deleteResult is TdApi.Error) {
+                                        TdlibManager.addLog("Failed to prune old SQLite backup message ($oldestMsgId): ${deleteResult.message}")
+                                    }
+                                }
                             }
                         }
                     }
+                    
+                    PreferencesManager.saveBackupMessageIds(context, backupIds)
+                    PreferencesManager.setLastBackupMessageId(context, newMsgId)
+                    PreferencesManager.setLastBackupRecordCount(context, currentCount)
+                    
                     TdlibManager.addLog("SQLite backup updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
@@ -205,14 +217,14 @@ object BackupManager {
                 return@withContext false
             }
             
-            TdlibManager.addLog("Local database is empty. Scanning for remote SQLite backup in chat $targetChatId...")
+            TdlibManager.addLog("Local database is empty. Scanning for remote SQLite backups in chat $targetChatId...")
             
-            // 1. Search for messages in target chat tagged with #tgpix_backup
+            // 1. Search for messages in target chat tagged with #tgpix_backup (limit up to 5)
             val searchQuery = TdApi.SearchChatMessages().apply {
                 this.chatId = targetChatId
                 query = "#tgpix_backup"
                 filter = TdApi.SearchMessagesFilterDocument()
-                limit = 1
+                limit = 5
             }
             
             val searchResult = suspendCancellableCoroutine<TdApi.Object> { continuation ->
@@ -221,59 +233,67 @@ object BackupManager {
                 }
             }
             
+            var restored = false
             if (searchResult is TdApi.FoundChatMessages && searchResult.messages.isNotEmpty()) {
-                val message = searchResult.messages[0]
-                val docContent = message.content as? TdApi.MessageDocument
-                val document = docContent?.document
-                if (document != null) {
-                    TdlibManager.addLog("Found remote SQLite backup. Downloading backup file (File ID: ${document.document.id})...")
-                    
-                    // 2. Download the document file from Telegram
-                    val downloadedFile = downloadFile(document.document.id)
-                    if (downloadedFile != null && downloadedFile.exists()) {
-                        // Verify integrity via SHA-256 checksum
-                        val captionText = docContent?.caption?.text ?: ""
-                        val expectedHash = captionText.substringAfter("sha256:", "").trim()
-                        if (expectedHash.isNotEmpty()) {
-                            val actualHash = computeSha256(downloadedFile)
-                            if (actualHash != expectedHash) {
-                                TdlibManager.addLog("Backup integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Aborting restore.")
-                                return@withContext false
+                TdlibManager.addLog("Found ${searchResult.messages.size} remote SQLite backup messages. Trying to restore from the newest valid backup...")
+                for (message in searchResult.messages) {
+                    val docContent = message.content as? TdApi.MessageDocument
+                    val document = docContent?.document
+                    if (document != null) {
+                        TdlibManager.addLog("Attempting to download backup (Msg ID: ${message.id}, File ID: ${document.document.id})...")
+                        
+                        val downloadedFile = downloadFile(document.document.id)
+                        if (downloadedFile != null && downloadedFile.exists()) {
+                            // Verify integrity via SHA-256 checksum
+                            val captionText = docContent.caption.text
+                            val expectedHash = captionText.substringAfter("sha256:", "").trim()
+                            if (expectedHash.isNotEmpty()) {
+                                val actualHash = computeSha256(downloadedFile)
+                                if (actualHash != expectedHash) {
+                                    TdlibManager.addLog("Backup (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Trying next available backup...")
+                                    continue
+                                }
+                                TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
                             }
-                            TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
-                        }
 
-                        TdlibManager.addLog("Backup downloaded successfully. Restoring local database...")
-                        
-                        // Close current Room database so we can overwrite its files
-                        UploadDatabase.closeDatabase()
-                        
-                        val dbFile = context.getDatabasePath("upload_database")
-                        
-                        // Overwrite target database files
-                        FileInputStream(downloadedFile).use { input ->
-                            FileOutputStream(dbFile).use { output ->
-                                input.copyTo(output)
+                            TdlibManager.addLog("Backup downloaded successfully. Restoring local database from Msg ID: ${message.id}...")
+                            
+                            // Close current Room database so we can overwrite its files
+                            UploadDatabase.closeDatabase()
+                            
+                            val dbFile = context.getDatabasePath("upload_database")
+                            
+                            // Overwrite target database files
+                            FileInputStream(downloadedFile).use { input ->
+                                FileOutputStream(dbFile).use { output ->
+                                    input.copyTo(output)
+                                }
                             }
+                            
+                            // Also delete any WAL files to prevent conflicts with old WAL states
+                            context.getDatabasePath("upload_database-wal").delete()
+                            context.getDatabasePath("upload_database-shm").delete()
+                            
+                            PreferencesManager.setLastBackupMessageId(context, message.id)
+                            
+                            // Re-initialize/open database to trigger updates
+                            val newDb = UploadDatabase.getDatabase(context)
+                            val restoredCount = newDb.cloudDao().getRecordCountDirect()
+                            PreferencesManager.setLastBackupRecordCount(context, restoredCount)
+                            
+                            TdlibManager.addLog("Local database successfully restored from remote backup (Restored records: $restoredCount).")
+                            restored = true
+                            break
+                        } else {
+                            TdlibManager.addLog("Failed to download backup file (Msg ID: ${message.id}). Trying next available backup...")
                         }
-                        
-                        // Also delete any WAL files to prevent conflicts with old WAL states
-                        context.getDatabasePath("upload_database-wal").delete()
-                        context.getDatabasePath("upload_database-shm").delete()
-                        
-                        PreferencesManager.setLastBackupMessageId(context, message.id)
-                        
-                        // Re-initialize/open database to trigger updates
-                        val newDb = UploadDatabase.getDatabase(context)
-                        val restoredCount = newDb.cloudDao().getRecordCountDirect()
-                        PreferencesManager.setLastBackupRecordCount(context, restoredCount)
-                        
-                        TdlibManager.addLog("Local database successfully restored from remote backup (Restored records: $restoredCount).")
-                        return@withContext true
                     }
                 }
             }
-            TdlibManager.addLog("No remote SQLite backup found. Gracefully falling back to full backward timeline scan.")
+            if (restored) {
+                return@withContext true
+            }
+            TdlibManager.addLog("No valid remote SQLite backup could be restored. Gracefully falling back to full backward timeline scan.")
             return@withContext false
         }
     }
@@ -285,14 +305,14 @@ object BackupManager {
                 return@withContext false
             }
             
-            TdlibManager.addLog("Force restoring database. Scanning for remote SQLite backup in chat $targetChatId...")
+            TdlibManager.addLog("Force restoring database. Scanning for remote SQLite backups in chat $targetChatId...")
             
-            // 1. Search for messages in target chat tagged with #tgpix_backup
+            // 1. Search for messages in target chat tagged with #tgpix_backup (limit up to 5)
             val searchQuery = TdApi.SearchChatMessages().apply {
                 this.chatId = targetChatId
                 query = "#tgpix_backup"
                 filter = TdApi.SearchMessagesFilterDocument()
-                limit = 1
+                limit = 5
             }
             
             val searchResult = suspendCancellableCoroutine<TdApi.Object> { continuation ->
@@ -301,59 +321,67 @@ object BackupManager {
                 }
             }
             
+            var restored = false
             if (searchResult is TdApi.FoundChatMessages && searchResult.messages.isNotEmpty()) {
-                val message = searchResult.messages[0]
-                val docContent = message.content as? TdApi.MessageDocument
-                val document = docContent?.document
-                if (document != null) {
-                    TdlibManager.addLog("Found remote SQLite backup. Downloading backup file (File ID: ${document.document.id})...")
-                    
-                    // 2. Download the document file from Telegram
-                    val downloadedFile = downloadFile(document.document.id)
-                    if (downloadedFile != null && downloadedFile.exists()) {
-                        // Verify integrity via SHA-256 checksum
-                        val captionText = docContent?.caption?.text ?: ""
-                        val expectedHash = captionText.substringAfter("sha256:", "").trim()
-                        if (expectedHash.isNotEmpty()) {
-                            val actualHash = computeSha256(downloadedFile)
-                            if (actualHash != expectedHash) {
-                                TdlibManager.addLog("Backup integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Aborting restore.")
-                                return@withContext false
+                TdlibManager.addLog("Found ${searchResult.messages.size} remote SQLite backup messages. Trying to force-restore from the newest valid backup...")
+                for (message in searchResult.messages) {
+                    val docContent = message.content as? TdApi.MessageDocument
+                    val document = docContent?.document
+                    if (document != null) {
+                        TdlibManager.addLog("Attempting to download backup for force-restore (Msg ID: ${message.id}, File ID: ${document.document.id})...")
+                        
+                        val downloadedFile = downloadFile(document.document.id)
+                        if (downloadedFile != null && downloadedFile.exists()) {
+                            // Verify integrity via SHA-256 checksum
+                            val captionText = docContent.caption.text
+                            val expectedHash = captionText.substringAfter("sha256:", "").trim()
+                            if (expectedHash.isNotEmpty()) {
+                                val actualHash = computeSha256(downloadedFile)
+                                if (actualHash != expectedHash) {
+                                    TdlibManager.addLog("Backup (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Trying next available backup...")
+                                    continue
+                                }
+                                TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
                             }
-                            TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
-                        }
-                        
-                        TdlibManager.addLog("Backup downloaded successfully. Force restoring local database...")
-                        
-                        // Close current Room database so we can overwrite its files
-                        UploadDatabase.closeDatabase()
-                        
-                        val dbFile = context.getDatabasePath("upload_database")
-                        
-                        // Overwrite target database files
-                        FileInputStream(downloadedFile).use { input ->
-                            FileOutputStream(dbFile).use { output ->
-                                input.copyTo(output)
+
+                            TdlibManager.addLog("Backup downloaded successfully. Force restoring local database from Msg ID: ${message.id}...")
+                            
+                            // Close current Room database so we can overwrite its files
+                            UploadDatabase.closeDatabase()
+                            
+                            val dbFile = context.getDatabasePath("upload_database")
+                            
+                            // Overwrite target database files
+                            FileInputStream(downloadedFile).use { input ->
+                                FileOutputStream(dbFile).use { output ->
+                                    input.copyTo(output)
+                                }
                             }
+                            
+                            // Also delete any WAL files to prevent conflicts with old WAL states
+                            context.getDatabasePath("upload_database-wal").delete()
+                            context.getDatabasePath("upload_database-shm").delete()
+                            
+                            PreferencesManager.setLastBackupMessageId(context, message.id)
+                            
+                            // Re-initialize/open database to trigger updates
+                            val newDb = UploadDatabase.getDatabase(context)
+                            val restoredCount = newDb.cloudDao().getRecordCountDirect()
+                            PreferencesManager.setLastBackupRecordCount(context, restoredCount)
+                            
+                            TdlibManager.addLog("Local database successfully force-restored (Restored records: $restoredCount).")
+                            restored = true
+                            break
+                        } else {
+                            TdlibManager.addLog("Failed to download backup file (Msg ID: ${message.id}). Trying next available backup...")
                         }
-                        
-                        // Also delete any WAL files to prevent conflicts with old WAL states
-                        context.getDatabasePath("upload_database-wal").delete()
-                        context.getDatabasePath("upload_database-shm").delete()
-                        
-                        PreferencesManager.setLastBackupMessageId(context, message.id)
-                        
-                        // Re-initialize/open database to trigger updates
-                        val newDb = UploadDatabase.getDatabase(context)
-                        val restoredCount = newDb.cloudDao().getRecordCountDirect()
-                        PreferencesManager.setLastBackupRecordCount(context, restoredCount)
-                        
-                        TdlibManager.addLog("Local database successfully force-restored (Restored records: $restoredCount).")
-                        return@withContext true
                     }
                 }
             }
-            TdlibManager.addLog("No remote SQLite backup found to force restore.")
+            if (restored) {
+                return@withContext true
+            }
+            TdlibManager.addLog("No valid remote SQLite backup could be found to force restore.")
             return@withContext false
         }
     }
