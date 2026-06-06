@@ -51,29 +51,53 @@ object BackupManager {
 
     suspend fun resolveBackupChatId(context: Context): Long {
         val customId = PreferencesManager.getDbChatId(context)
-        if (customId != 0L) return customId
+        if (customId != 0L) {
+            // Ensure TDLib has loaded/cached this chat before we try to send to it.
+            // On fresh sessions, GetChat may return "Chat not found" until TDLib syncs.
+            // We retry a few times with a short delay to give TDLib time to populate.
+            ensureChatLoaded(customId)
+            return customId
+        }
         
         val myId = resolveMyUserId()
         val targetId = if (myId != 0L) myId else PreferencesManager.getChatId(context)
         
         if (targetId != 0L) {
+            ensureChatLoaded(targetId)
+        }
+        
+        return targetId
+    }
+
+    /**
+     * Ensures TDLib has loaded the given chat into its local cache.
+     * On fresh sessions, channels/supergroups are not immediately known.
+     * Retries GetChat up to 5 times with 1-second delays before giving up.
+     */
+    private suspend fun ensureChatLoaded(chatId: Long) {
+        repeat(5) { attempt ->
             try {
-                suspendCancellableCoroutine<TdApi.Object> { cont ->
-                    val request = if (targetId > 0L) {
-                        TdApi.CreatePrivateChat(targetId, false)
+                val result = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                    val request = if (chatId > 0L) {
+                        TdApi.CreatePrivateChat(chatId, false)
                     } else {
-                        TdApi.GetChat(targetId)
+                        TdApi.GetChat(chatId)
                     }
                     TdlibManager.getClient().send(request) { res ->
                         cont.resume(res)
                     }
                 }
+                if (result is TdApi.Chat) {
+                    return // Success — chat is loaded
+                }
+                if (result is TdApi.Error) {
+                    TdlibManager.addLog("ensureChatLoaded: attempt ${attempt + 1} for chat $chatId failed: ${result.message}")
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+            if (attempt < 4) delay(1500) // Wait before retrying
         }
-        
-        return targetId
     }
 
     suspend fun resolveMyUserId(): Long {
