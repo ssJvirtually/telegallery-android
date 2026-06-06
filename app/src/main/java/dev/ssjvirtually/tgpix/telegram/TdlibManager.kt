@@ -307,6 +307,8 @@ object TdlibManager {
                     var dateTaken = msg.date.toLong() * 1000L
                     var tags = ""
                     var metadata: ParsedMetadata? = null
+                    var width = 0
+                    var height = 0
                     
                     if (content is TdApi.MessagePhoto) {
                         val sizes = content.photo.sizes
@@ -318,6 +320,8 @@ object TdlibManager {
                             
                             // Store first photo size as thumbnail (usually 's' or 'm')
                             thumbFileId = sizes.first().photo.id
+                            width = largest.width
+                            height = largest.height
                             
                             val captionText = content.caption.text
                             metadata = parseMetadataFromCaption(captionText)
@@ -356,6 +360,8 @@ object TdlibManager {
                             
                             // Store document thumbnail if present, fallback to document fileId
                             thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                            width = doc.thumbnail?.width ?: 0
+                            height = doc.thumbnail?.height ?: 0
                             
                             val captionText = content.caption.text
                             metadata = parseMetadataFromCaption(captionText)
@@ -400,7 +406,9 @@ object TdlibManager {
                                 isHd = isHdValue,
                                 originalSizeBytes = originalSizeValue,
                                 dateTaken = dateTaken,
-                                mimeType = mime
+                                mimeType = mime,
+                                width = width,
+                                height = height
                             )
                         )
                     }
