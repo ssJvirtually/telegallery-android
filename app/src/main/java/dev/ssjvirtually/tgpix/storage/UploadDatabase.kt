@@ -180,7 +180,14 @@ abstract class UploadDatabase : RoomDatabase() {
                     "upload_database"
                 )
                 .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
-                .fallbackToDestructiveMigration()
+                .addCallback(object : RoomDatabase.Callback() {
+                    override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                        android.util.Log.e(
+                            "UploadDatabase",
+                            "Destructive migration executed! User database was reset."
+                        )
+                    }
+                })
                 .build()
                 INSTANCE = instance
                 instance
