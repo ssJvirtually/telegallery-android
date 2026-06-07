@@ -34,6 +34,11 @@ class MainActivity : ComponentActivity() {
     private var deleteLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
     private var deleteMultipleLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
 
+    override fun onResume() {
+        super.onResume()
+        TdlibManager.forceReconnect(applicationContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         

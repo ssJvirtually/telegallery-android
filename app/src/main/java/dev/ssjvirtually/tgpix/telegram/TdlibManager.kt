@@ -853,4 +853,27 @@ object TdlibManager {
             
         notificationManager.notify(777, notification)
     }
+
+    fun forceReconnect(context: Context) {
+        if (client == null) return
+        try {
+            val cl = getClient()
+            cl.send(TdApi.SetNetworkType(TdApi.NetworkTypeNone())) { _ ->
+                val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                val activeNetwork = cm.activeNetwork
+                val capabilities = activeNetwork?.let { cm.getNetworkCapabilities(it) }
+                val tdNetworkType = when {
+                    capabilities == null -> TdApi.NetworkTypeNone()
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> TdApi.NetworkTypeWiFi()
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> TdApi.NetworkTypeMobile()
+                    else -> TdApi.NetworkTypeOther()
+                }
+                cl.send(TdApi.SetNetworkType(tdNetworkType)) { result ->
+                    addLog("Forced TDLib reconnection to: ${tdNetworkType::class.java.simpleName} (Result: ${result::class.java.simpleName})")
+                }
+            }
+        } catch (e: Exception) {
+            addLog("Failed to force TDLib reconnection: ${e.message}")
+        }
+    }
 }

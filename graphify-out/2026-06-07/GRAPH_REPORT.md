@@ -1,11 +1,11 @@
 # Graph Report - telegallery-calude  (2026-06-07)
 
 ## Corpus Check
-- 45 files · ~205,871 words
+- 46 files · ~205,876 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 727 nodes · 1120 edges · 63 communities (45 shown, 18 thin omitted)
+- 731 nodes · 1123 edges · 65 communities (46 shown, 19 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 80 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
@@ -74,6 +74,8 @@
 - [[_COMMUNITY_Community 60|Community 60]]
 - [[_COMMUNITY_Community 61|Community 61]]
 - [[_COMMUNITY_Community 62|Community 62]]
+- [[_COMMUNITY_Community 63|Community 63]]
+- [[_COMMUNITY_Community 64|Community 64]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `PreferencesManager` - 45 edges
@@ -112,7 +114,7 @@
 - **User Authentication Flow** — screens_phoneloginscreen_phoneloginscreen, screens_otpverifyscreen_otpverifyscreen, screenshots_login_screen_otp_login_form [INFERRED 0.85]
 - **Media Backup and Sync Ecosystem** — screenshots_settings_screen_private_vault, screenshots_gallery_timeline_sync_badges, screenshots_photo_viewer_action_sheet, storage_backupmanager_backupmanager [INFERRED 0.85]
 
-## Communities (63 total, 18 thin omitted)
+## Communities (65 total, 19 thin omitted)
 
 ### Community 0 - "Database and DAO Schema"
 Cohesion: 0.05
@@ -139,8 +141,8 @@ Cohesion: 0.06
 Nodes (56): androidx, Context, dev, Int, List, LocalPhoto, Long, String (+48 more)
 
 ### Community 6 - "Photos Grid and Search UI"
-Cohesion: 0.06
-Nodes (34): androidx, Boolean, Context, dev, Int, List, LocalPhoto, Set (+26 more)
+Cohesion: 0.12
+Nodes (18): androidx, Boolean, Context, dev, Int, List, LocalPhoto, Set (+10 more)
 
 ### Community 7 - "Database Backup Manager"
 Cohesion: 0.20
@@ -259,8 +261,8 @@ Cohesion: 0.09
 Nodes (18): AndroidViewModel, File, Application, Boolean, CloudPhotoEntity, Flow, List, LocalPhoto (+10 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.25
-Nodes (7): TGPix README, PhoneLoginScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane, OTP SMS Verification Form, Alternative TeleGallery Logo Design Asset, Alternative Three-Petal Purple Logo Design
+Cohesion: 0.16
+Nodes (11): String, TGPix README, OtpVerifyScreen(), PhoneLoginScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane, OTP SMS Verification Form, Alternative TeleGallery Logo Design Asset (+3 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.27
@@ -271,31 +273,35 @@ Cohesion: 0.33
 Nodes (6): String, SettingsScreen(), Backup Settings Screen Screenshot, Backup Configurations Interface, Active JNI Developer Logs Console, Backup Target - Private Vault
 
 ### Community 61 - "Community 61"
-Cohesion: 0.40
-Nodes (4): String, OtpVerifyScreen(), AppNavigation(), MainAppLayout()
+Cohesion: 0.20
+Nodes (11): androidx, Boolean, dev, Int, List, LocalPhoto, Set, String (+3 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.40
 Nodes (4): TdlibManager.initialize, MainActivity.onCreate, MainActivity.scheduleSyncWorker, TelePhotosTheme
 
+### Community 63 - "Community 63"
+Cohesion: 0.40
+Nodes (5): List, LocalPhoto, TdApi, ChatRow(), TelegramShareDialog()
+
 ## Knowledge Gaps
-- **278 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+273 more)
+- **279 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+274 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Albums Screen UI and Utils`, `Image Upload Manager`, `Community 61`, `Community 62`?**
-  _High betweenness centrality (0.080) - this node is a cross-community bridge._
+- **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Albums Screen UI and Utils`, `Image Upload Manager`, `Community 57`, `Community 61`, `Community 62`, `Community 63`?**
+  _High betweenness centrality (0.079) - this node is a cross-community bridge._
 - **Why does `PreferencesManager` connect `Application Preferences` to `Background Backup Workers`, `Telegram Client Integration`, `Community 62`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
-- **Why does `AppNavigation()` connect `Community 61` to `Authentication and Navigation UI`, `Telegram Client Integration`, `Main Activity UI Lifecycle`, `Community 57`, `Community 62`?**
-  _High betweenness centrality (0.074) - this node is a cross-community bridge._
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
+- **Why does `AppNavigation()` connect `Community 57` to `Main Activity UI Lifecycle`, `Authentication and Navigation UI`, `Telegram Client Integration`, `Community 62`?**
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
 - **Are the 10 inferred relationships involving `PhotosGridScreen()` (e.g. with `AlbumsScreen()` and `SearchScreen()`) actually correct?**
   _`PhotosGridScreen()` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` to the rest of the system?**
-  _292 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _293 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Database and DAO Schema` be split into smaller, more focused modules?**
   _Cohesion score 0.0519311911716975 - nodes in this community are weakly interconnected._
 - **Should `Application Preferences` be split into smaller, more focused modules?**
