@@ -49,6 +49,13 @@ class TGPixApplication : Application() {
                     Log.d("TGPixApplication", "Pending database restore and post-restore cleanup completed successfully.")
                 } catch (e: Exception) {
                     Log.e("TGPixApplication", "Failed to restore database from pending restore file", e)
+                    try {
+                        if (srcFile.exists()) {
+                            srcFile.delete()
+                        }
+                    } catch (ex: Exception) {
+                        // Ignore deletion exception
+                    }
                 }
             } else {
                 Log.w("TGPixApplication", "Pending restore file path was set but file does not exist: $pendingRestorePath")

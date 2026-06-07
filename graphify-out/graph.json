@@ -279,7 +279,7 @@
       "label": ".clearCachedPathsRaw()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
-      "source_location": "L61",
+      "source_location": "L68",
       "id": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw",
       "community": 56,
       "norm_label": ".clearcachedpathsraw()"
@@ -288,7 +288,7 @@
       "label": "File",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
-      "source_location": "L61",
+      "source_location": "L68",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_tgpixapplication_kt_file",
       "community": 56,
       "norm_label": "file"
@@ -6759,9 +6759,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
       "source_location": "L61",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication",
-      "target": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw",
-      "confidence_score": 1.0
+      "target": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw"
     },
     {
       "relation": "method",
@@ -6780,9 +6780,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
       "source_location": "L45",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication_oncreate",
-      "target": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw",
-      "confidence_score": 1.0
+      "target": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw"
     },
     {
       "relation": "references",
@@ -6791,9 +6791,9 @@
       "source_location": "L61",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication_clearcachedpathsraw",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_tgpixapplication_kt_file",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_tgpixapplication_kt_file"
     },
     {
       "relation": "contains",
@@ -17338,5 +17338,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "e3e1f0971a58d2d5f33392fd1a5ec53b929bb29f"
+  "built_at_commit": "7bd138e10fda6d2308472291fdc0c6686d19460d"
 }

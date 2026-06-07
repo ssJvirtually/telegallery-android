@@ -10,8 +10,8 @@
     "semantic_hash": "034667d50b341890eee70a6a49f6f824"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
-    "mtime": 1780811982.350947,
-    "ast_hash": "168e592c2d50b0d540e215d233de9c12",
+    "mtime": 1780812222.8897004,
+    "ast_hash": "3d4cac447f5b68e0e2ffcfc881a3fc2f",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/PreferencesManager.kt": {
-    "mtime": 1780811962.0395026,
-    "ast_hash": "906d1efda1c23adcc65b789d3b8b3133",
+    "mtime": 1780812229.6907823,
+    "ast_hash": "28870d3f154dd4781fa0d8836d64fa07",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt": {
@@ -270,13 +270,13 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt": {
-    "mtime": 1780812024.6652744,
-    "ast_hash": "1647450a71757a3a9cee208775e6bd5e",
+    "mtime": 1780812211.8428755,
+    "ast_hash": "d680d5da367df28d24999572e3cabf79",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt": {
-    "mtime": 1780811946.4259415,
-    "ast_hash": "bcc8f51d7435d5fa0453cf5d81354fa4",
+    "mtime": 1780812206.55856,
+    "ast_hash": "44f2e5fd9c66a1f143b48f0c3c7bc898",
     "semantic_hash": ""
   }
 }
