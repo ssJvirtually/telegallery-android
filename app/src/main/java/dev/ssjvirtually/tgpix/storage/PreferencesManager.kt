@@ -236,18 +236,4 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString(KEY_PENDING_RESTORE_PATH, null)
     }
-
-    private const val KEY_RESTORE_NEEDS_CLEANUP = "restore_needs_cleanup"
-
-    fun setRestoreNeedsCleanup(context: Context, needsCleanup: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_RESTORE_NEEDS_CLEANUP, needsCleanup)
-            .apply()
-    }
-
-    fun isRestoreNeedsCleanup(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_RESTORE_NEEDS_CLEANUP, false)
-    }
 }

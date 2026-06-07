@@ -376,10 +376,11 @@ object BackupManager {
     private fun restartApp(context: Context) {
         val packageManager = context.packageManager
         val intent = packageManager.getLaunchIntentForPackage(context.packageName)
-        val componentName = intent?.component
-        val mainIntent = Intent.makeRestartActivityTask(componentName)
-        context.startActivity(mainIntent)
-        Runtime.getRuntime().exit(0)
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 
     private suspend fun tryRestoreFromChatAndTag(context: Context, chatId: Long, tag: String): Boolean {
@@ -483,7 +484,6 @@ object BackupManager {
                         PreferencesManager.setPendingRestorePath(context, pendingFile.absolutePath)
                         PreferencesManager.setLastBackupMessageId(context, message.id)
                         PreferencesManager.setLastBackupRecordCount(context, recordsCount)
-                        PreferencesManager.setRestoreNeedsCleanup(context, true)
                         
                         // Close current Room database so we can safely overwrite it on relaunch
                         UploadDatabase.closeDatabase()
