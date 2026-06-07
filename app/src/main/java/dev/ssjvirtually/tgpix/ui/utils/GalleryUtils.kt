@@ -31,6 +31,9 @@ fun parseCloudPhotoUri(uri: String): Triple<Long, Int, String>? {
     return null
 }
 
+private val fnDateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+private val fnDateFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd", java.util.Locale.US)
+
 fun parseDateFromFilename(fileName: String): Long? {
     try {
         // Pattern 1: YYYY-MM-DD_HH-MM-SS (e.g. photo_2026-05-29_16-09-11.jpg)
@@ -38,8 +41,8 @@ fun parseDateFromFilename(fileName: String): Long? {
         val matcher1 = pattern1.matcher(fileName)
         if (matcher1.find()) {
             val dateStr = "${matcher1.group(1)}-${matcher1.group(2)}-${matcher1.group(3)} ${matcher1.group(4)}:${matcher1.group(5)}:${matcher1.group(6)}"
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
-            return sdf.parse(dateStr)?.time
+            val localDateTime = java.time.LocalDateTime.parse(dateStr, fnDateTimeFormatter)
+            return localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
 
         // Pattern 2: YYYYMMDD_HHMMSS (e.g. IMG_20260529_204420.jpg)
@@ -47,8 +50,8 @@ fun parseDateFromFilename(fileName: String): Long? {
         val matcher2 = pattern2.matcher(fileName)
         if (matcher2.find()) {
             val dateStr = "${matcher2.group(1)}-${matcher2.group(2)}-${matcher2.group(3)} ${matcher2.group(4)}:${matcher2.group(5)}:${matcher2.group(6)}"
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
-            return sdf.parse(dateStr)?.time
+            val localDateTime = java.time.LocalDateTime.parse(dateStr, fnDateTimeFormatter)
+            return localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
 
         // Pattern 3: YYYY-MM-DD (e.g. 2026-05-29.jpg)
@@ -56,8 +59,8 @@ fun parseDateFromFilename(fileName: String): Long? {
         val matcher3 = pattern3.matcher(fileName)
         if (matcher3.find()) {
             val dateStr = "${matcher3.group(1)}-${matcher3.group(2)}-${matcher3.group(3)}"
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-            return sdf.parse(dateStr)?.time
+            val localDate = java.time.LocalDate.parse(dateStr, fnDateFormatter)
+            return localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
 
         // Pattern 4: YYYYMMDD (e.g. 20260529.jpg)
@@ -65,8 +68,8 @@ fun parseDateFromFilename(fileName: String): Long? {
         val matcher4 = pattern4.matcher(fileName)
         if (matcher4.find()) {
             val dateStr = "${matcher4.group(1)}-${matcher4.group(2)}-${matcher4.group(3)}"
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-            return sdf.parse(dateStr)?.time
+            val localDate = java.time.LocalDate.parse(dateStr, fnDateFormatter)
+            return localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
     } catch (e: Exception) {}
     return null

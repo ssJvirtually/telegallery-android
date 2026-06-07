@@ -70,8 +70,14 @@ object TdlibManager {
         }
     }
 
+    private val logTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss", java.util.Locale.getDefault())
+
     fun addLog(msg: String) {
-        val time = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
+        val time = try {
+            logTimeFormatter.format(java.time.LocalTime.now())
+        } catch (e: Exception) {
+            ""
+        }
         android.util.Log.d("TGPix", msg)
         val current = _logs.value.toMutableList()
         current.add("[$time] $msg")

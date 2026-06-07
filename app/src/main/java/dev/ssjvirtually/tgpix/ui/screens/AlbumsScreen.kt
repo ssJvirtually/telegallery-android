@@ -65,8 +65,9 @@ data class AlbumUiModel(
 @Composable
 fun AlbumsScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
-    mergedPhotosList: List<LocalPhoto>
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
     val context = LocalContext.current
     val dbVersion by TdlibManager.dbVersion.collectAsState()
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }

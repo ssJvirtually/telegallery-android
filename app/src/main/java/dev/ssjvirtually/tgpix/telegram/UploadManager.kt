@@ -28,6 +28,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 
+private val exifFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
+private val logDateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+
 object UploadManager {
     suspend fun uploadPhoto(
         context: Context,
@@ -121,10 +124,10 @@ object UploadManager {
                                 ?: exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME)
                             if (!exifDateStr.isNullOrBlank()) {
                                 try {
-                                    val sdf = java.text.SimpleDateFormat("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
-                                    val parsed = sdf.parse(exifDateStr)
-                                    if (parsed != null && parsed.time > 0L) {
-                                        exifDateTakenMs = parsed.time
+                                    val localDateTime = java.time.LocalDateTime.parse(exifDateStr, exifFormatter)
+                                    val parsedTime = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                                    if (parsedTime > 0L) {
+                                        exifDateTakenMs = parsedTime
                                         hasExifDate = true
                                     }
                                 } catch (_: Exception) {}
@@ -174,8 +177,12 @@ object UploadManager {
                         }
                         val tagsLine = tags.distinct().joinToString(" ")
 
-                        val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(resolvedDateTaken))
-                        val addedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date())
+                        val formattedDate = try {
+                            logDateTimeFormatter.format(java.time.Instant.ofEpochMilli(resolvedDateTaken).atZone(java.time.ZoneId.systemDefault()))
+                        } catch (e: Exception) { "" }
+                        val addedDate = try {
+                            logDateTimeFormatter.format(java.time.LocalDateTime.now())
+                        } catch (e: Exception) { "" }
                         val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
                         val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
                         val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")

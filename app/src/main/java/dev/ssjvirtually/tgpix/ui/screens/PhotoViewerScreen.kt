@@ -66,14 +66,26 @@ import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
 import kotlin.math.roundToInt
 
+private val viewerTitleFormatter = java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy • h:mm a", java.util.Locale.getDefault())
+private val viewerDetailFormatter = java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy • h:mm a", java.util.Locale.getDefault())
+
+private fun formatTimestamp(ms: Long, formatter: java.time.format.DateTimeFormatter): String {
+    return try {
+        formatter.format(java.time.Instant.ofEpochMilli(ms).atZone(java.time.ZoneId.systemDefault()))
+    } catch (e: Exception) {
+        ""
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PhotoViewerScreen(
     photosList: List<LocalPhoto>,
     startIndex: Int,
-    uploadedUris: Set<String>,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
     val context = LocalContext.current as MainActivity
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(initialPage = startIndex, pageCount = { photosList.size })
@@ -374,7 +386,7 @@ fun PhotoViewerScreen(
                     )
                     Text(
                         text = activePhoto?.let {
-                            java.text.SimpleDateFormat("MMM dd, yyyy • h:mm a", java.util.Locale.getDefault()).format(java.util.Date(it.dateTaken))
+                            formatTimestamp(it.dateTaken, viewerTitleFormatter)
                         } ?: "",
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 11.sp
@@ -545,7 +557,7 @@ fun PhotoDetailsSheet(
     }
     
     val formattedDate = remember(photo.dateTaken) {
-        java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy • h:mm a", java.util.Locale.getDefault()).format(java.util.Date(photo.dateTaken))
+        formatTimestamp(photo.dateTaken, viewerDetailFormatter)
     }
 
     // Resolve localFilePath for EXIF parsing if cloud photo

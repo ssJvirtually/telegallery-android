@@ -66,6 +66,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val headerDateFormatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.getDefault())
+private val monthYearDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM", Locale.US)
+private val bubbleDateFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
 
 data class SearchItem(val photo: LocalPhoto, val keywords: String)
 
@@ -73,10 +81,11 @@ data class SearchItem(val photo: LocalPhoto, val keywords: String)
 @Composable
 fun SearchScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
-    mergedPhotosList: List<LocalPhoto>,
-    uploadedUris: Set<String>,
-    isScanning: Boolean
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val searchIndex by viewModel.searchIndex.collectAsState()
+    val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
+    val isScanning by viewModel.isScanningLocal.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
@@ -123,46 +132,25 @@ fun SearchScreen(
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
- 
-    val unifiedPhotos = mergedPhotosList
- 
-    // Pre-computed lowercase search keywords calculated on a background thread to prevent UI thread blocking
-    var indexedPhotos by remember { mutableStateOf<List<SearchItem>>(emptyList()) }
-    LaunchedEffect(unifiedPhotos) {
-        withContext(Dispatchers.IO) {
-            val sdf = java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault())
-            val indexed = unifiedPhotos.map { photo ->
-                val formattedDate = try {
-                    sdf.format(java.util.Date(photo.dateTaken)).lowercase()
-                } catch (e: Exception) { "" }
-                val keywords = "${photo.name.lowercase()} ${photo.tags.lowercase()} $formattedDate"
-                SearchItem(photo, keywords)
-            }
-            withContext(Dispatchers.Main) {
-                indexedPhotos = indexed
-            }
-        }
-    }
 
     // Filter photos based on search query using sub-millisecond pre-computed string matching
-    val filteredPhotos = remember(indexedPhotos, searchQuery) {
+    val filteredPhotos = remember(searchIndex, searchQuery) {
         val query = searchQuery.trim().lowercase()
         if (query.isEmpty()) {
             emptyList()
         } else {
-            indexedPhotos.filter { it.keywords.contains(query) }.map { it.photo }
+            searchIndex.filter { it.keywords.contains(query) }.map { it.photo }
         }
     }
 
     // Group filtered photos by clean human-readable date header
     val groupedPhotosList = remember(filteredPhotos) {
         val list = mutableListOf<GalleryItem>()
-        val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
         var lastDateHeader = ""
 
         for (photo in filteredPhotos) {
             val dateHeader = try {
-                sdfHeader.format(java.util.Date(photo.dateTaken))
+                headerDateFormatter.format(Instant.ofEpochMilli(photo.dateTaken).atZone(ZoneId.systemDefault()))
             } catch (e: Exception) {
                 "Unknown Date"
             }
@@ -366,7 +354,7 @@ fun SearchScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (isScanning && unifiedPhotos.isEmpty()) {
+        if (isScanning && searchIndex.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = TelePhotosTheme.AccentBlue)
             }
@@ -754,15 +742,16 @@ fun SearchScreen(
                         val monthSections = remember(groupedPhotosList) {
                             val sections = mutableListOf<Int>()
                             val seenMonths = mutableSetOf<String>()
-                            val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
-                            val sdfMonthYear = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.US)
                             
                             for (index in groupedPhotosList.indices) {
                                 val item = groupedPhotosList[index]
                                 val dateMs = when (item) {
                                     is GalleryItem.Header -> {
                                         try {
-                                            sdfHeader.parse(item.date)?.time ?: 0L
+                                            java.time.LocalDate.parse(item.date, headerDateFormatter)
+                                                .atStartOfDay(ZoneId.systemDefault())
+                                                .toInstant()
+                                                .toEpochMilli()
                                         } catch (e: Exception) {
                                             0L
                                         }
@@ -771,8 +760,10 @@ fun SearchScreen(
                                 }
                                 
                                 if (dateMs > 0L) {
-                                    val monthKey = sdfMonthYear.format(java.util.Date(dateMs))
-                                    if (seenMonths.add(monthKey)) {
+                                    val monthKey = try {
+                                        monthYearDateFormatter.format(Instant.ofEpochMilli(dateMs).atZone(ZoneId.systemDefault()))
+                                    } catch (e: Exception) { "" }
+                                    if (monthKey.isNotEmpty() && seenMonths.add(monthKey)) {
                                         sections.add(index)
                                     }
                                 }
@@ -948,8 +939,7 @@ fun SearchScreen(
                                         is GalleryItem.Header -> activeItem.date
                                         is GalleryItem.PhotoItem -> {
                                             try {
-                                                val sdfMonth = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
-                                                sdfMonth.format(java.util.Date(activeItem.photo.dateTaken))
+                                                bubbleDateFormatter.format(Instant.ofEpochMilli(activeItem.photo.dateTaken).atZone(ZoneId.systemDefault()))
                                             } catch (e: Exception) {
                                                 ""
                                             }

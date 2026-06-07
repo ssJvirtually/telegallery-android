@@ -86,22 +86,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.drinkless.tdlib.TdApi
 
+private val gridHeaderFormatter = java.time.format.DateTimeFormatter.ofPattern("MMMM dd, yyyy", java.util.Locale.getDefault())
+private val gridMonthYearFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM", java.util.Locale.US)
+private val gridBubbleFormatter = java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale.getDefault())
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PhotosGridScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
     profilePhotoPath: String?,
     onSettingsClick: () -> Unit,
-    mergedPhotosList: List<LocalPhoto>,
-    uploadedUris: Set<String>,
-    isScanningLocal: Boolean,
-    // True while DB restore + Telegram cloud crawl are running in the background.
-    // Grid is already visible with local photos at this point; this just shows a
-    // subtle non-blocking pill indicator so the user knows cloud sync is happening.
-    isSyncingCloud: Boolean = false,
     hasPermission: Boolean,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
+    val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
+    val isScanningLocal by viewModel.isScanningLocal.collectAsState()
+    val isSyncingCloud by viewModel.isSyncingCloud.collectAsState()
     val context = LocalContext.current
 
     if (!hasPermission) {
@@ -207,12 +209,11 @@ fun PhotosGridScreen(
         // Group photos by clean human-readable date header
         val groupedPhotosList = remember(mergedPhotosList) {
             val list = mutableListOf<GalleryItem>()
-            val sdf = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
             var lastDateHeader = ""
 
             for (photo in mergedPhotosList) {
                 val dateHeader = try {
-                    sdf.format(java.util.Date(photo.dateTaken))
+                    gridHeaderFormatter.format(java.time.Instant.ofEpochMilli(photo.dateTaken).atZone(java.time.ZoneId.systemDefault()))
                 } catch (e: Exception) {
                     "Unknown Date"
                 }
@@ -869,15 +870,16 @@ fun PhotosGridScreen(
                             val monthSections = remember(groupedPhotosList) {
                                 val sections = mutableListOf<Int>()
                                 val seenMonths = mutableSetOf<String>()
-                                val sdfHeader = java.text.SimpleDateFormat("MMMM dd, yyyy", java.util.Locale.getDefault())
-                                val sdfMonthYear = java.text.SimpleDateFormat("yyyy-MM", java.util.Locale.US)
                                 
                                 for (index in groupedPhotosList.indices) {
                                     val item = groupedPhotosList[index]
                                     val dateMs = when (item) {
                                         is GalleryItem.Header -> {
                                             try {
-                                                sdfHeader.parse(item.date)?.time ?: 0L
+                                                java.time.LocalDate.parse(item.date, gridHeaderFormatter)
+                                                    .atStartOfDay(java.time.ZoneId.systemDefault())
+                                                    .toInstant()
+                                                    .toEpochMilli()
                                             } catch (e: Exception) {
                                                 0L
                                             }
@@ -886,8 +888,12 @@ fun PhotosGridScreen(
                                     }
                                     
                                     if (dateMs > 0L) {
-                                        val monthKey = sdfMonthYear.format(java.util.Date(dateMs))
-                                        if (seenMonths.add(monthKey)) {
+                                        val monthKey = try {
+                                            gridMonthYearFormatter.format(java.time.Instant.ofEpochMilli(dateMs).atZone(java.time.ZoneId.systemDefault()))
+                                        } catch (e: Exception) {
+                                            ""
+                                        }
+                                        if (monthKey.isNotEmpty() && seenMonths.add(monthKey)) {
                                             sections.add(index)
                                         }
                                     }
@@ -1063,8 +1069,7 @@ fun PhotosGridScreen(
                                             is GalleryItem.Header -> activeItem.date
                                             is GalleryItem.PhotoItem -> {
                                                 try {
-                                                    val sdf = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
-                                                    sdf.format(java.util.Date(activeItem.photo.dateTaken))
+                                                    gridBubbleFormatter.format(java.time.Instant.ofEpochMilli(activeItem.photo.dateTaken).atZone(java.time.ZoneId.systemDefault()))
                                                 } catch (e: Exception) {
                                                     ""
                                                 }

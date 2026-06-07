@@ -21,6 +21,12 @@ data class LocalPhoto(
     val tags: String = ""
 )
 
+private val waFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd", java.util.Locale.US)
+private val dtFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss", java.util.Locale.US)
+private val hyphenFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss", java.util.Locale.US)
+private val underscoreFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss", java.util.Locale.US)
+private val dateOnlyFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd", java.util.Locale.US)
+
 object MediaStoreScanner {
     private val waRegex = Regex("""IMG[-_](\d{8})[-_]WA""")
     private val dtRegex = Regex("""(\d{8})[-_](\d{6})""")
@@ -28,41 +34,39 @@ object MediaStoreScanner {
     private val underscoreDtRegex = Regex("""(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})""")
     private val dateOnlyRegex = Regex("""(\d{4})-(\d{2})-(\d{2})""")
 
-    private fun parseDateFromFilename(
-        name: String,
-        waFormat: java.text.SimpleDateFormat,
-        dtFormat: java.text.SimpleDateFormat,
-        hyphenFormat: java.text.SimpleDateFormat,
-        underscoreFormat: java.text.SimpleDateFormat,
-        dateOnlyFormat: java.text.SimpleDateFormat
-    ): Long? {
+    private fun parseDateFromFilename(name: String): Long? {
         try {
             // WhatsApp format: IMG-YYYYMMDD-WAxxxx
             waRegex.find(name)?.let { match ->
                 val dateStr = match.groupValues[1] // YYYYMMDD
-                return waFormat.parse(dateStr)?.time
+                val localDate = java.time.LocalDate.parse(dateStr, waFormatter)
+                return localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
 
             // Timestamp format with date and time: YYYYMMDD_HHMMSS or YYYYMMDD-HHMMSS
             dtRegex.find(name)?.let { match ->
                 val dateStr = match.groupValues[1] // YYYYMMDD
                 val timeStr = match.groupValues[2] // HHMMSS
-                return dtFormat.parse("${dateStr}_${timeStr}")?.time
+                val localDateTime = java.time.LocalDateTime.parse("${dateStr}_${timeStr}", dtFormatter)
+                return localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
 
             // Hyphenated date and time: YYYY-MM-DD-HH-MM-SS
             hyphenDtRegex.find(name)?.let { match ->
-                return hyphenFormat.parse(match.value)?.time
+                val localDateTime = java.time.LocalDateTime.parse(match.value, hyphenFormatter)
+                return localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
 
             // Underscored date and time: YYYY_MM_DD_HH_MM_SS
             underscoreDtRegex.find(name)?.let { match ->
-                return underscoreFormat.parse(match.value)?.time
+                val localDateTime = java.time.LocalDateTime.parse(match.value, underscoreFormatter)
+                return localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
 
             // Just YYYY-MM-DD
             dateOnlyRegex.find(name)?.let { match ->
-                return dateOnlyFormat.parse(match.value)?.time
+                val localDate = java.time.LocalDate.parse(match.value, dateOnlyFormatter)
+                return localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -86,21 +90,7 @@ object MediaStoreScanner {
 
         val queryUri: Uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
 
-        val waFormat = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getDefault()
-        }
-        val dtFormat = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getDefault()
-        }
-        val hyphenFormat = java.text.SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getDefault()
-        }
-        val underscoreFormat = java.text.SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getDefault()
-        }
-        val dateOnlyFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getDefault()
-        }
+        // Date formats are now handled thread-safely by static DateTimeFormatter instances
 
         try {
             context.contentResolver.query(
@@ -132,7 +122,7 @@ object MediaStoreScanner {
                     //   Level 3: DATE_ADDED — when the file first appeared in the media library (seconds * 1000).
                     //   Level 4: DATE_MODIFIED — filesystem last-modified (seconds * 1000).
                     val dateTaken: Long = cursor.getLong(dateTakenColumn).takeIf { it > 0L }
-                        ?: parseDateFromFilename(name, waFormat, dtFormat, hyphenFormat, underscoreFormat, dateOnlyFormat)
+                        ?: parseDateFromFilename(name)
                         ?: (cursor.getLong(dateAddedColumn) * 1000L).takeIf { it > 0L }
                         ?: (cursor.getLong(dateModifiedColumn) * 1000L)
 

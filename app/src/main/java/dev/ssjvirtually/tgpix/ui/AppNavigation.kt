@@ -28,6 +28,7 @@ import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.*
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.update.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
 import android.Manifest
 import android.os.Build
@@ -211,6 +212,9 @@ fun MainAppLayout(
     var telegramProfilePhotoPath by remember { mutableStateOf<String?>(null) }
     val authState by TdlibManager.authState.collectAsState()
 
+    // Initialize stateful GalleryViewModel to handle all data flows reactively
+    val galleryViewModel: GalleryViewModel = viewModel()
+
     // HOISTED STATES FOR PHOTOS GRID, SEARCH, AND ALBUMS
     var hasPermission by remember {
         mutableStateOf(
@@ -247,93 +251,13 @@ fun MainAppLayout(
     }
 
     val coroutineScope = rememberCoroutineScope()
-    var localPhotos by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
-    var isScanningLocal by remember { mutableStateOf(true) }
-    // Tracks whether a background cloud sync (DB restore + Telegram crawl) is in progress.
-    // Used to show a subtle sync pill indicator — grid is already visible at this point.
-    var isSyncingCloud by remember { mutableStateOf(false) }
-
-    // Re-key db on dbVersion: when BackupManager closes & reopens the Room singleton after
-    // a restore, dbVersion increments → this remember block re-runs → cloudLogs re-subscribes
-    // to the new instance's Flow → grid updates automatically without app restart.
-    val dbVersion by TdlibManager.dbVersion.collectAsState()
-    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
-    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-    var mergedPhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
-    var uploadedUrisSet by remember { mutableStateOf<Set<String>>(emptySet()) }
+    
+    // Observe stateful flows from ViewModel
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
-            // ── Phase 1: Scan local photos immediately and show the grid ──────────────
-            // This runs first and is fast (~100-300ms). The grid will show local
-            // photos as soon as this completes, without waiting for cloud sync.
-            isScanningLocal = true
-            val scanned = withContext(Dispatchers.IO) {
-                MediaStoreScanner.scan(context)
-            }
-            localPhotos = scanned
-            // isScanningLocal will be set to false by the merge LaunchedEffect below
-            // as soon as localPhotos is non-empty.
-
-            // ── Phase 2: DB restore + cloud sync run in background ────────────────────
-            // The grid is already showing local photos at this point. Cloud photos
-            // will be merged in silently when the DB/crawl finishes.
-            isSyncingCloud = true
-            coroutineScope.launch(Dispatchers.IO) {
-                // 2a. Restore local Room DB from remote Telegram backup (network call)
-                var restored = false
-                try {
-                    restored = dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(context)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
-                // 2b. Crawl Telegram channel history to index cloud photos into Room DB
-                val chatId = PreferencesManager.getChatId(context)
-                if (chatId != 0L) {
-                    try {
-                        TdlibManager.syncCloudHistory(context, chatId, forceFullCrawl = restored)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                // 2c. Crawl fallback: If database backup was not restored, reconstruct the albums from manifest files
-                if (!restored) {
-                    try {
-                        dev.ssjvirtually.tgpix.storage.BackupManager.reconstructAlbumsFromBackupChannel(context)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                withContext(Dispatchers.Main) {
-                    isSyncingCloud = false
-                }
-            }
-        }
-    }
-
-    // Hoisted background thread merging and deduplication via PhotosRepository.
-    LaunchedEffect(localPhotos, cloudLogs) {
-        if (mergedPhotosList.isEmpty()) isScanningLocal = true
-        val result = dev.ssjvirtually.tgpix.storage.PhotosRepository.mergeAndDeduplicate(localPhotos, cloudLogs)
-        withContext(Dispatchers.Main) {
-            mergedPhotosList = result.mergedPhotos
-            uploadedUrisSet = result.uploadedUris
-            isScanningLocal = false
-        }
-    }
-
-    var scanJob by remember { mutableStateOf<Job?>(null) }
-    val triggerScan = {
-        scanJob?.cancel()
-        scanJob = coroutineScope.launch(Dispatchers.IO) {
-            delay(1000) // 1 second debounce to completely prevent multiple scans during fast camera snaps or multiple events
-            val scanned = MediaStoreScanner.scan(context)
-            withContext(Dispatchers.Main) {
-                localPhotos = scanned
-            }
+            galleryViewModel.loadLocalPhotos(hasPermission)
+            galleryViewModel.startCloudSync()
         }
     }
 
@@ -346,7 +270,7 @@ fun MainAppLayout(
         val contentObserver = object : android.database.ContentObserver(handler) {
             override fun onChange(selfChange: Boolean, uri: android.net.Uri?) {
                 super.onChange(selfChange, uri)
-                triggerScan()
+                galleryViewModel.triggerScan()
             }
         }
 
@@ -357,7 +281,7 @@ fun MainAppLayout(
             } else if (event == Lifecycle.Event.ON_RESUME) {
                 if (wasPaused) {
                     wasPaused = false
-                    triggerScan()
+                    galleryViewModel.triggerScan()
                 }
             }
         }
@@ -373,7 +297,6 @@ fun MainAppLayout(
         onDispose {
             context.contentResolver.unregisterContentObserver(contentObserver)
             lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-            scanJob?.cancel()
         }
     }
     
@@ -589,14 +512,11 @@ fun MainAppLayout(
                                 onSettingsClick = {
                                     activeTab = "Settings"
                                 },
-                                mergedPhotosList = mergedPhotosList,
-                                uploadedUris = uploadedUrisSet,
-                                isScanningLocal = isScanningLocal,
-                                isSyncingCloud = isSyncingCloud,
                                 hasPermission = hasPermission,
                                 onRequestPermission = {
                                     permissionLauncher.launch(permissionsToRequest)
-                                }
+                                },
+                                viewModel = galleryViewModel
                             )
                         }
                         "Search" -> {
@@ -605,9 +525,7 @@ fun MainAppLayout(
                                     fullScreenPhotoIndex = index
                                     devicePhotosList = photos
                                 },
-                                mergedPhotosList = mergedPhotosList,
-                                uploadedUris = uploadedUrisSet,
-                                isScanning = isScanningLocal
+                                viewModel = galleryViewModel
                             )
                         }
                         "Albums" -> {
@@ -616,7 +534,7 @@ fun MainAppLayout(
                                     fullScreenPhotoIndex = index
                                     devicePhotosList = photos
                                 },
-                                mergedPhotosList = mergedPhotosList
+                                viewModel = galleryViewModel
                             )
                         }
                         "Settings" -> {
@@ -640,11 +558,11 @@ fun MainAppLayout(
                     PhotoViewerScreen(
                         photosList = devicePhotosList,
                         startIndex = fullScreenPhotoIndex!!,
-                        uploadedUris = uploadedUrisSet,
                         onClose = {
                             fullScreenPhotoIndex = null
                             devicePhotosList = emptyList()
-                        }
+                        },
+                        viewModel = galleryViewModel
                     )
                 }
             }
