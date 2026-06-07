@@ -176,7 +176,15 @@ class ShareWorker(
                         }
                         TdlibManager.addLog("ShareWorker: Successfully backed up '${photo.name}' to main vault.")
                     } else {
-                        TdlibManager.addLog("ShareWorker: Failed to back up '${photo.name}' before sharing. Continuing.")
+                        val errMsg = if (backupResult is TdApi.Error) {
+                            "[${backupResult.code}] ${backupResult.message}"
+                        } else {
+                            "Unknown error"
+                        }
+                        TdlibManager.addLog("ShareWorker: Failed to back up '${photo.name}' before sharing: $errMsg. Continuing.")
+                        if (backupResult is TdApi.Error && TdlibManager.checkAndHandleChatError(applicationContext, backupResult)) {
+                            break
+                        }
                     }
                 }
             }

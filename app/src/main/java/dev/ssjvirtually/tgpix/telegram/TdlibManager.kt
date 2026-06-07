@@ -757,4 +757,87 @@ object TdlibManager {
             }
         }
     }
+
+    fun checkAndHandleChatError(context: Context, error: TdApi.Error): Boolean {
+        val msg = error.message.uppercase()
+        val isForbidden = error.code == 400 && (
+            msg.contains("CHAT_WRITE_FORBIDDEN") || 
+            msg.contains("CHAT_SEND_MEDIA_FORBIDDEN") || 
+            msg.contains("CHAT_SEND_PHOTOS_FORBIDDEN") ||
+            msg.contains("CHAT_SEND_DOCUMENTS_FORBIDDEN") ||
+            msg.contains("CHAT_SEND_MESSAGES_FORBIDDEN")
+        )
+        val isAdminReq = error.code == 403 && (
+            msg.contains("CHAT_ADMIN_REQUIRED") || 
+            msg.contains("USER_IS_BANNED") ||
+            msg.contains("CHAT_WRITE_FORBIDDEN")
+        )
+        val isNotFound = error.code == 404 && (
+            msg.contains("CHAT_NOT_FOUND") || 
+            msg.contains("CHAT_ID_INVALID")
+        )
+        
+        if (isForbidden || isAdminReq || isNotFound) {
+            addLog("Critical Telegram error detected [${error.code}]: ${error.message}. Resetting backup chat configuration.")
+            
+            // 1. Reset chat preferences locally so user is forced to re-select
+            PreferencesManager.saveChatId(context, 0L)
+            PreferencesManager.saveChatTitle(context, "")
+            PreferencesManager.saveDbChatId(context, 0L)
+            PreferencesManager.saveDbChatTitle(context, "Private Saved Messages")
+            
+            // 2. Cancel active background jobs
+            try {
+                androidx.work.WorkManager.getInstance(context.applicationContext).cancelAllWork()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            
+            // 3. Show high priority system notification
+            showChatUnavailableNotification(context)
+            return true
+        }
+        return false
+    }
+
+    private fun showChatUnavailableNotification(context: Context) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "tgpix_session_channel"
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "TGPix Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Critical session alerts and logout notices."
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        val intent = Intent(context, dev.ssjvirtually.tgpix.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            300,
+            intent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
+        
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setContentTitle("Backup Chat Unavailable")
+            .setContentText("Your target Telegram backup chat is no longer accessible. Tap to choose a new destination.")
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+            
+        notificationManager.notify(777, notification)
+    }
 }

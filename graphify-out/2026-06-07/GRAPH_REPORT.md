@@ -1,16 +1,16 @@
 # Graph Report - telegallery-calude  (2026-06-07)
 
 ## Corpus Check
-- 45 files · ~204,346 words
+- 45 files · ~204,628 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 707 nodes · 1067 edges · 58 communities (41 shown, 17 thin omitted)
+- 712 nodes · 1078 edges · 58 communities (41 shown, 17 thin omitted)
 - Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 79 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a202839f`
+- Built from commit: `c298ad85`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -71,8 +71,8 @@
 - [[_COMMUNITY_Community 58|Community 58]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `PreferencesManager` - 43 edges
-2. `Context` - 39 edges
+1. `PreferencesManager` - 45 edges
+2. `Context` - 41 edges
 3. `TdlibManager` - 37 edges
 4. `TGPix — Implementation Plan` - 28 edges
 5. `PhotosGridScreen()` - 24 edges
@@ -114,7 +114,7 @@ Cohesion: 0.06
 Nodes (28): Boolean, Context, Flow, Int, java, List, Long, String (+20 more)
 
 ### Community 1 - "Application Preferences"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (8): android, Boolean, Context, Int, List, Long, String, PreferencesManager
 
 ### Community 2 - "Authentication and Navigation UI"
@@ -123,7 +123,7 @@ Nodes (30): String, String, String, File, Float, String, TGPix README, OtpVerify
 
 ### Community 3 - "Background Backup Workers"
 Cohesion: 0.06
-Nodes (29): Result, ForegroundInfo, Int, Result, ForegroundInfo, Result, String, ForegroundInfo (+21 more)
+Nodes (31): Context, Result, String, ForegroundInfo, Int, Result, ForegroundInfo, Result (+23 more)
 
 ### Community 4 - "Telegram Client Integration"
 Cohesion: 0.10
@@ -258,7 +258,7 @@ Cohesion: 0.28
 Nodes (6): CloudPhotoEntity, List, LocalPhoto, String, MergeResult, PhotosRepository
 
 ## Knowledge Gaps
-- **276 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+271 more)
+- **278 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+273 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -266,16 +266,16 @@ Nodes (6): CloudPhotoEntity, List, LocalPhoto, String, MergeResult, PhotosReposi
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Image Upload Manager`, `Authentication and Navigation UI`, `Albums Screen UI and Utils`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
+  _High betweenness centrality (0.087) - this node is a cross-community bridge._
 - **Why does `AppNavigation()` connect `Authentication and Navigation UI` to `Main Activity UI Lifecycle`, `Telegram Client Integration`?**
   _High betweenness centrality (0.075) - this node is a cross-community bridge._
-- **Why does `AutoVaultSetupScreen()` connect `Telegram Client Integration` to `Application Preferences`, `Authentication and Navigation UI`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Why does `PreferencesManager` connect `Application Preferences` to `Authentication and Navigation UI`, `Background Backup Workers`, `Telegram Client Integration`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Are the 10 inferred relationships involving `PhotosGridScreen()` (e.g. with `AlbumsScreen()` and `SearchScreen()`) actually correct?**
   _`PhotosGridScreen()` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` to the rest of the system?**
-  _290 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _292 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Database and DAO Schema` be split into smaller, more focused modules?**
   _Cohesion score 0.05706760316066725 - nodes in this community are weakly interconnected._
 - **Should `Application Preferences` be split into smaller, more focused modules?**
-  _Cohesion score 0.10549645390070922 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10204081632653061 - nodes in this community are weakly interconnected._

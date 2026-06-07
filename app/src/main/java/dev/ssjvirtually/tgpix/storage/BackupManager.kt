@@ -299,6 +299,7 @@ object BackupManager {
                     if (tempMasterFile != null && tempMasterFile.exists()) {
                         tempMasterFile.delete()
                     }
+                    TdlibManager.checkAndHandleChatError(context, uploadResult)
                 }
                 
                 // Clean up local temp file

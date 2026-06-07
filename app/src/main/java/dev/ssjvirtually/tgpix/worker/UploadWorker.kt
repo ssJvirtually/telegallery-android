@@ -301,6 +301,9 @@ class UploadWorker(
                             val errMsg = "[${uploadResult.code}] ${uploadResult.message}"
                             TdlibManager.addLog("Worker: failed to back up '${photo.name}': $errMsg")
                             recordFailure(photo, fingerprint, errMsg)
+                            if (TdlibManager.checkAndHandleChatError(applicationContext, uploadResult)) {
+                                break
+                            }
                             failedCount++
                         }
                         else -> {
