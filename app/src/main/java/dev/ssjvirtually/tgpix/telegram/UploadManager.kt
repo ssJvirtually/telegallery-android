@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.getPartialHash
+import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -28,21 +29,61 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 
+import dev.ssjvirtually.tgpix.storage.UploadDatabase
+import dev.ssjvirtually.tgpix.storage.UploadEntity
+
 private val exifFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
 private val logDateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
 
 object UploadManager {
+    private val inFlightUploads = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
     suspend fun uploadPhoto(
         context: Context,
         photo: LocalPhoto,
         chatId: Long,
         isHd: Boolean
     ): TdApi.Object {
-        val fileName = photo.name
-        val uploadCacheDir = File(context.cacheDir, "tgpix_uploads")
-        uploadCacheDir.mkdirs()
-        val tempFile = File(uploadCacheDir, fileName)
-        var thumbFile: File? = null
+        if (!inFlightUploads.add(photo.uri)) {
+            return TdApi.Error(409, "Upload already in progress for this photo")
+        }
+
+        try {
+            val db = UploadDatabase.getDatabase(context)
+            
+            // Check local uploads table first
+            val localUpload = db.dao().find(photo.uri)
+            if (localUpload != null && localUpload.telegramMessageId != 0L) {
+                return TdApi.Error(409, "Photo already uploaded (found in local database)")
+            }
+
+            // Check cloud database using content fingerprint
+            val fingerprint = try {
+                photo.getFingerprint(context)
+            } catch (e: Exception) {
+                "unknown_fingerprint"
+            }
+            if (fingerprint != "unknown_fingerprint") {
+                val cloudPhoto = db.cloudDao().findByFingerprint(fingerprint)
+                if (cloudPhoto != null) {
+                    db.dao().insert(
+                        UploadEntity(
+                            mediaStoreId = photo.id,
+                            path = photo.uri,
+                            contentFingerprint = fingerprint,
+                            uploadedAt = cloudPhoto.uploadedAt,
+                            telegramMessageId = cloudPhoto.messageId
+                        )
+                    )
+                    return TdApi.Error(409, "Photo already exists in Telegram cloud vault")
+                }
+            }
+
+            val fileName = photo.name
+            val uploadCacheDir = File(context.cacheDir, "tgpix_uploads")
+            uploadCacheDir.mkdirs()
+            val tempFile = File(uploadCacheDir, fileName)
+            var thumbFile: File? = null
         
         try {
             // 1. Prepare and optionally compress the photo to local cache
@@ -289,6 +330,9 @@ object UploadManager {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+        } finally {
+            inFlightUploads.remove(photo.uri)
         }
     }
 

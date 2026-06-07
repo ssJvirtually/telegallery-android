@@ -245,7 +245,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                             PreferencesManager.saveDbChatId(context, existingDbChatId)
                             PreferencesManager.saveDbChatTitle(context, "TGPix_database (Private Backup)")
                             
-                            context.scheduleSyncWorker()
+                            dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(context)
                             
                             withContext(Dispatchers.Main) {
                                 progressText = "Vaults linked successfully! Opening gallery..."
@@ -326,7 +326,7 @@ fun AutoVaultSetupScreen(onSetupComplete: (Long, String) -> Unit) {
                         PreferencesManager.saveDbChatTitle(context, "TGPix_database (Private Backup)")
                         
                         // Schedule background sync worker
-                        context.scheduleSyncWorker()
+                        dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(context)
                         
                         withContext(Dispatchers.Main) {
                             progressText = "Vaults ready! Opening your gallery..."

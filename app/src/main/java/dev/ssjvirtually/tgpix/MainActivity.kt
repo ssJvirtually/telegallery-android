@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         
         // Start background backup sync immediately if configured
         if (PreferencesManager.getChatId(applicationContext) != 0L) {
-            scheduleSyncWorker()
+            dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(applicationContext)
         }
 
         setContent {
@@ -148,53 +148,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun scheduleSyncWorker() {
-        val isBackupActive = PreferencesManager.isBackupActive(applicationContext)
-        if (!isBackupActive) {
-            // Cancel background backups instantly
-            WorkManager.getInstance(applicationContext).cancelUniqueWork("upload_worker")
-            runOnUiThread {
-                Toast.makeText(this, "Background backup synchronization disabled/paused.", Toast.LENGTH_SHORT).show()
-            }
-            return
-        }
-
-        val wifiOnly = PreferencesManager.isWifiOnly(applicationContext)
-        val networkType = if (wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED
-
-        // 1. Enqueue Periodic Work for long-term scheduling (every 15 mins)
-        val request = PeriodicWorkRequestBuilder<UploadWorker>(
-            15, TimeUnit.MINUTES
-        ).setConstraints(
-            Constraints.Builder()
-                .setRequiredNetworkType(networkType)
-                .build()
-        ).build()
-
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniquePeriodicWork(
-                "upload_worker",
-                ExistingPeriodicWorkPolicy.UPDATE,
-                request
-            )
-
-        val oneTimeRequest = OneTimeWorkRequestBuilder<UploadWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(networkType)
-                    .build()
-            ).build()
-
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniqueWork(
-                "upload_worker_one_time",
-                ExistingWorkPolicy.REPLACE,
-                oneTimeRequest
-            )
-        
-        val dataMsg = if (wifiOnly) "Wi-Fi Only (Data Saver Active)" else "Wi-Fi + Mobile Data allowed"
-        runOnUiThread {
-            Toast.makeText(this, "Backup active: $dataMsg", Toast.LENGTH_SHORT).show()
-        }
-    }
 }

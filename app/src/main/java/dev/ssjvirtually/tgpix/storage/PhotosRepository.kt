@@ -24,9 +24,10 @@ object PhotosRepository {
 
     suspend fun mergeAndDeduplicate(
         localPhotos: List<LocalPhoto>,
-        cloudLogs: List<CloudPhotoEntity>
+        cloudLogs: List<CloudPhotoEntity>,
+        uploadedPaths: List<String>
     ): MergeResult = withContext(Dispatchers.Default) {
-        if (cloudLogs.isEmpty()) {
+        if (cloudLogs.isEmpty() && uploadedPaths.isEmpty()) {
             return@withContext MergeResult(
                 mergedPhotos = localPhotos.sortedByDescending { it.dateTaken },
                 uploadedUris = emptySet()
@@ -35,6 +36,8 @@ object PhotosRepository {
 
         val list = mutableListOf<LocalPhoto>()
         val uploadedUris = mutableSetOf<String>()
+        
+        uploadedUris.addAll(uploadedPaths)
         
         // Build helper maps for multi-layered matching to eliminate duplicates
         val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }

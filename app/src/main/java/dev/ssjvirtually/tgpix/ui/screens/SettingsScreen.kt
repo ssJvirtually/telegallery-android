@@ -240,7 +240,7 @@ fun SettingsScreen(
                                 onCheckedChange = { checked ->
                                     backupActive = checked
                                     PreferencesManager.setBackupActive(context, checked)
-                                    context.scheduleSyncWorker()
+                                    dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(context)
                                 },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = TelePhotosTheme.AccentBlue,
@@ -271,7 +271,7 @@ fun SettingsScreen(
                                 onCheckedChange = { checked ->
                                     wifiOnly = checked
                                     PreferencesManager.setWifiOnly(context, checked)
-                                    context.scheduleSyncWorker()
+                                    dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(context)
                                 },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = TelePhotosTheme.AccentBlue,

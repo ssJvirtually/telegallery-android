@@ -475,6 +475,19 @@ object TdlibManager {
             }
         }
         addLog("Vault server synchronization crawl completed.")
+
+        // Clean up duplicate photo uploads from both Telegram and local database
+        try {
+            val duplicates = cloudDao.getDuplicateMessageIds()
+            if (duplicates.isNotEmpty()) {
+                addLog("Found ${duplicates.size} duplicate messages in server vault. Deleting duplicates from Telegram...")
+                sendRequest(TdApi.DeleteMessages(chatId, duplicates.toLongArray(), true))
+                cloudDao.deleteDuplicatesFromCloudPhotos()
+                addLog("Local database duplicate cloud photos cleaned up.")
+            }
+        } catch (e: Exception) {
+            addLog("Failed to clean up duplicate vault messages: ${e.message}")
+        }
         
         // Trigger storage cache cleanup to stay within 500 MB limit
         try {

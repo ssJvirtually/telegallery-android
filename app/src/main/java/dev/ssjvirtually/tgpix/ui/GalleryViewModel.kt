@@ -11,6 +11,7 @@ import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.MergeResult
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
+import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.SearchItem
 import androidx.work.WorkManager
@@ -95,9 +96,13 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         UploadDatabase.getDatabase(application).cloudDao().getAllFlow()
     }
 
-    // 1. mergeResult combines local photos and cloud logs, executing in the background (Default dispatcher)
-    val mergeResult: StateFlow<MergeResult> = combine(_localPhotos, cloudLogs) { local, cloud ->
-        PhotosRepository.mergeAndDeduplicate(local, cloud)
+    val uploadedPaths: Flow<List<String>> = TdlibManager.dbVersion.flatMapLatest { _ ->
+        UploadDatabase.getDatabase(application).dao().getUploadedPathsFlow()
+    }
+
+    // 1. mergeResult combines local photos, cloud logs, and local uploads, executing in the background (Default dispatcher)
+    val mergeResult: StateFlow<MergeResult> = combine(_localPhotos, cloudLogs, uploadedPaths) { local, cloud, uploads ->
+        PhotosRepository.mergeAndDeduplicate(local, cloud, uploads)
     }.flowOn(Dispatchers.Default)
      .stateIn(
          scope = viewModelScope,
@@ -149,6 +154,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             }
             _localPhotos.value = scanned
             _isScanningLocal.value = false
+            dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(getApplication())
         }
     }
 
@@ -162,6 +168,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             }
             _localPhotos.value = scanned
             _isScanningLocal.value = false
+            dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(getApplication())
         }
     }
 

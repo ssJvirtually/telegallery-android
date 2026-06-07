@@ -46,6 +46,9 @@ interface UploadDao {
 
     @Query("SELECT * FROM uploads ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<UploadEntity>>
+
+    @Query("SELECT path FROM uploads WHERE telegramMessageId != 0")
+    fun getUploadedPathsFlow(): Flow<List<String>>
     
     @Query("DELETE FROM uploads WHERE path = :path")
     suspend fun delete(path: String)
@@ -124,6 +127,28 @@ interface CloudPhotoDao {
 
     @Query("SELECT * FROM cloud_photos WHERE messageId = :messageId LIMIT 1")
     suspend fun findByMessageId(messageId: Long): CloudPhotoEntity?
+
+    @Query("""
+        SELECT messageId FROM cloud_photos 
+        WHERE messageId NOT IN (
+            SELECT MIN(messageId) 
+            FROM cloud_photos 
+            GROUP BY contentFingerprint
+        )
+        AND contentFingerprint != ''
+    """)
+    suspend fun getDuplicateMessageIds(): List<Long>
+
+    @Query("""
+        DELETE FROM cloud_photos 
+        WHERE messageId NOT IN (
+            SELECT MIN(messageId) 
+            FROM cloud_photos 
+            GROUP BY contentFingerprint
+        )
+        AND contentFingerprint != ''
+    """)
+    suspend fun deleteDuplicatesFromCloudPhotos()
 }
 
 @Entity(tableName = "albums")
