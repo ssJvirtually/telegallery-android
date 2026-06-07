@@ -40,6 +40,15 @@ object BackupManager {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
+    private fun getSchemaVersionFromFile(dbFile: File): Int {
+        val bytes = ByteArray(4)
+        java.io.RandomAccessFile(dbFile, "r").use { raf ->
+            raf.seek(60)
+            raf.readFully(bytes)
+        }
+        return java.nio.ByteBuffer.wrap(bytes).int
+    }
+
     fun getBackupChatId(context: Context): Long {
         val customId = PreferencesManager.getDbChatId(context)
         if (customId != 0L) return customId
@@ -420,6 +429,32 @@ object BackupManager {
                                 continue
                             }
                             TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
+                        }
+
+                        // Verify magic header is SQLite format 3
+                        val header = ByteArray(15)
+                        try {
+                            FileInputStream(downloadedFile).use { it.read(header) }
+                        } catch (e: Exception) {
+                            TdlibManager.addLog("Failed to read header of backup: ${e.message}")
+                            continue
+                        }
+                        if (!String(header).startsWith("SQLite format 3")) {
+                            TdlibManager.addLog("Backup (Msg ID: ${message.id}) magic header check FAILED. Not a valid SQLite database.")
+                            continue
+                        }
+
+                        // Validate schema version of restored file before opening with Room
+                        val restoredVersion = try {
+                            getSchemaVersionFromFile(downloadedFile)
+                        } catch (e: Exception) {
+                            TdlibManager.addLog("Failed to read schema version of backup: ${e.message}")
+                            continue
+                        }
+                        val currentVersion = UploadDatabase.DATABASE_VERSION
+                        if (restoredVersion > currentVersion) {
+                            TdlibManager.addLog("Skipping backup (Msg ID: ${message.id}): backup schema version ($restoredVersion) is newer than app database version ($currentVersion). Please update the app first.")
+                            continue
                         }
 
                         TdlibManager.addLog("Backup downloaded successfully. Restoring local database from Msg ID: ${message.id}...")

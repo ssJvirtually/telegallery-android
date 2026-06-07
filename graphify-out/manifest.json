@@ -10,8 +10,8 @@
     "semantic_hash": "034667d50b341890eee70a6a49f6f824"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
-    "mtime": 1780807198.3419516,
-    "ast_hash": "5ebfad638c67b6a19a4fc714640ee1a9",
+    "mtime": 1780811723.369307,
+    "ast_hash": "ab9b0b25eb12e2002061e97e59977a86",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
