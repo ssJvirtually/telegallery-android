@@ -154,22 +154,22 @@ object BackupManager {
         )
     }
 
-    suspend fun backupDatabase(context: Context) {
-        if (isBackupRunning) return
+    suspend fun backupDatabase(context: Context): Boolean {
+        if (isBackupRunning) return false
         isBackupRunning = true
+        var success = false
         
         try {
             val targetChatId = resolveBackupChatId(context)
             if (targetChatId == 0L) {
                 isBackupRunning = false
-                return
+                return false
             }
-            withContext(Dispatchers.IO) {
+            success = withContext(Dispatchers.IO) {
                 val db = UploadDatabase.getDatabase(context)
                 val dbFile = context.getDatabasePath("upload_database")
                 if (!dbFile.exists()) {
-                    isBackupRunning = false
-                    return@withContext
+                    return@withContext false
                 }
 
                 // 1. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
@@ -197,8 +197,7 @@ object BackupManager {
                 }
 
                 if (!checkpointSuccess) {
-                    isBackupRunning = false
-                    return@withContext
+                    return@withContext false
                 }
 
                 // 2. Safely lock the database and perform a copy while in a Room transaction
@@ -226,15 +225,13 @@ object BackupManager {
                 }
 
                 if (transactionResult == null) {
-                    isBackupRunning = false
-                    return@withContext
+                    return@withContext false
                 }
 
                 val (tempBackupFile, currentCount) = transactionResult
 
                 if (!tempBackupFile.exists() || tempBackupFile.length() == 0L) {
-                    isBackupRunning = false
-                    return@withContext
+                    return@withContext false
                 }
                 
                 // 5. Compute integrity checksum and upload document message to Telegram (performed outside database transaction)
@@ -262,6 +259,7 @@ object BackupManager {
                     targetChatId,
                     "TGPix SQLite Database Backup #tgpix_backup v$dbVersion sha256:$sha256 records:$currentCount"
                 )
+                var uploadSuccess = false
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
                     
@@ -295,6 +293,7 @@ object BackupManager {
                     if (tempMasterFile != null && tempMasterFile.exists()) {
                         performDailyMasterBackup(context, tempMasterFile, sha256, currentCount)
                     }
+                    uploadSuccess = true
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
                     if (tempMasterFile != null && tempMasterFile.exists()) {
@@ -306,12 +305,14 @@ object BackupManager {
                 if (tempBackupFile.exists()) {
                     tempBackupFile.delete()
                 }
+                uploadSuccess
             }
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
             isBackupRunning = false
         }
+        return success
     }
 
     private suspend fun performDailyMasterBackup(context: Context, tempMasterFile: File, sha256: String, recordsCount: Int) {

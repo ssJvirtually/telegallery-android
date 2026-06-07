@@ -251,6 +251,20 @@ object PreferencesManager {
             .getLong(KEY_LAST_SCANNED_MSG_ID, 0L)
     }
 
+    private const val KEY_CONSECUTIVE_BACKUP_FAILURES = "consecutive_backup_failures"
+
+    fun getConsecutiveBackupFailures(context: Context): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(KEY_CONSECUTIVE_BACKUP_FAILURES, 0)
+    }
+
+    fun setConsecutiveBackupFailures(context: Context, failures: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(KEY_CONSECUTIVE_BACKUP_FAILURES, failures)
+            .apply()
+    }
+
     fun clearAll(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
