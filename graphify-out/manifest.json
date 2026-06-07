@@ -50,8 +50,8 @@
     "semantic_hash": "a00f6211ca518c9c3288a57946b5322b"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt": {
-    "mtime": 1780796568.2047677,
-    "ast_hash": "5a5a1ed6cce28afc963e4c7f1c3038a9",
+    "mtime": 1780808505.0774443,
+    "ast_hash": "e4c4545fd205b39823b56fde17225674",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt": {
@@ -75,18 +75,18 @@
     "semantic_hash": "71cbf15577558eb9178b1276471a1c15"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt": {
-    "mtime": 1780796641.571287,
-    "ast_hash": "3482fc1ebfedd0822512e37f0d98fe5d",
+    "mtime": 1780808531.298039,
+    "ast_hash": "6b15db3995653c65e0d9367ab24badea",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotosGridScreen.kt": {
-    "mtime": 1780796629.0503275,
-    "ast_hash": "c07a01f353951592b8091f676cc2abfd",
+    "mtime": 1780808516.0247207,
+    "ast_hash": "b8ae5e6f867eedb8632495cd56e7ce27",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt": {
-    "mtime": 1780796635.6348567,
-    "ast_hash": "b04a6037a01861f268d60e1bba03d194",
+    "mtime": 1780808524.7156825,
+    "ast_hash": "b8584d0817ff513738bbb377b0342a0d",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt": {
@@ -265,8 +265,8 @@
     "semantic_hash": "7126b33ff00c5e04ec44767a2e3522eb"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/PhotosRepository.kt": {
-    "mtime": 1780769988.218785,
-    "ast_hash": "c9a11ec29003cf29ab48c7e2864f4ceb",
+    "mtime": 1780808492.2617216,
+    "ast_hash": "06e5f94ad6cd22decc2713c0d4bfd9d4",
     "semantic_hash": ""
   }
 }

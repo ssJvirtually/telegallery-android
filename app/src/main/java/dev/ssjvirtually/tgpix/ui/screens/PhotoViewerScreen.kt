@@ -71,6 +71,7 @@ import kotlin.math.roundToInt
 fun PhotoViewerScreen(
     photosList: List<LocalPhoto>,
     startIndex: Int,
+    uploadedUris: Set<String>,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current as MainActivity
@@ -83,21 +84,6 @@ fun PhotoViewerScreen(
     val dbVersion by TdlibManager.dbVersion.collectAsState()
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-    val uploadedUris = remember(photosList, cloudLogs) {
-        val synced = mutableSetOf<String>()
-        val regexTrashed = Regex("""^\.trashed-\d+-""")
-        fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
-        val cloudKeys = cloudLogs.map { "${it.fileName.normalize()}_${it.fileSize}" }.toSet()
-        for (photo in photosList) {
-            if (!isCloudPhoto(photo.uri)) {
-                val key = "${photo.name.normalize()}_${photo.size}"
-                if (cloudKeys.contains(key)) {
-                    synced.add(photo.uri)
-                }
-            }
-        }
-        synced
-    }
 
     val activePhoto = photosList.getOrNull(pagerState.currentPage)
     val isSynced = activePhoto?.let { uploadedUris.contains(it.uri) } ?: false

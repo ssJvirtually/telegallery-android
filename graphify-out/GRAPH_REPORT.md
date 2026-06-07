@@ -1,16 +1,16 @@
 # Graph Report - telegallery-calude  (2026-06-07)
 
 ## Corpus Check
-- 41 files · ~201,290 words
+- 41 files · ~201,239 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 636 nodes · 946 edges · 56 communities (39 shown, 17 thin omitted)
+- 641 nodes · 953 edges · 56 communities (39 shown, 17 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 78 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `daa26712`
+- Built from commit: `08b39253`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -74,12 +74,12 @@
 2. `TdlibManager` - 35 edges
 3. `Context` - 32 edges
 4. `TGPix — Implementation Plan` - 28 edges
-5. `BackupManager` - 21 edges
-6. `PhotosGridScreen()` - 21 edges
-7. `📝 TGPix Android — Version Release Changelog` - 15 edges
-8. `CloudPhotoDao` - 14 edges
-9. `AlbumDao` - 14 edges
-10. `TGPix — Backup Strategy Production Review` - 14 edges
+5. `PhotosGridScreen()` - 22 edges
+6. `BackupManager` - 21 edges
+7. `PhotoViewerScreen()` - 15 edges
+8. `📝 TGPix Android — Version Release Changelog` - 15 edges
+9. `CloudPhotoDao` - 14 edges
+10. `AlbumDao` - 14 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `BackupManager` --references--> `Backup Target - Private Vault`  [INFERRED]
@@ -130,11 +130,11 @@ Nodes (18): app/build.gradle, Boolean, Context, Int, List, Long, String, TdApi (
 
 ### Community 5 - "Albums Screen UI and Utils"
 Cohesion: 0.07
-Nodes (48): androidx, Context, Int, List, LocalPhoto, Long, String, Boolean (+40 more)
+Nodes (49): androidx, Context, Int, List, LocalPhoto, Long, String, Boolean (+41 more)
 
 ### Community 6 - "Photos Grid and Search UI"
-Cohesion: 0.08
-Nodes (28): androidx, Boolean, Context, Int, List, LocalPhoto, String, androidx (+20 more)
+Cohesion: 0.07
+Nodes (31): androidx, Boolean, Context, Int, List, LocalPhoto, Set, String (+23 more)
 
 ### Community 7 - "Database Backup Manager"
 Cohesion: 0.21
@@ -249,11 +249,11 @@ Cohesion: 0.67
 Nodes (3): 8. Phase 4 — Telegram Storage Integration, Goal, Steps
 
 ### Community 58 - "Community 58"
-Cohesion: 0.29
-Nodes (5): CloudPhotoEntity, List, LocalPhoto, String, PhotosRepository
+Cohesion: 0.28
+Nodes (6): CloudPhotoEntity, List, LocalPhoto, String, MergeResult, PhotosRepository
 
 ## Knowledge Gaps
-- **251 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+246 more)
+- **255 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+250 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -261,16 +261,16 @@ Nodes (5): CloudPhotoEntity, List, LocalPhoto, String, PhotosRepository
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Image Upload Manager`, `Authentication and Navigation UI`, `Albums Screen UI and Utils`?**
-  _High betweenness centrality (0.087) - this node is a cross-community bridge._
+  _High betweenness centrality (0.088) - this node is a cross-community bridge._
 - **Why does `AppNavigation()` connect `Authentication and Navigation UI` to `Main Activity UI Lifecycle`, `Telegram Client Integration`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `TdlibManager` connect `Telegram Client Integration` to `Background Backup Workers`?**
   _High betweenness centrality (0.068) - this node is a cross-community bridge._
+- **Are the 10 inferred relationships involving `PhotosGridScreen()` (e.g. with `AlbumsScreen()` and `SearchScreen()`) actually correct?**
+  _`PhotosGridScreen()` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` to the rest of the system?**
-  _265 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _269 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Database and DAO Schema` be split into smaller, more focused modules?**
   _Cohesion score 0.06412583182093164 - nodes in this community are weakly interconnected._
 - **Should `Application Preferences` be split into smaller, more focused modules?**
   _Cohesion score 0.12073170731707317 - nodes in this community are weakly interconnected._
-- **Should `Authentication and Navigation UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05897435897435897 - nodes in this community are weakly interconnected._

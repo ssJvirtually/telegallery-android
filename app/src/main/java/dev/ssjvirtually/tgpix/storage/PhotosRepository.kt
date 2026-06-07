@@ -4,20 +4,37 @@ import dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+data class MergeResult(
+    val mergedPhotos: List<LocalPhoto>,
+    val uploadedUris: Set<String>
+)
+
 object PhotosRepository {
 
-    private val regexTrashed = Regex("""^\.trashed-\d+-""")
-    private fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
+    private fun String.normalize(): String {
+        val lower = this.lowercase()
+        if (lower.startsWith(".trashed-")) {
+            val index = lower.indexOf('-', 9) // 9 is ".trashed-".length
+            if (index != -1) {
+                return lower.substring(index + 1)
+            }
+        }
+        return lower
+    }
 
     suspend fun mergeAndDeduplicate(
         localPhotos: List<LocalPhoto>,
         cloudLogs: List<CloudPhotoEntity>
-    ): List<LocalPhoto> = withContext(Dispatchers.Default) {
+    ): MergeResult = withContext(Dispatchers.Default) {
         if (cloudLogs.isEmpty()) {
-            return@withContext localPhotos.sortedByDescending { it.dateTaken }
+            return@withContext MergeResult(
+                mergedPhotos = localPhotos.sortedByDescending { it.dateTaken },
+                uploadedUris = emptySet()
+            )
         }
 
         val list = mutableListOf<LocalPhoto>()
+        val uploadedUris = mutableSetOf<String>()
         
         // Build helper maps for multi-layered matching to eliminate duplicates
         val localByFingerprint = localPhotos.associateBy { "${it.name.normalize()}_${it.size}_${it.dateTaken}" }
@@ -48,7 +65,6 @@ object PhotosRepository {
             
             if (matchingLocal == null && parsedDate != null) {
                 val parsedSeconds = parsedDate / 1000
-                // Optimize list allocations by avoiding the + operator
                 val candidates = mutableListOf<LocalPhoto>()
                 localByDate[parsedSeconds]?.let { candidates.addAll(it) }
                 localByDate[parsedSeconds - 1]?.let { candidates.addAll(it) }
@@ -68,6 +84,7 @@ object PhotosRepository {
                     addedUris.add(matchingLocal.uri)
                 }
                 matchedLocalKeys.add(matchingLocal.name.lowercase())
+                uploadedUris.add(matchingLocal.uri) // Match found! This local photo is uploaded/synced.
             } else {
                 val cloudUri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}"
                 if (!addedUris.contains(cloudUri)) {
@@ -95,6 +112,9 @@ object PhotosRepository {
         }
 
         // 3. Sort strictly by date taken descending
-        list.sortedByDescending { it.dateTaken }
+        MergeResult(
+            mergedPhotos = list.sortedByDescending { it.dateTaken },
+            uploadedUris = uploadedUris
+        )
     }
 }

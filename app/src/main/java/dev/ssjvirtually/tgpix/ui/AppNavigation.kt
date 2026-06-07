@@ -260,6 +260,7 @@ fun MainAppLayout(
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     var mergedPhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
+    var uploadedUrisSet by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     LaunchedEffect(hasPermission) {
         if (hasPermission) {
@@ -316,9 +317,10 @@ fun MainAppLayout(
     // Hoisted background thread merging and deduplication via PhotosRepository.
     LaunchedEffect(localPhotos, cloudLogs) {
         if (mergedPhotosList.isEmpty()) isScanningLocal = true
-        val merged = dev.ssjvirtually.tgpix.storage.PhotosRepository.mergeAndDeduplicate(localPhotos, cloudLogs)
+        val result = dev.ssjvirtually.tgpix.storage.PhotosRepository.mergeAndDeduplicate(localPhotos, cloudLogs)
         withContext(Dispatchers.Main) {
-            mergedPhotosList = merged
+            mergedPhotosList = result.mergedPhotos
+            uploadedUrisSet = result.uploadedUris
             isScanningLocal = false
         }
     }
@@ -588,6 +590,7 @@ fun MainAppLayout(
                                     activeTab = "Settings"
                                 },
                                 mergedPhotosList = mergedPhotosList,
+                                uploadedUris = uploadedUrisSet,
                                 isScanningLocal = isScanningLocal,
                                 isSyncingCloud = isSyncingCloud,
                                 hasPermission = hasPermission,
@@ -603,6 +606,7 @@ fun MainAppLayout(
                                     devicePhotosList = photos
                                 },
                                 mergedPhotosList = mergedPhotosList,
+                                uploadedUris = uploadedUrisSet,
                                 isScanning = isScanningLocal
                             )
                         }
@@ -636,6 +640,7 @@ fun MainAppLayout(
                     PhotoViewerScreen(
                         photosList = devicePhotosList,
                         startIndex = fullScreenPhotoIndex!!,
+                        uploadedUris = uploadedUrisSet,
                         onClose = {
                             fullScreenPhotoIndex = null
                             devicePhotosList = emptyList()

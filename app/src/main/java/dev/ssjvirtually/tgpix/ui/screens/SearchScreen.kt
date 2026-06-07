@@ -74,6 +74,7 @@ data class SearchItem(val photo: LocalPhoto, val keywords: String)
 fun SearchScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
     mergedPhotosList: List<LocalPhoto>,
+    uploadedUris: Set<String>,
     isScanning: Boolean
 ) {
     val context = LocalContext.current
@@ -91,20 +92,20 @@ fun SearchScreen(
     var initialSelection by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
     var isSelecting by remember { mutableStateOf(true) }
     var dragCurrentPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-
+ 
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val isTablet = screenWidthDp >= 600
     val minColumns = if (isTablet) 3 else 2
     val maxColumns = if (isTablet) 8 else 5
-
+ 
     var gridColumns by remember {
         mutableStateOf(PreferencesManager.getGridColumns(context, 3).coerceIn(minColumns, maxColumns))
     }
     var activeScale by remember { mutableStateOf(1f) }
     var transformOrigin by remember { mutableStateOf(TransformOrigin.Center) }
     var isZooming by remember { mutableStateOf(false) }
-
+ 
     if (isSelectionMode) {
         BackHandler {
             selectedPhotos.clear()
@@ -121,34 +122,25 @@ fun SearchScreen(
     val dbVersion by TdlibManager.dbVersion.collectAsState()
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-    val uploadedUris = remember(mergedPhotosList, cloudLogs) {
-        val synced = mutableSetOf<String>()
-        val regexTrashed = Regex("""^\.trashed-\d+-""")
-        fun String.normalize(): String = this.lowercase().replace(regexTrashed, "")
-        val cloudKeys = cloudLogs.map { "${it.fileName.normalize()}_${it.fileSize}" }.toSet()
-        for (photo in mergedPhotosList) {
-            if (!isCloudPhoto(photo.uri)) {
-                val key = "${photo.name.normalize()}_${photo.size}"
-                if (cloudKeys.contains(key)) {
-                    synced.add(photo.uri)
-                }
-            }
-        }
-        synced
-    }
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
-
+ 
     val unifiedPhotos = mergedPhotosList
-
-    // Pre-computed lowercase search keywords for zero-allocation performance in typing loops
-    val sdf = remember { java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault()) }
-    val indexedPhotos = remember(unifiedPhotos) {
-        unifiedPhotos.map { photo ->
-            val formattedDate = try {
-                sdf.format(java.util.Date(photo.dateTaken)).lowercase()
-            } catch (e: Exception) { "" }
-            val keywords = "${photo.name.lowercase()} ${photo.tags.lowercase()} $formattedDate"
-            SearchItem(photo, keywords)
+ 
+    // Pre-computed lowercase search keywords calculated on a background thread to prevent UI thread blocking
+    var indexedPhotos by remember { mutableStateOf<List<SearchItem>>(emptyList()) }
+    LaunchedEffect(unifiedPhotos) {
+        withContext(Dispatchers.IO) {
+            val sdf = java.text.SimpleDateFormat("EEEE, MMMM dd, yyyy", java.util.Locale.getDefault())
+            val indexed = unifiedPhotos.map { photo ->
+                val formattedDate = try {
+                    sdf.format(java.util.Date(photo.dateTaken)).lowercase()
+                } catch (e: Exception) { "" }
+                val keywords = "${photo.name.lowercase()} ${photo.tags.lowercase()} $formattedDate"
+                SearchItem(photo, keywords)
+            }
+            withContext(Dispatchers.Main) {
+                indexedPhotos = indexed
+            }
         }
     }
 
