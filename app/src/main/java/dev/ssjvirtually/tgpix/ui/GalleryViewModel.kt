@@ -34,6 +34,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+private val searchDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy", Locale.getDefault())
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class GalleryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -78,7 +80,6 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         )
 
     // 2. Search indexing using thread-safe DateTimeFormatter and running on Default thread pool
-    private val searchDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy", Locale.getDefault())
 
     val searchIndex: StateFlow<List<SearchItem>> = mergedPhotosList.map { photos ->
         photos.map { photo ->
