@@ -232,3 +232,180 @@ fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
     
     return localPath
 }
+
+data class CloudPhotoDownloadState(
+    val path: String?,
+    val progress: Float
+)
+
+@Composable
+fun rememberCloudPhotoDownloadState(messageId: Long, isThumbnail: Boolean): CloudPhotoDownloadState {
+    val context = LocalContext.current
+    var localPath by remember(messageId, isThumbnail) { mutableStateOf<String?>(null) }
+    var progress by remember(messageId, isThumbnail) { mutableStateOf(0f) }
+    
+    LaunchedEffect(messageId, isThumbnail) {
+        val chatId = PreferencesManager.getChatId(context)
+        if (chatId == 0L) return@LaunchedEffect
+        
+        try {
+            val db = UploadDatabase.getDatabase(context)
+            val cachedPhoto = db.cloudDao().findByMessageId(messageId)
+            
+            // Check if we already have the local path cached in DB and it exists on disk
+            val existingPath = if (isThumbnail) cachedPhoto?.localCachedThumbnailPath else cachedPhoto?.localCachedLargePath
+            if (!existingPath.isNullOrEmpty() && java.io.File(existingPath).exists()) {
+                localPath = existingPath
+                progress = 1.0f
+                return@LaunchedEffect
+            }
+            
+            suspend fun performDownload(fileId: Int): String? {
+                val fileResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                if (fileResult is TdApi.File) {
+                    if (fileResult.local.isDownloadingCompleted) {
+                        progress = 1.0f
+                        return fileResult.local.path
+                    }
+                    
+                    val downloadResult = TdlibManager.sendRequest(TdApi.DownloadFile(fileId, 1, 0, 0, false))
+                    if (downloadResult is TdApi.File) {
+                        if (downloadResult.local.isDownloadingCompleted) {
+                            progress = 1.0f
+                            return downloadResult.local.path
+                        }
+                        var attempts = 0
+                        while (attempts < 60) {
+                            delay(500)
+                            val pollResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                            if (pollResult is TdApi.File) {
+                                val localFile = pollResult.local
+                                val totalSize = pollResult.size
+                                val currentProgress = if (totalSize.toFloat() > 0f) {
+                                    localFile.downloadedSize.toFloat() / totalSize.toFloat()
+                                } else {
+                                    0f
+                                }
+                                progress = currentProgress.coerceIn(0f, 1f)
+                                
+                                if (localFile.isDownloadingCompleted) {
+                                    progress = 1.0f
+                                    return localFile.path
+                                }
+                            } else if (pollResult is TdApi.Error) {
+                                break
+                            }
+                            attempts++
+                        }
+                    }
+                }
+                return null
+            }
+
+            var targetFileId = 0
+            val isFresh = cachedPhoto != null && 
+                    cachedPhoto.telegramFileId != 0 && 
+                    (System.currentTimeMillis() - cachedPhoto.fileIdCachedAt < 30 * 60 * 1000L)
+            
+            if (isFresh && cachedPhoto != null) {
+                targetFileId = if (isThumbnail) cachedPhoto.telegramThumbnailFileId else cachedPhoto.telegramFileId
+                android.util.Log.d("TGPix", "Using cached fresh targetFileId=$targetFileId for messageId=$messageId")
+            } else {
+                android.util.Log.d("TGPix", "Cache stale or missing for messageId=$messageId. Fetching fresh message...")
+                val messageResult = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+                if (messageResult is TdApi.Message) {
+                    val content = messageResult.content
+                    var fileId = 0
+                    var thumbFileId = 0
+                    
+                    if (content is TdApi.MessagePhoto) {
+                        val sizes = content.photo.sizes
+                        if (sizes.isNotEmpty()) {
+                            fileId = sizes.last().photo.id
+                            thumbFileId = sizes.first().photo.id
+                        }
+                    } else if (content is TdApi.MessageDocument) {
+                        val doc = content.document
+                        fileId = doc.document.id
+                        thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                    }
+                    
+                    if (fileId != 0) {
+                        targetFileId = if (isThumbnail) thumbFileId else fileId
+                        // Update cached photo in database
+                        if (cachedPhoto != null) {
+                            db.cloudDao().insert(
+                                cachedPhoto.copy(
+                                    telegramFileId = fileId,
+                                    telegramThumbnailFileId = thumbFileId,
+                                    fileIdCachedAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            
+            var path: String? = null
+            if (targetFileId != 0) {
+                path = performDownload(targetFileId)
+            }
+            
+            // Self-healing fallback: if download fails, refresh file ID and retry
+            if (path == null) {
+                android.util.Log.d("TGPix", "Download failed with cached ID. Fetching fresh message for messageId=$messageId...")
+                val messageResult = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+                if (messageResult is TdApi.Message) {
+                    val content = messageResult.content
+                    var fileId = 0
+                    var thumbFileId = 0
+                    
+                    if (content is TdApi.MessagePhoto) {
+                        val sizes = content.photo.sizes
+                        if (sizes.isNotEmpty()) {
+                            fileId = sizes.last().photo.id
+                            thumbFileId = sizes.first().photo.id
+                        }
+                    } else if (content is TdApi.MessageDocument) {
+                        val doc = content.document
+                        fileId = doc.document.id
+                        thumbFileId = doc.thumbnail?.file?.id ?: doc.document.id
+                    }
+                    
+                    if (fileId != 0) {
+                        targetFileId = if (isThumbnail) thumbFileId else fileId
+                        // Update cached photo in database
+                        if (cachedPhoto != null) {
+                            db.cloudDao().insert(
+                                cachedPhoto.copy(
+                                    telegramFileId = fileId,
+                                    telegramThumbnailFileId = thumbFileId,
+                                    fileIdCachedAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                        path = performDownload(targetFileId)
+                    }
+                }
+            }
+            
+            if (path != null) {
+                localPath = path
+                progress = 1.0f
+                // Save the successfully downloaded path to Room
+                if (cachedPhoto != null) {
+                    val updated = if (isThumbnail) {
+                        cachedPhoto.copy(localCachedThumbnailPath = path)
+                    } else {
+                        cachedPhoto.copy(localCachedLargePath = path)
+                    }
+                    db.cloudDao().insert(updated)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TGPix", "Exception in rememberCloudPhotoDownloadState: ${e.message}", e)
+        }
+    }
+    
+    return CloudPhotoDownloadState(localPath, progress)
+}

@@ -284,7 +284,7 @@ fun PhotoViewerScreen(
                          if (isCloud) {
                             val parts = parseCloudPhotoUri(photo.uri)
                             if (parts != null) {
-                                val localFilePath = rememberCloudThumbnailPath(
+                                val downloadState = rememberCloudPhotoDownloadState(
                                     messageId = parts.first,
                                     isThumbnail = false
                                 )
@@ -307,20 +307,33 @@ fun PhotoViewerScreen(
                                     }
                                     
                                     // 2. Cloud Full-Res Image
-                                    if (localFilePath != null) {
+                                    if (downloadState.path != null) {
                                         AsyncImage(
                                             model = ImageRequest.Builder(LocalContext.current)
-                                                .data(localFilePath)
+                                                .data(downloadState.path)
                                                 .build(),
                                             contentDescription = photo.name,
                                             contentScale = ContentScale.Fit,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     } else {
-                                        CircularProgressIndicator(
-                                            color = TelePhotosTheme.AccentBlue,
-                                            modifier = Modifier.align(Alignment.Center)
-                                        )
+                                        Box(
+                                            modifier = Modifier.align(Alignment.Center),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                progress = { downloadState.progress },
+                                                color = TelePhotosTheme.AccentBlue,
+                                                trackColor = Color.White.copy(alpha = 0.2f),
+                                                modifier = Modifier.size(64.dp)
+                                            )
+                                            Text(
+                                                text = "${(downloadState.progress * 100).toInt()}%",
+                                                color = Color.White,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
                                 }
                             }
