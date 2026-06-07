@@ -131,7 +131,8 @@ class ShareWorker(
 
             // 5. Backup-Before-Share pipeline loop (upload if local-only and not backed up yet)
             for ((index, photo) in photosToShare.withIndex()) {
-                var isSynced = db.dao().find(photo.uri) != null
+                val existingUpload = db.dao().find(photo.uri)
+                var isSynced = existingUpload != null && existingUpload.telegramMessageId != 0L
                 if (!isSynced && !photo.uri.startsWith("cloud://") && mainChatId != 0L) {
                     val fingerprint = photo.getFingerprint(applicationContext)
                     val existingInCloud = db.cloudDao().findByFingerprint(fingerprint)

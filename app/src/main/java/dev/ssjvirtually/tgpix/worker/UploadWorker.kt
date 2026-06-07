@@ -149,7 +149,7 @@ class UploadWorker(
 
             // 8a. Load all local uploads and cloud photos to perform fast in-memory matching
             val localUploads = dao.getAll()
-            val localUploadedPaths = localUploads.map { it.path }.toSet()
+            val localUploadsMap = localUploads.associateBy { it.path }
 
             val cloudPhotos = db.cloudDao().getAll()
             val cloudByFileName = cloudPhotos.groupBy { it.fileName.lowercase() }
@@ -158,8 +158,16 @@ class UploadWorker(
             val syncedToInsert = mutableListOf<UploadEntity>()
 
             for (photo in photos) {
-                if (photo.uri in localUploadedPaths) {
-                    continue
+                val existingUpload = localUploadsMap[photo.uri]
+                if (existingUpload != null) {
+                    if (existingUpload.telegramMessageId != 0L) {
+                        // Already successfully uploaded
+                        continue
+                    }
+                    if (existingUpload.permanentlyFailed || existingUpload.retryCount >= 5) {
+                        // Skip permanently failed photos to save battery & API limits
+                        continue
+                    }
                 }
 
                 // Check if already in cloud database (e.g. from another device or prior sync)
@@ -203,6 +211,29 @@ class UploadWorker(
             var failedCount = 0
             var skippedCount = 0
 
+            // Helper to track and record upload failures in the database
+            suspend fun recordFailure(photo: dev.ssjvirtually.tgpix.storage.LocalPhoto, fingerprint: String, reason: String) {
+                try {
+                    val existing = dao.find(photo.uri)
+                    val newRetryCount = (existing?.retryCount ?: 0) + 1
+                    val isPermanent = newRetryCount >= 5
+                    val entity = UploadEntity(
+                        mediaStoreId = photo.id,
+                        path = photo.uri,
+                        contentFingerprint = fingerprint,
+                        uploadedAt = 0L,
+                        telegramMessageId = 0L,
+                        retryCount = newRetryCount,
+                        lastFailureReason = reason,
+                        permanentlyFailed = isPermanent
+                    )
+                    dao.insert(entity)
+                    TdlibManager.addLog("Worker: Recorded failure for '${photo.name}' (Retry: $newRetryCount, Permanent: $isPermanent, Reason: $reason)")
+                } catch (ex: Exception) {
+                    TdlibManager.addLog("Worker: Failed to record failure in DB for '${photo.name}': ${ex.message}")
+                }
+            }
+
             // 9. Loop and upload unsynced photos sequentially (one-by-one)
             for (photo in unsyncedPhotos) {
                 // Re-verify backup toggle mid-run in case it was switched off during active sequence
@@ -219,12 +250,17 @@ class UploadWorker(
                     TdlibManager.addLog("Worker: Re-acquired WakeLock mid-run.")
                 }
 
+                val fingerprint = try {
+                    photo.getFingerprint(applicationContext)
+                } catch (e: Exception) {
+                    "unknown_fingerprint"
+                }
+                val fileKey = photo.uri
+
                 // Per-photo isolation: an exception on one photo must never abort the entire
                 // batch. Corrupt files, missing content resolver paths, or transient TDLib
                 // errors should log clearly and skip to the next photo.
                 try {
-                    val fileKey = photo.uri
-
                     // Update user-visible notification with active upload progress
                     try {
                         val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${unsyncedPhotos.size})"
@@ -233,7 +269,6 @@ class UploadWorker(
                         e.printStackTrace()
                     }
 
-                    val fingerprint = photo.getFingerprint(applicationContext)
                     val currentIsHd = PreferencesManager.isHdMode(applicationContext)
                     val modeStr = if (currentIsHd) "HD" else "standard quality"
                     TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
@@ -249,7 +284,10 @@ class UploadWorker(
                                     path = fileKey,
                                     contentFingerprint = fingerprint,
                                     uploadedAt = System.currentTimeMillis(),
-                                    telegramMessageId = uploadResult.id
+                                    telegramMessageId = uploadResult.id,
+                                    retryCount = 0,
+                                    lastFailureReason = null,
+                                    permanentlyFailed = false
                                 )
                             )
                             try {
@@ -260,18 +298,24 @@ class UploadWorker(
                             uploadedCount++
                         }
                         is TdApi.Error -> {
-                            TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")
+                            val errMsg = "[${uploadResult.code}] ${uploadResult.message}"
+                            TdlibManager.addLog("Worker: failed to back up '${photo.name}': $errMsg")
+                            recordFailure(photo, fingerprint, errMsg)
                             failedCount++
                         }
                         else -> {
-                            TdlibManager.addLog("Worker: backup returned unexpected response for '${photo.name}': ${uploadResult::class.java.simpleName}")
+                            val responseType = uploadResult::class.java.simpleName
+                            TdlibManager.addLog("Worker: backup returned unexpected response for '${photo.name}': $responseType")
+                            recordFailure(photo, fingerprint, "Unexpected response: $responseType")
                             skippedCount++
                         }
                     }
                 } catch (e: Exception) {
                     // Isolate this photo — log and continue with the rest of the batch
-                    TdlibManager.addLog("Worker: exception uploading '${photo.name}' — skipping. Error: ${e.message}")
+                    val excMsg = e.message ?: "Unknown exception"
+                    TdlibManager.addLog("Worker: exception uploading '${photo.name}' — skipping. Error: $excMsg")
                     e.printStackTrace()
+                    recordFailure(photo, fingerprint, excMsg)
                     failedCount++
                 }
 

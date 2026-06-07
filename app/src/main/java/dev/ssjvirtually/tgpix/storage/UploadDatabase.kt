@@ -24,7 +24,10 @@ data class UploadEntity(
     val path: String,
     val contentFingerprint: String,
     val uploadedAt: Long,
-    val telegramMessageId: Long
+    val telegramMessageId: Long,
+    val retryCount: Int = 0,
+    val lastFailureReason: String? = null,
+    val permanentlyFailed: Boolean = false
 )
 
 @Dao
@@ -208,7 +211,7 @@ abstract class UploadDatabase : RoomDatabase() {
     abstract fun albumDao(): AlbumDao
 
     companion object {
-        const val DATABASE_VERSION = 15
+        const val DATABASE_VERSION = 16
 
         @Volatile
         private var INSTANCE: UploadDatabase? = null
@@ -402,6 +405,14 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `uploads` ADD COLUMN `retryCount` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `uploads` ADD COLUMN `lastFailureReason` TEXT")
+                db.execSQL("ALTER TABLE `uploads` ADD COLUMN `permanentlyFailed` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -423,7 +434,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
-                    MIGRATION_14_15
+                    MIGRATION_14_15,
+                    MIGRATION_15_16
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
@@ -508,13 +520,20 @@ abstract class UploadDatabase : RoomDatabase() {
                         while (c.moveToNext()) {
                             fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
                             fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                            fun int(col: String) = try { c.getInt(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0 }
+                            val retryCountVal = int("retryCount")
+                            val lastFailureReasonVal = str("lastFailureReason")
+                            val permanentlyFailedVal = int("permanentlyFailed") != 0
                             uploads.add(
                                 UploadEntity(
                                     mediaStoreId = lng("mediaStoreId"),
                                     path = str("path") ?: continue,
                                     contentFingerprint = str("contentFingerprint") ?: "",
                                     uploadedAt = lng("uploadedAt"),
-                                    telegramMessageId = lng("telegramMessageId")
+                                    telegramMessageId = lng("telegramMessageId"),
+                                    retryCount = retryCountVal,
+                                    lastFailureReason = lastFailureReasonVal,
+                                    permanentlyFailed = permanentlyFailedVal
                                 )
                             )
                         }
@@ -587,8 +606,8 @@ abstract class UploadDatabase : RoomDatabase() {
                         }
                         uploads.forEach { u ->
                             sqLite.execSQL(
-                                "INSERT OR REPLACE INTO uploads (mediaStoreId,path,contentFingerprint,uploadedAt,telegramMessageId) VALUES(?,?,?,?,?)",
-                                arrayOf(u.mediaStoreId, u.path, u.contentFingerprint, u.uploadedAt, u.telegramMessageId)
+                                "INSERT OR REPLACE INTO uploads (mediaStoreId,path,contentFingerprint,uploadedAt,telegramMessageId,retryCount,lastFailureReason,permanentlyFailed) VALUES(?,?,?,?,?,?,?,?)",
+                                arrayOf(u.mediaStoreId, u.path, u.contentFingerprint, u.uploadedAt, u.telegramMessageId, u.retryCount, u.lastFailureReason, if (u.permanentlyFailed) 1 else 0)
                             )
                         }
                         albums.forEach { a ->
