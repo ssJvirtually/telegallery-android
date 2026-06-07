@@ -184,7 +184,7 @@ interface AlbumDao {
 
 @Database(
     entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
-    version = 15,
+    version = UploadDatabase.DATABASE_VERSION,
     exportSchema = false
 )
 abstract class UploadDatabase : RoomDatabase() {
@@ -193,6 +193,8 @@ abstract class UploadDatabase : RoomDatabase() {
     abstract fun albumDao(): AlbumDao
 
     companion object {
+        const val DATABASE_VERSION = 15
+
         @Volatile
         private var INSTANCE: UploadDatabase? = null
 

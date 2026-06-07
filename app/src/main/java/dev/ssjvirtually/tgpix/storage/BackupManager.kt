@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import kotlin.coroutines.resume
 import androidx.work.WorkManager
 import androidx.work.OneTimeWorkRequestBuilder
@@ -160,16 +161,38 @@ object BackupManager {
                     return@withContext
                 }
 
+                // 1. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
+                val checkpointSuccess = try {
+                    val cursor = db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)")
+                    cursor.use { c ->
+                        if (c.moveToFirst()) {
+                            val busy = c.getInt(0)
+                            val log = c.getInt(1)
+                            val checkpointed = c.getInt(2)
+                            if (busy != 0 || log != checkpointed) {
+                                TdlibManager.addLog("WAL checkpoint incomplete: busy=$busy log=$log checkpointed=$checkpointed")
+                                false
+                            } else {
+                                true
+                            }
+                        } else {
+                            false
+                        }
+                    }
+                } catch (e: Exception) {
+                    TdlibManager.addLog("Failed to execute WAL checkpoint: ${e.message}")
+                    e.printStackTrace()
+                    false
+                }
+
+                if (!checkpointSuccess) {
+                    isBackupRunning = false
+                    return@withContext
+                }
+
                 // 2. Safely lock the database and perform a copy while in a Room transaction
                 val transactionResult = try {
                     db.withTransaction {
-                        // 1. Flush Room's WAL logs and truncate the WAL file size inside transaction
-                        try {
-                            db.openHelper.writableDatabase.execSQL("PRAGMA wal_checkpoint(TRUNCATE)")
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-
                         val currentCount = db.cloudDao().getRecordCountDirect()
                         val lastCount = PreferencesManager.getLastBackupRecordCount(context)
 
@@ -222,8 +245,12 @@ object BackupManager {
                         null
                     }
                 } else null
-
-                val uploadResult = uploadFile(tempBackupFile, targetChatId, "TGPix SQLite Database Backup #tgpix_backup sha256:$sha256")
+                val dbVersion = UploadDatabase.DATABASE_VERSION
+                val uploadResult = uploadFile(
+                    tempBackupFile,
+                    targetChatId,
+                    "TGPix SQLite Database Backup #tgpix_backup v$dbVersion sha256:$sha256 records:$currentCount"
+                )
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
                     
@@ -252,10 +279,10 @@ object BackupManager {
                     PreferencesManager.setLastBackupRecordCount(context, currentCount)
                     
                     TdlibManager.addLog("SQLite backup updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
-
+ 
                     // 6. Daily master backup strategy
                     if (tempMasterFile != null && tempMasterFile.exists()) {
-                        performDailyMasterBackup(context, tempMasterFile, sha256)
+                        performDailyMasterBackup(context, tempMasterFile, sha256, currentCount)
                     }
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
@@ -276,7 +303,7 @@ object BackupManager {
         }
     }
 
-    private suspend fun performDailyMasterBackup(context: Context, tempMasterFile: File, sha256: String) {
+    private suspend fun performDailyMasterBackup(context: Context, tempMasterFile: File, sha256: String, recordsCount: Int) {
         val myUserId = resolveMyUserId()
         if (myUserId == 0L) {
             TdlibManager.addLog("Daily master backup aborted: Unable to resolve myUserId")
@@ -304,7 +331,8 @@ object BackupManager {
 
         try {
             TdlibManager.addLog("Uploading daily master backup (#tgpix_master_backup) to Saved Messages (Chat ID: $myUserId)...")
-            val caption = "TGPix SQLite Master Database Backup #tgpix_master_backup sha256:$sha256"
+            val dbVersion = UploadDatabase.DATABASE_VERSION
+            val caption = "TGPix SQLite Master Database Backup #tgpix_master_backup v$dbVersion sha256:$sha256 records:$recordsCount"
             val uploadResult = uploadFile(tempMasterFile, myUserId, caption)
             if (uploadResult is TdApi.Message) {
                 val newMasterMsgId = uploadResult.id
@@ -372,12 +400,18 @@ object BackupManager {
                 val docContent = message.content as? TdApi.MessageDocument
                 val document = docContent?.document
                 if (document != null) {
+                    val captionText = docContent.caption?.text ?: ""
+                    val backupVersion = captionText.substringAfter(" v", "").trim().substringBefore(" ").toIntOrNull()
+                    if (backupVersion != null && backupVersion > UploadDatabase.DATABASE_VERSION) {
+                        TdlibManager.addLog("Skipping backup (Msg ID: ${message.id}): backup version ($backupVersion) is newer than app database version (${UploadDatabase.DATABASE_VERSION}). Please update the app.")
+                        continue
+                    }
+
                     TdlibManager.addLog("Attempting to download backup (Msg ID: ${message.id}, File ID: ${document.document.id})...")
                     
                     val downloadedFile = downloadFile(document.document.id)
                     if (downloadedFile != null && downloadedFile.exists()) {
                         // Verify integrity via SHA-256 checksum
-                        val captionText = docContent.caption.text
                         val expectedHash = captionText.substringAfter("sha256:", "").trim().substringBefore(" ")
                         if (expectedHash.isNotEmpty()) {
                             val actualHash = computeSha256(downloadedFile)

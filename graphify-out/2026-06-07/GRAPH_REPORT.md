@@ -1,11 +1,11 @@
 # Graph Report - telegallery-calude  (2026-06-07)
 
 ## Corpus Check
-- 41 files · ~201,290 words
+- 41 files · ~201,229 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 636 nodes · 946 edges · 56 communities (39 shown, 17 thin omitted)
+- 636 nodes · 945 edges · 62 communities (45 shown, 17 thin omitted)
 - Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 78 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
@@ -67,7 +67,13 @@
 - [[_COMMUNITY_Community 52|Community 52]]
 - [[_COMMUNITY_Community 53|Community 53]]
 - [[_COMMUNITY_Community 54|Community 54]]
+- [[_COMMUNITY_Community 55|Community 55]]
+- [[_COMMUNITY_Community 56|Community 56]]
+- [[_COMMUNITY_Community 57|Community 57]]
 - [[_COMMUNITY_Community 58|Community 58]]
+- [[_COMMUNITY_Community 59|Community 59]]
+- [[_COMMUNITY_Community 60|Community 60]]
+- [[_COMMUNITY_Community 61|Community 61]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `PreferencesManager` - 36 edges
@@ -106,7 +112,7 @@
 - **User Authentication Flow** — screens_phoneloginscreen_phoneloginscreen, screens_otpverifyscreen_otpverifyscreen, screenshots_login_screen_otp_login_form [INFERRED 0.85]
 - **Media Backup and Sync Ecosystem** — screenshots_settings_screen_private_vault, screenshots_gallery_timeline_sync_badges, screenshots_photo_viewer_action_sheet, storage_backupmanager_backupmanager [INFERRED 0.85]
 
-## Communities (56 total, 17 thin omitted)
+## Communities (62 total, 17 thin omitted)
 
 ### Community 0 - "Database and DAO Schema"
 Cohesion: 0.06
@@ -117,8 +123,8 @@ Cohesion: 0.12
 Nodes (8): android, Boolean, Context, Int, List, Long, String, PreferencesManager
 
 ### Community 2 - "Authentication and Navigation UI"
-Cohesion: 0.06
-Nodes (30): String, String, String, File, Float, String, TGPix README, OtpVerifyScreen() (+22 more)
+Cohesion: 0.08
+Nodes (20): String, String, TGPix README, OtpVerifyScreen(), PhoneLoginScreen(), SettingsScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane (+12 more)
 
 ### Community 3 - "Background Backup Workers"
 Cohesion: 0.07
@@ -129,12 +135,12 @@ Cohesion: 0.12
 Nodes (18): app/build.gradle, Boolean, Context, Int, List, Long, String, TdApi (+10 more)
 
 ### Community 5 - "Albums Screen UI and Utils"
-Cohesion: 0.07
-Nodes (48): androidx, Context, Int, List, LocalPhoto, Long, String, Boolean (+40 more)
+Cohesion: 0.18
+Nodes (18): Boolean, CloudPhotoEntity, Context, Int, List, LocalPhoto, String, CloudPhotoEntity (+10 more)
 
 ### Community 6 - "Photos Grid and Search UI"
-Cohesion: 0.08
-Nodes (28): androidx, Boolean, Context, Int, List, LocalPhoto, String, androidx (+20 more)
+Cohesion: 0.15
+Nodes (15): androidx, Boolean, Context, Int, List, LocalPhoto, String, getItemIndexAt() (+7 more)
 
 ### Community 7 - "Database Backup Manager"
 Cohesion: 0.21
@@ -248,29 +254,53 @@ Nodes (3): 6. Phase 2 — Local Gallery, Goal, Steps
 Cohesion: 0.67
 Nodes (3): 8. Phase 4 — Telegram Storage Integration, Goal, Steps
 
+### Community 55 - "Community 55"
+Cohesion: 0.18
+Nodes (17): androidx, Context, Int, List, LocalPhoto, Long, String, Albums Screen Sharing Error Screenshot (+9 more)
+
+### Community 56 - "Community 56"
+Cohesion: 0.23
+Nodes (13): Boolean, Int, Long, String, Volatile File ID Refresh, Triple, GalleryItem, Header (+5 more)
+
+### Community 57 - "Community 57"
+Cohesion: 0.28
+Nodes (8): androidx, Boolean, Int, List, LocalPhoto, getItemIndexAt(), SearchItem, SearchScreen()
+
 ### Community 58 - "Community 58"
 Cohesion: 0.29
 Nodes (5): CloudPhotoEntity, List, LocalPhoto, String, PhotosRepository
 
+### Community 59 - "Community 59"
+Cohesion: 0.25
+Nodes (7): File, Float, String, UpdateDialog(), UpdateState, UpdateInfo, UpdateState
+
+### Community 60 - "Community 60"
+Cohesion: 0.40
+Nodes (5): List, LocalPhoto, TdApi, ChatRow(), TelegramShareDialog()
+
+### Community 61 - "Community 61"
+Cohesion: 0.67
+Nodes (3): String, AppNavigation(), MainAppLayout()
+
 ## Knowledge Gaps
-- **251 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+246 more)
+- **252 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `Bundle`, `List` (+247 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Image Upload Manager`, `Authentication and Navigation UI`, `Albums Screen UI and Utils`?**
+- **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Database and DAO Schema`, `Authentication and Navigation UI`, `Image Upload Manager`, `Community 55`, `Community 56`, `Community 57`, `Community 60`, `Community 61`?**
   _High betweenness centrality (0.087) - this node is a cross-community bridge._
-- **Why does `AppNavigation()` connect `Authentication and Navigation UI` to `Main Activity UI Lifecycle`, `Telegram Client Integration`?**
+- **Why does `AppNavigation()` connect `Community 61` to `Community 59`, `Main Activity UI Lifecycle`, `Authentication and Navigation UI`, `Telegram Client Integration`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `TdlibManager` connect `Telegram Client Integration` to `Background Backup Workers`?**
   _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **What connects `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` to the rest of the system?**
-  _265 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _266 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Database and DAO Schema` be split into smaller, more focused modules?**
   _Cohesion score 0.06412583182093164 - nodes in this community are weakly interconnected._
 - **Should `Application Preferences` be split into smaller, more focused modules?**
   _Cohesion score 0.12073170731707317 - nodes in this community are weakly interconnected._
 - **Should `Authentication and Navigation UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05897435897435897 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07936507936507936 - nodes in this community are weakly interconnected._
