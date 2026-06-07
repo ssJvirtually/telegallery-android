@@ -293,6 +293,11 @@ object BackupManager {
                     if (tempMasterFile != null && tempMasterFile.exists()) {
                         performDailyMasterBackup(context, tempMasterFile, sha256, currentCount)
                     }
+                    UploadDatabase.recordEvent(
+                        context,
+                        "db_backup_success",
+                        "Successfully backed up database to Telegram Message ID $newMsgId (Records: $currentCount)"
+                    )
                     uploadSuccess = true
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
@@ -300,6 +305,11 @@ object BackupManager {
                         tempMasterFile.delete()
                     }
                     TdlibManager.checkAndHandleChatError(context, uploadResult)
+                    UploadDatabase.recordEvent(
+                        context,
+                        "db_backup_failed",
+                        "Failed to back up database. Telegram Error: [${uploadResult.code}] ${uploadResult.message}"
+                    )
                 }
                 
                 // Clean up local temp file
@@ -310,6 +320,11 @@ object BackupManager {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            UploadDatabase.recordEvent(
+                context,
+                "db_backup_failed",
+                "Exception during database backup: ${e.message}"
+            )
         } finally {
             isBackupRunning = false
         }
@@ -482,6 +497,11 @@ object BackupManager {
                             android.os.Handler(android.os.Looper.getMainLooper()).post {
                                 Toast.makeText(context, "Gallery restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
                             }
+                            UploadDatabase.recordEvent(
+                                context,
+                                "restore_success",
+                                "Successfully restored $restored cloud photo records from Msg ID: ${message.id}"
+                            )
                             return true
                         } else {
                             TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}. Trying next backup...")
@@ -540,6 +560,13 @@ object BackupManager {
                 restored = tryRestoreFromChatAndTag(context, myUserId, "#tgpix_master_backup")
             }
             
+            if (!restored) {
+                UploadDatabase.recordEvent(
+                    context,
+                    "restore_failed",
+                    "Failed to restore database from backup channel ($targetChatId) or master backup ($myUserId)"
+                )
+            }
             return@withContext restored
         }
     }

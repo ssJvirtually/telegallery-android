@@ -28,6 +28,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dev.ssjvirtually.tgpix.MainActivity
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.UploadDatabase
+import dev.ssjvirtually.tgpix.storage.BackupEventEntity
 import dev.ssjvirtually.tgpix.telegram.AuthManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
@@ -51,6 +53,11 @@ fun SettingsScreen(
     val chats by TdlibManager.chats.collectAsState()
     val systemLogs by TdlibManager.logs.collectAsState()
     var activePickerType by remember { mutableStateOf<String?>(null) }
+    
+    val dbVersion by TdlibManager.dbVersion.collectAsState()
+    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
+    val eventDao = remember(db) { db.eventDao() }
+    val backupEvents by eventDao.getAllFlow().collectAsState(initial = emptyList())
     
     var dbChatTitle by remember {
         mutableStateOf(
@@ -434,13 +441,119 @@ fun SettingsScreen(
                 }
             }
 
+            // Backup Events Observability History
+            item {
+                Text(
+                    text = "Backup & Restore History",
+                    color = TelePhotosTheme.TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D12)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                ) {
+                    if (backupEvents.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No backup events recorded yet.",
+                                color = TelePhotosTheme.TextSecondary,
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(backupEvents.take(50)) { event ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF16161F), RoundedCornerShape(8.dp))
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val isSuccess = event.eventType.contains("success")
+                                    val icon = if (isSuccess) Icons.Default.Cloud else Icons.Default.Info
+                                    val iconColor = if (isSuccess) Color(0xFF00E676) else TelePhotosTheme.GoogleRed
+                                    
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = null,
+                                        tint = iconColor,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            val title = when (event.eventType) {
+                                                "photo_upload_success" -> "Photo Synced"
+                                                "photo_upload_failed" -> "Photo Sync Failed"
+                                                "photo_upload_permanently_failed" -> "Photo Permanent Failure"
+                                                "db_backup_success" -> "Database Backed Up"
+                                                "db_backup_failed" -> "Database Backup Failed"
+                                                "restore_success" -> "Backup Restored"
+                                                "restore_failed" -> "Restore Failed"
+                                                else -> event.eventType.replace("_", " ").replaceFirstChar { it.uppercase() }
+                                            }
+                                            Text(
+                                                text = title,
+                                                color = TelePhotosTheme.TextPrimary,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            val timeFormatted = remember(event.timestamp) {
+                                                val sdf = java.text.SimpleDateFormat("HH:mm:ss dd/MM", java.util.Locale.getDefault())
+                                                sdf.format(java.util.Date(event.timestamp))
+                                            }
+                                            Text(
+                                                text = timeFormatted,
+                                                color = TelePhotosTheme.TextSecondary,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                        event.details?.let {
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = it,
+                                                color = TelePhotosTheme.TextSecondary,
+                                                fontSize = 11.sp,
+                                                lineHeight = 14.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // System JNI Core Logs Console
             item {
                 Text(
                     text = "Active JNI Core Logs",
                     color = TelePhotosTheme.TextPrimary,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
             }
 

@@ -174,6 +174,11 @@ class ShareWorker(
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
+                        UploadDatabase.recordEvent(
+                            applicationContext,
+                            "photo_upload_success",
+                            "Successfully backed up photo '${photo.name}' (size: ${photo.size} bytes) during share-prep"
+                        )
                         TdlibManager.addLog("ShareWorker: Successfully backed up '${photo.name}' to main vault.")
                     } else {
                         val errMsg = if (backupResult is TdApi.Error) {
@@ -182,6 +187,11 @@ class ShareWorker(
                             "Unknown error"
                         }
                         TdlibManager.addLog("ShareWorker: Failed to back up '${photo.name}' before sharing: $errMsg. Continuing.")
+                        UploadDatabase.recordEvent(
+                            applicationContext,
+                            "photo_upload_failed",
+                            "Failed to back up photo '${photo.name}' during share-prep. Reason: $errMsg"
+                        )
                         if (backupResult is TdApi.Error && TdlibManager.checkAndHandleChatError(applicationContext, backupResult)) {
                             break
                         }

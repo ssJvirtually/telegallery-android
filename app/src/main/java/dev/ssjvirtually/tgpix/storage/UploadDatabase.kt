@@ -200,8 +200,31 @@ interface AlbumDao {
     suspend fun getRecordCountDirect(): Int
 }
 
+@Entity(tableName = "backup_events")
+data class BackupEventEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val eventType: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val details: String? = null
+)
+
+@Dao
+interface BackupEventDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(event: BackupEventEntity)
+
+    @Query("SELECT * FROM backup_events ORDER BY timestamp DESC")
+    fun getAllFlow(): Flow<List<BackupEventEntity>>
+
+    @Query("SELECT * FROM backup_events ORDER BY timestamp DESC")
+    suspend fun getAll(): List<BackupEventEntity>
+
+    @Query("DELETE FROM backup_events")
+    suspend fun clearAll()
+}
+
 @Database(
-    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class],
+    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class, BackupEventEntity::class],
     version = UploadDatabase.DATABASE_VERSION,
     exportSchema = false
 )
@@ -209,9 +232,10 @@ abstract class UploadDatabase : RoomDatabase() {
     abstract fun dao(): UploadDao
     abstract fun cloudDao(): CloudPhotoDao
     abstract fun albumDao(): AlbumDao
+    abstract fun eventDao(): BackupEventDao
 
     companion object {
-        const val DATABASE_VERSION = 16
+        const val DATABASE_VERSION = 17
 
         @Volatile
         private var INSTANCE: UploadDatabase? = null
@@ -413,6 +437,21 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `backup_events` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `eventType` TEXT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        `details` TEXT
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -435,7 +474,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_12_13,
                     MIGRATION_13_14,
                     MIGRATION_14_15,
-                    MIGRATION_15_16
+                    MIGRATION_15_16,
+                    MIGRATION_16_17
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
@@ -573,6 +613,25 @@ abstract class UploadDatabase : RoomDatabase() {
                         }
                     }
 
+                    // ── Read backup_events ─────────────────────────────────────────────
+                    val events = mutableListOf<BackupEventEntity>()
+                    try {
+                        rawDb.rawQuery("SELECT * FROM backup_events", null).use { c ->
+                            while (c.moveToNext()) {
+                                fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
+                                fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                                events.add(
+                                    BackupEventEntity(
+                                        id = lng("id"),
+                                        eventType = str("eventType") ?: continue,
+                                        timestamp = lng("timestamp"),
+                                        details = str("details")
+                                    )
+                                )
+                            }
+                        }
+                    } catch (_: Exception) {}
+
                     rawDb.close()
                     rawDb = null
 
@@ -622,6 +681,15 @@ abstract class UploadDatabase : RoomDatabase() {
                                 arrayOf(ap.albumId, ap.photoUri)
                             )
                         }
+                        try {
+                            sqLite.execSQL("DELETE FROM backup_events")
+                            events.forEach { ev ->
+                                sqLite.execSQL(
+                                    "INSERT OR REPLACE INTO backup_events (id,eventType,timestamp,details) VALUES(?,?,?,?)",
+                                    arrayOf(ev.id, ev.eventType, ev.timestamp, ev.details)
+                                )
+                            }
+                        } catch (_: Exception) {}
                     }
 
                     cloudPhotos.size
@@ -631,6 +699,21 @@ abstract class UploadDatabase : RoomDatabase() {
                 } finally {
                     try { rawDb?.close() } catch (_: Exception) {}
                 }
+            }
+        }
+
+        suspend fun recordEvent(context: Context, eventType: String, details: String? = null) {
+            try {
+                val db = getDatabase(context)
+                db.eventDao().insert(
+                    BackupEventEntity(
+                        eventType = eventType,
+                        timestamp = System.currentTimeMillis(),
+                        details = details
+                    )
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("UploadDatabase", "Failed to record event: $eventType", e)
             }
         }
     }

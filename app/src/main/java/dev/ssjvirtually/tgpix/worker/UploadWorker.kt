@@ -229,6 +229,12 @@ class UploadWorker(
                     )
                     dao.insert(entity)
                     TdlibManager.addLog("Worker: Recorded failure for '${photo.name}' (Retry: $newRetryCount, Permanent: $isPermanent, Reason: $reason)")
+                    
+                    UploadDatabase.recordEvent(
+                        applicationContext,
+                        if (isPermanent) "photo_upload_permanently_failed" else "photo_upload_failed",
+                        "Failed to back up photo '${photo.name}'. Reason: $reason (Attempt $newRetryCount/5)"
+                    )
                 } catch (ex: Exception) {
                     TdlibManager.addLog("Worker: Failed to record failure in DB for '${photo.name}': ${ex.message}")
                 }
@@ -295,6 +301,11 @@ class UploadWorker(
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
+                            UploadDatabase.recordEvent(
+                                applicationContext,
+                                "photo_upload_success",
+                                "Successfully backed up photo '${photo.name}' (size: ${photo.size} bytes)"
+                            )
                             uploadedCount++
                         }
                         is TdApi.Error -> {
