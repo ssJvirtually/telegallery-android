@@ -381,7 +381,22 @@ fun MainAppLayout(
             ) {
                 NavigationBarItem(
                     selected = activeTab == "Photos",
-                    onClick = { activeTab = "Photos" },
+                    onClick = {
+                        if (activeTab == "Photos") {
+                            if (fullScreenPhotoIndex != null) {
+                                fullScreenPhotoIndex = null
+                                devicePhotosList = emptyList()
+                            } else {
+                                coroutineScope.launch {
+                                    photosGridState.animateScrollToItem(0)
+                                }
+                            }
+                        } else {
+                            fullScreenPhotoIndex = null
+                            devicePhotosList = emptyList()
+                            activeTab = "Photos"
+                        }
+                    },
                     icon = { Icon(Icons.Default.Home, contentDescription = "Photos") },
                     label = { Text("Photos") },
                     colors = NavigationBarItemDefaults.colors(
@@ -394,7 +409,11 @@ fun MainAppLayout(
                 )
                 NavigationBarItem(
                     selected = activeTab == "Search",
-                    onClick = { activeTab = "Search" },
+                    onClick = {
+                        fullScreenPhotoIndex = null
+                        devicePhotosList = emptyList()
+                        activeTab = "Search"
+                    },
                     icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     label = { Text("Search") },
                     colors = NavigationBarItemDefaults.colors(
@@ -407,7 +426,11 @@ fun MainAppLayout(
                 )
                 NavigationBarItem(
                     selected = activeTab == "Albums",
-                    onClick = { activeTab = "Albums" },
+                    onClick = {
+                        fullScreenPhotoIndex = null
+                        devicePhotosList = emptyList()
+                        activeTab = "Albums"
+                    },
                     icon = { Icon(Icons.Default.Collections, contentDescription = "Albums") },
                     label = { Text("Albums") },
                     colors = NavigationBarItemDefaults.colors(

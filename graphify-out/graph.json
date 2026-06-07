@@ -218,7 +218,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L76",
       "id": "tgpix_mainactivity_mainactivity_oncreate",
-      "community": 59,
+      "community": 57,
       "norm_label": ".oncreate()"
     },
     {
@@ -227,7 +227,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L76",
       "id": "bundle",
-      "community": 59,
+      "community": 57,
       "norm_label": "bundle"
     },
     {
@@ -236,7 +236,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L129",
       "id": "tgpix_mainactivity_mainactivity_triggerdelete",
-      "community": 60,
+      "community": 10,
       "norm_label": ".triggerdelete()"
     },
     {
@@ -245,7 +245,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L129",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_localphoto",
-      "community": 60,
+      "community": 10,
       "norm_label": "localphoto"
     },
     {
@@ -254,7 +254,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L147",
       "id": "tgpix_mainactivity_mainactivity_triggerbatchdelete",
-      "community": 60,
+      "community": 10,
       "norm_label": ".triggerbatchdelete()"
     },
     {
@@ -263,7 +263,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L147",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_list",
-      "community": 60,
+      "community": 10,
       "norm_label": "list"
     },
     {
@@ -1901,7 +1901,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L1",
       "id": "telegram_authmanager",
-      "community": 2,
+      "community": 57,
       "norm_label": "authmanager.kt"
     },
     {
@@ -1910,7 +1910,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L5",
       "id": "telegram_authmanager_authmanager",
-      "community": 2,
+      "community": 57,
       "norm_label": "authmanager"
     },
     {
@@ -1919,7 +1919,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "telegram_authmanager_authmanager_sendphone",
-      "community": 2,
+      "community": 57,
       "norm_label": ".sendphone()"
     },
     {
@@ -1928,7 +1928,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_authmanager_kt_string",
-      "community": 2,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -1937,7 +1937,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L13",
       "id": "telegram_authmanager_authmanager_verifyotp",
-      "community": 2,
+      "community": 57,
       "norm_label": ".verifyotp()"
     },
     {
@@ -1946,7 +1946,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L20",
       "id": "telegram_authmanager_authmanager_logout",
-      "community": 2,
+      "community": 57,
       "norm_label": ".logout()"
     },
     {
@@ -2513,7 +2513,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L1",
       "id": "ui_appnavigation",
-      "community": 59,
+      "community": 57,
       "norm_label": "appnavigation.kt"
     },
     {
@@ -2522,7 +2522,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L55",
       "id": "ui_appnavigation_appnavigation",
-      "community": 59,
+      "community": 57,
       "norm_label": "appnavigation()"
     },
     {
@@ -2531,7 +2531,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L201",
       "id": "ui_appnavigation_mainapplayout",
-      "community": 59,
+      "community": 57,
       "norm_label": "mainapplayout()"
     },
     {
@@ -2540,7 +2540,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L201",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_appnavigation_kt_string",
-      "community": 59,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -2882,7 +2882,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L1",
       "id": "screens_otpverifyscreen",
-      "community": 2,
+      "community": 57,
       "norm_label": "otpverifyscreen.kt"
     },
     {
@@ -2891,7 +2891,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L24",
       "id": "screens_otpverifyscreen_otpverifyscreen",
-      "community": 2,
+      "community": 57,
       "norm_label": "otpverifyscreen()"
     },
     {
@@ -2900,7 +2900,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L1",
       "id": "screens_phoneloginscreen",
-      "community": 32,
+      "community": 57,
       "norm_label": "phoneloginscreen.kt"
     },
     {
@@ -2909,7 +2909,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L26",
       "id": "screens_phoneloginscreen_phoneloginscreen",
-      "community": 32,
+      "community": 57,
       "norm_label": "phoneloginscreen()"
     },
     {
@@ -3485,7 +3485,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L1",
       "id": "update_updatedialog",
-      "community": 31,
+      "community": 57,
       "norm_label": "updatedialog.kt"
     },
     {
@@ -3494,7 +3494,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "update_updatedialog_updatedialog",
-      "community": 31,
+      "community": 57,
       "norm_label": "updatedialog()"
     },
     {
@@ -3503,7 +3503,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updateinfo",
-      "community": 31,
+      "community": 57,
       "norm_label": "updateinfo"
     },
     {
@@ -3512,7 +3512,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updatestate",
-      "community": 31,
+      "community": 57,
       "norm_label": "updatestate"
     },
     {
@@ -3521,7 +3521,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_float",
-      "community": 31,
+      "community": 57,
       "norm_label": "float"
     },
     {
@@ -3530,7 +3530,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_file",
-      "community": 31,
+      "community": 57,
       "norm_label": "file"
     },
     {
@@ -3539,7 +3539,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_string",
-      "community": 31,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -3548,7 +3548,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L319",
       "id": "update_updatedialog_updatestate",
-      "community": 31,
+      "community": 57,
       "norm_label": "updatestate"
     },
     {
@@ -5856,11 +5856,20 @@
       "id": "androidx"
     },
     {
+      "label": "android",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
+      "source_location": "L37",
+      "community": 1,
+      "norm_label": "android",
+      "id": "android"
+    },
+    {
       "label": "LocalPhoto",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L95",
-      "community": 60,
+      "source_location": "L129",
+      "community": 10,
       "norm_label": "localphoto",
       "id": "localphoto"
     },
@@ -5926,15 +5935,6 @@
       "community": 4,
       "norm_label": "boolean",
       "id": "boolean"
-    },
-    {
-      "label": "android",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/PreferencesManager.kt",
-      "source_location": "L20",
-      "community": 1,
-      "norm_label": "android",
-      "id": "android"
     },
     {
       "label": "UploadEntity",
@@ -6828,7 +6828,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "tgpix readme",
       "id": "readme_readme"
     },
@@ -6932,7 +6932,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "telegallery phone number login screen screenshot",
       "id": "screenshots_login_screen"
     },
@@ -6945,7 +6945,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "telegallery shutter logo with paper plane",
       "id": "screenshots_login_screen_brand_logo"
     },
@@ -6958,7 +6958,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "otp sms verification form",
       "id": "screenshots_login_screen_otp_login_form"
     },
@@ -6971,7 +6971,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "alternative telegallery logo design asset",
       "id": "screenshots_logo"
     },
@@ -6984,7 +6984,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 32,
+      "community": 57,
       "norm_label": "alternative three-petal purple logo design",
       "id": "screenshots_logo_purple_leaves_logo"
     },
@@ -7095,6 +7095,17 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
+      "source_location": "L37",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "tgpix_mainactivity_mainactivity",
+      "target": "android"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L35",
       "weight": 1.0,
       "context": "generic_arg",
@@ -7182,9 +7193,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_mainactivity_mainactivity",
-      "target": "tgpix_mainactivity_mainactivity_onstart",
-      "confidence_score": 1.0
+      "target": "tgpix_mainactivity_mainactivity_onstart"
     },
     {
       "relation": "method",
@@ -7192,9 +7203,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_mainactivity_mainactivity",
-      "target": "tgpix_mainactivity_mainactivity_onstop",
-      "confidence_score": 1.0
+      "target": "tgpix_mainactivity_mainactivity_onstop"
     },
     {
       "relation": "method",
@@ -9185,9 +9196,9 @@
       "source_location": "L20",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_preferencesmanager_preferencesmanager_savefolder",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_preferencesmanager_kt_android",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_preferencesmanager_kt_android"
     },
     {
       "relation": "references",
@@ -9647,9 +9658,9 @@
       "source_location": "L27",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "storage_preferencesmanager_preferencesmanager_getfolder",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_preferencesmanager_kt_android",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_preferencesmanager_kt_android"
     },
     {
       "relation": "references",
@@ -12446,9 +12457,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L881",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager",
-      "target": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline"
     },
     {
       "relation": "method",
@@ -12780,9 +12791,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L885",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
-      "target": "telegram_tdlibmanager_tdlibmanager_addlog",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_addlog"
     },
     {
       "relation": "calls",
@@ -12835,9 +12846,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L884",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
-      "target": "telegram_tdlibmanager_tdlibmanager_getclient",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_getclient"
     },
     {
       "relation": "calls",
@@ -19386,5 +19397,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "77a60ad7644e2b7e017af430f03f1e2077d18b47"
+  "built_at_commit": "c84ac8366d96d247553ef7a40e15fea2753be758"
 }
