@@ -1,6 +1,8 @@
 package dev.ssjvirtually.tgpix.storage
 
 import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import org.drinkless.tdlib.TdApi
 import kotlinx.coroutines.Dispatchers
@@ -371,6 +373,15 @@ object BackupManager {
         }
     }
 
+    private fun restartApp(context: Context) {
+        val packageManager = context.packageManager
+        val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+        val componentName = intent?.component
+        val mainIntent = Intent.makeRestartActivityTask(componentName)
+        context.startActivity(mainIntent)
+        Runtime.getRuntime().exit(0)
+    }
+
     private suspend fun tryRestoreFromChatAndTag(context: Context, chatId: Long, tag: String): Boolean {
         if (chatId == 0L) return false
         
@@ -457,33 +468,34 @@ object BackupManager {
                             continue
                         }
 
-                        TdlibManager.addLog("Backup downloaded successfully. Restoring local database from Msg ID: ${message.id}...")
+                        TdlibManager.addLog("Backup downloaded successfully. Staging local database from Msg ID: ${message.id}...")
                         
-                        // Close current Room database so we can overwrite its files
-                        UploadDatabase.closeDatabase()
-                        
-                        val dbFile = context.getDatabasePath("upload_database")
-                        
-                        // Overwrite target database files
-                        FileInputStream(downloadedFile).use { input ->
-                            FileOutputStream(dbFile).use { output ->
-                                input.copyTo(output)
-                            }
+                        // Stage database restore
+                        val pendingFile = File(context.filesDir, "pending_restore.db")
+                        try {
+                            downloadedFile.copyTo(pendingFile, overwrite = true)
+                        } catch (e: Exception) {
+                            TdlibManager.addLog("Failed to stage database restore file: ${e.message}")
+                            continue
                         }
                         
-                        // Also delete any WAL files to prevent conflicts with old WAL states
-                        context.getDatabasePath("upload_database-wal").delete()
-                        context.getDatabasePath("upload_database-shm").delete()
-                        
+                        val recordsCount = captionText.substringAfter("records:", "").trim().substringBefore(" ").toIntOrNull() ?: 0
+                        PreferencesManager.setPendingRestorePath(context, pendingFile.absolutePath)
                         PreferencesManager.setLastBackupMessageId(context, message.id)
+                        PreferencesManager.setLastBackupRecordCount(context, recordsCount)
+                        PreferencesManager.setRestoreNeedsCleanup(context, true)
                         
-                        // Re-initialize/open database to trigger updates
-                        val newDb = UploadDatabase.getDatabase(context)
-                        newDb.cloudDao().clearAllCachedPaths()
-                        val restoredCount = newDb.cloudDao().getRecordCountDirect()
-                        PreferencesManager.setLastBackupRecordCount(context, restoredCount)
+                        // Close current Room database so we can safely overwrite it on relaunch
+                        UploadDatabase.closeDatabase()
                         
-                        TdlibManager.addLog("Local database successfully restored from remote backup (Restored records: $restoredCount).")
+                        TdlibManager.addLog("Local database backup staged successfully. Restarting application to apply...")
+                        
+                        // Restart app on main thread
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            Toast.makeText(context, "Database backup ready. Relaunching TGPix...", Toast.LENGTH_LONG).show()
+                            restartApp(context)
+                        }
+                        
                         return true
                     } else {
                         TdlibManager.addLog("Failed to download backup file (Msg ID: ${message.id}). Trying next available backup...")

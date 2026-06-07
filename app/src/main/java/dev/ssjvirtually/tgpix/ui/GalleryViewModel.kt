@@ -48,8 +48,23 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
     private val _isSyncingCloud = MutableStateFlow(false)
     val isSyncingCloud: StateFlow<Boolean> = _isSyncingCloud.asStateFlow()
 
+    init {
+        if (PreferencesManager.isRestoreNeedsCleanup(application)) {
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val db = UploadDatabase.getDatabase(application)
+                    db.cloudDao().clearAllCachedPaths()
+                    PreferencesManager.setRestoreNeedsCleanup(application, false)
+                    TdlibManager.addLog("Post-restore database cache path cleanup executed.")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     // Whenever dbVersion updates (e.g. after database restore), flatMapLatest will switch to the new database's Flow
-    val cloudLogs: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { version ->
+    val cloudLogs: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { _ ->
         UploadDatabase.getDatabase(application).cloudDao().getAllFlow()
     }
 

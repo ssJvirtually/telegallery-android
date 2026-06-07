@@ -222,4 +222,32 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_IS_MANUAL_LOGOUT, false)
     }
+
+    private const val KEY_PENDING_RESTORE_PATH = "pending_restore_path"
+
+    fun setPendingRestorePath(context: Context, path: String?) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_PENDING_RESTORE_PATH, path)
+            .apply()
+    }
+
+    fun getPendingRestorePath(context: Context): String? {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_PENDING_RESTORE_PATH, null)
+    }
+
+    private const val KEY_RESTORE_NEEDS_CLEANUP = "restore_needs_cleanup"
+
+    fun setRestoreNeedsCleanup(context: Context, needsCleanup: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_RESTORE_NEEDS_CLEANUP, needsCleanup)
+            .apply()
+    }
+
+    fun isRestoreNeedsCleanup(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_RESTORE_NEEDS_CLEANUP, false)
+    }
 }
