@@ -80,7 +80,8 @@ fun PhotoViewerScreen(
     var showChrome by remember { mutableStateOf(true) }
     var isDetailsVisible by remember { mutableStateOf(false) }
 
-    val db = remember { UploadDatabase.getDatabase(context) }
+    val dbVersion by TdlibManager.dbVersion.collectAsState()
+    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     val uploadedUris = remember(photosList, cloudLogs) {
         val synced = mutableSetOf<String>()

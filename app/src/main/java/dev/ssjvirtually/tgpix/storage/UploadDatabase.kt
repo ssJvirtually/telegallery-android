@@ -427,6 +427,9 @@ abstract class UploadDatabase : RoomDatabase() {
                 INSTANCE?.close()
                 INSTANCE = null
             }
+            // Signal UI composables to re-key their remember { db } blocks so they
+            // re-subscribe to the new singleton's Room Flows after a restore.
+            dev.ssjvirtually.tgpix.telegram.TdlibManager.notifyDatabaseReplaced()
         }
     }
 }

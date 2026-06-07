@@ -46,6 +46,7 @@ import dev.ssjvirtually.tgpix.storage.AlbumPhotoEntity
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import dev.ssjvirtually.tgpix.telegram.UploadManager
+import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.ui.utils.*
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +68,8 @@ fun AlbumsScreen(
     mergedPhotosList: List<LocalPhoto>
 ) {
     val context = LocalContext.current
-    val db = remember { UploadDatabase.getDatabase(context) }
+    val dbVersion by TdlibManager.dbVersion.collectAsState()
+    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
 
     // 1. Load albums from DB

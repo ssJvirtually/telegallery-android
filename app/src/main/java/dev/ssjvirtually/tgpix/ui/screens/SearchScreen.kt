@@ -118,7 +118,8 @@ fun SearchScreen(
         searchQuery = typedQuery
     }
     
-    val db = remember { UploadDatabase.getDatabase(context) }
+    val dbVersion by TdlibManager.dbVersion.collectAsState()
+    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     val uploadedUris = remember(mergedPhotosList, cloudLogs) {
         val synced = mutableSetOf<String>()

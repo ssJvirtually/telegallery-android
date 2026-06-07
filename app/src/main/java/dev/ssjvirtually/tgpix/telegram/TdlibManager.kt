@@ -45,6 +45,18 @@ object TdlibManager {
     private val _logs = MutableStateFlow<List<String>>(listOf("System initialized."))
     val logs: StateFlow<List<String>> = _logs
 
+    /**
+     * Incremented whenever the Room database singleton is closed and recreated
+     * (e.g. after restoring a backup). UI composables key their `remember { db }`
+     * on this value so they automatically re-subscribe to the new instance's Flows.
+     */
+    private val _dbVersion = MutableStateFlow(0)
+    val dbVersion: StateFlow<Int> = _dbVersion
+
+    fun notifyDatabaseReplaced() {
+        _dbVersion.value += 1
+    }
+
     // Active upload tracking
     val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
     val completedUploads = java.util.concurrent.ConcurrentHashMap<Long, TdApi.Object>()

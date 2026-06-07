@@ -253,7 +253,11 @@ fun MainAppLayout(
     // Used to show a subtle sync pill indicator — grid is already visible at this point.
     var isSyncingCloud by remember { mutableStateOf(false) }
 
-    val db = remember { UploadDatabase.getDatabase(context) }
+    // Re-key db on dbVersion: when BackupManager closes & reopens the Room singleton after
+    // a restore, dbVersion increments → this remember block re-runs → cloudLogs re-subscribes
+    // to the new instance's Flow → grid updates automatically without app restart.
+    val dbVersion by TdlibManager.dbVersion.collectAsState()
+    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     var mergedPhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
 
