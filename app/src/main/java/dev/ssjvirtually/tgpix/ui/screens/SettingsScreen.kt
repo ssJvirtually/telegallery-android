@@ -420,6 +420,7 @@ fun SettingsScreen(
                         AuthManager.logOut {
                             coroutineScope.launch(Dispatchers.Main) {
                                 Toast.makeText(context, "Logged out of Telegram successfully", Toast.LENGTH_LONG).show()
+                                TdlibManager.performLogoutCleanup(context)
                                 onResetChat()
                             }
                         }

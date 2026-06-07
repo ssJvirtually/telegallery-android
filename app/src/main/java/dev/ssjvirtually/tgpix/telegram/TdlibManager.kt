@@ -154,16 +154,14 @@ object TdlibManager {
                     val isManual = PreferencesManager.isManualLogout(context)
                     addLog("Auth State: WaitPhoneNumber (wasLoggedIn: $wasLoggedIn, isManual: $isManual)")
                     
-                    if (wasLoggedIn && !isManual) {
-                        addLog("External logout detected. Triggering system notification.")
-                        showSessionExpiredNotification(context)
-                        // Reset credentials locally
-                        PreferencesManager.saveChatId(context, 0L)
-                        PreferencesManager.saveChatTitle(context, "")
-                        PreferencesManager.saveDbChatId(context, 0L)
-                        PreferencesManager.saveDbChatTitle(context, "Private Saved Messages")
-                    } else if (isManual) {
-                        PreferencesManager.setManualLogout(context, false)
+                    if (wasLoggedIn) {
+                        if (!isManual) {
+                            addLog("External logout detected. Triggering system notification.")
+                            showSessionExpiredNotification(context)
+                        } else {
+                            addLog("Manual logout detected in state listener.")
+                        }
+                        performLogoutCleanup(context)
                     }
                 }
             }
@@ -287,7 +285,13 @@ object TdlibManager {
         }
     }
 
-    suspend fun syncCloudHistory(context: Context, chatId: Long, forceFullCrawl: Boolean = false) {
+    suspend fun syncCloudHistory(
+        context: Context,
+        chatId: Long,
+        forceFullCrawl: Boolean = false,
+        startMessageId: Long = 0L,
+        onProgress: (suspend (recoveredCount: Int, lastMessageId: Long) -> Unit)? = null
+    ) {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
         
@@ -296,9 +300,10 @@ object TdlibManager {
             cloudDao.deleteBackupDbFiles()
         } catch (e: Exception) {}
         
-        var lastMessageId = 0L
+        var lastMessageId = startMessageId
         var crawling = true
-        addLog("Starting server vault synchronization crawl (forceFullCrawl=$forceFullCrawl)...")
+        var totalRecovered = 0
+        addLog("Starting server vault synchronization crawl (forceFullCrawl=$forceFullCrawl, startMessageId=$startMessageId)...")
 
         while (crawling) {
             val getHistory = TdApi.GetChatHistory().apply {
@@ -459,10 +464,12 @@ object TdlibManager {
                 
                 if (entities.isNotEmpty()) {
                     cloudDao.insertBatch(entities)
+                    totalRecovered += entities.size
                     addLog("Indexed ${entities.size} vault photos from Telegram server.")
                 }
                 
                 lastMessageId = result.messages.last().id
+                onProgress?.invoke(totalRecovered, lastMessageId)
             } else {
                 crawling = false
             }
@@ -694,5 +701,60 @@ object TdlibManager {
             .build()
             
         notificationManager.notify(888, notification)
+    }
+
+    fun performLogoutCleanup(context: Context) {
+        addLog("Performing logout cleanup...")
+        
+        // 1. Cancel background workers
+        try {
+            androidx.work.WorkManager.getInstance(context.applicationContext).cancelAllWork()
+            addLog("Cancelled all background work requests.")
+        } catch (e: Exception) {
+            addLog("Failed to cancel background workers: ${e.message}")
+        }
+
+        // 2. Clear local Room database & DataStore preferences
+        val db = UploadDatabase.getDatabase(context)
+        managerScope.launch(Dispatchers.IO) {
+            try {
+                // Clear cached paths first
+                db.cloudDao().clearAllCachedPaths()
+                // Wipe all tables to prevent privacy leakage
+                db.cloudDao().clearAll()
+                db.dao().clearAll()
+                db.albumDao().clearAllAlbums()
+                db.albumDao().clearAllAlbumPhotos()
+                addLog("Cleared all local database tables.")
+            } catch (e: Exception) {
+                addLog("Failed to clear local database tables: ${e.message}")
+            }
+
+            // 3. Delete actual cached thumbnail/large files from cacheDir
+            try {
+                context.cacheDir.listFiles()?.filter {
+                    it.name.startsWith("tgpix_")
+                }?.forEach { file ->
+                    file.delete()
+                }
+                
+                // Clean temp uploads folder
+                val uploadCacheDir = File(context.cacheDir, "tgpix_uploads")
+                if (uploadCacheDir.exists()) {
+                    uploadCacheDir.deleteRecursively()
+                }
+                addLog("Deleted all local cached media files and temp uploads.")
+            } catch (e: Exception) {
+                addLog("Failed to delete cached media files: ${e.message}")
+            }
+
+            // 4. Wipe all shared preferences
+            try {
+                PreferencesManager.clearAll(context)
+                addLog("Cleared all shared preferences.")
+            } catch (e: Exception) {
+                addLog("Failed to clear shared preferences: ${e.message}")
+            }
+        }
     }
 }

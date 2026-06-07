@@ -39,6 +39,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import java.io.File
@@ -214,6 +215,9 @@ fun MainAppLayout(
 
     // Initialize stateful GalleryViewModel to handle all data flows reactively
     val galleryViewModel: GalleryViewModel = viewModel()
+
+    // Hoisted grid scroll state — survives tab switches so Photos grid remembers scroll position
+    val photosGridState = rememberLazyGridState()
 
     // HOISTED STATES FOR PHOTOS GRID, SEARCH, AND ALBUMS
     var hasPermission by remember {
@@ -516,6 +520,7 @@ fun MainAppLayout(
                                 onRequestPermission = {
                                     permissionLauncher.launch(permissionsToRequest)
                                 },
+                                gridState = photosGridState,
                                 viewModel = galleryViewModel
                             )
                         }

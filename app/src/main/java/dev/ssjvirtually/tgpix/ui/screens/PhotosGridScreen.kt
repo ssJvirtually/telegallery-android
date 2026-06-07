@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,12 +99,14 @@ fun PhotosGridScreen(
     onSettingsClick: () -> Unit,
     hasPermission: Boolean,
     onRequestPermission: () -> Unit,
+    gridState: LazyGridState = rememberLazyGridState(),
     viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
     val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
     val isScanningLocal by viewModel.isScanningLocal.collectAsState()
     val isSyncingCloud by viewModel.isSyncingCloud.collectAsState()
+    val syncProgressText by viewModel.syncProgressText.collectAsState()
     val context = LocalContext.current
 
     if (!hasPermission) {
@@ -492,8 +495,7 @@ fun PhotosGridScreen(
                 }
             }
 
-            // Grid wrapper with fast scrollbar
-            val gridState = rememberLazyGridState()
+            // Grid wrapper with fast scrollbar — state is hoisted from caller to survive tab switches
             val haptic = LocalHapticFeedback.current
             Box(
                 modifier = Modifier
@@ -1132,7 +1134,7 @@ fun PhotosGridScreen(
                             color = Color(0xFF4FC3F7)
                         )
                         Text(
-                            text = "Syncing cloud photos…",
+                            text = syncProgressText ?: "Syncing cloud photos…",
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

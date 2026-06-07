@@ -46,6 +46,9 @@ interface UploadDao {
     
     @Query("DELETE FROM uploads WHERE path = :path")
     suspend fun delete(path: String)
+
+    @Query("DELETE FROM uploads")
+    suspend fun clearAll()
 }
 
 @Entity(
@@ -151,6 +154,9 @@ interface AlbumDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlbum(album: AlbumEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlbumsBatch(albums: List<AlbumEntity>)
+
     @Query("DELETE FROM albums WHERE id = :albumId")
     suspend fun deleteAlbum(albumId: Long)
 
@@ -180,6 +186,15 @@ interface AlbumDao {
 
     @Query("DELETE FROM album_photos WHERE albumId = :albumId")
     suspend fun deleteAlbumPhotos(albumId: Long)
+
+    @Query("DELETE FROM albums")
+    suspend fun clearAllAlbums()
+
+    @Query("DELETE FROM album_photos")
+    suspend fun clearAllAlbumPhotos()
+
+    @Query("SELECT COUNT(*) FROM albums")
+    suspend fun getRecordCountDirect(): Int
 }
 
 @Database(
@@ -432,6 +447,172 @@ abstract class UploadDatabase : RoomDatabase() {
             // Signal UI composables to re-key their remember { db } blocks so they
             // re-subscribe to the new singleton's Room Flows after a restore.
             dev.ssjvirtually.tgpix.telegram.TdlibManager.notifyDatabaseReplaced()
+        }
+
+        /**
+         * Seamless in-process restore: reads all rows from [backupFile] using a raw
+         * SQLiteDatabase connection (never touches Room), then replaces all data in the
+         * live Room database inside a single transaction.
+         *
+         * Room's Flows emit automatically after the transaction commits, so the grid
+         * updates live with no process restart, no scary relaunch toast, and no flicker.
+         *
+         * Returns the number of cloud_photos rows restored, or -1 on failure.
+         */
+        suspend fun restoreDataFromFile(context: Context, backupFile: java.io.File): Int {
+            return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                var rawDb: android.database.sqlite.SQLiteDatabase? = null
+                try {
+                    rawDb = android.database.sqlite.SQLiteDatabase.openDatabase(
+                        backupFile.path, null,
+                        android.database.sqlite.SQLiteDatabase.OPEN_READONLY
+                    )
+
+                    // ── Read cloud_photos ──────────────────────────────────────────────
+                    val cloudPhotos = mutableListOf<CloudPhotoEntity>()
+                    rawDb.rawQuery("SELECT * FROM cloud_photos", null).use { c ->
+                        while (c.moveToNext()) {
+                            fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
+                            fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                            fun int(col: String) = try { c.getInt(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0 }
+                            fun bool(col: String) = int(col) != 0
+                            cloudPhotos.add(
+                                CloudPhotoEntity(
+                                    messageId = lng("messageId"),
+                                    telegramFileId = int("telegramFileId"),
+                                    uniqueRemoteId = str("uniqueRemoteId") ?: "",
+                                    fileName = str("fileName") ?: "",
+                                    uploadedAt = lng("uploadedAt"),
+                                    fileSize = lng("fileSize"),
+                                    isDocument = bool("isDocument"),
+                                    localCachedThumbnailPath = null, // paths are device-specific
+                                    localCachedLargePath = null,
+                                    contentFingerprint = str("contentFingerprint") ?: "",
+                                    telegramThumbnailFileId = int("telegramThumbnailFileId"),
+                                    tags = str("tags") ?: "",
+                                    fileIdCachedAt = 0L, // reset — IDs are session-scoped
+                                    isHd = bool("isHd"),
+                                    originalSizeBytes = lng("originalSizeBytes"),
+                                    dateTaken = lng("dateTaken"),
+                                    mimeType = str("mimeType") ?: "image/jpeg",
+                                    width = int("width"),
+                                    height = int("height")
+                                )
+                            )
+                        }
+                    }
+
+                    // ── Read uploads ───────────────────────────────────────────────────
+                    val uploads = mutableListOf<UploadEntity>()
+                    rawDb.rawQuery("SELECT * FROM uploads", null).use { c ->
+                        while (c.moveToNext()) {
+                            fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
+                            fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                            uploads.add(
+                                UploadEntity(
+                                    mediaStoreId = lng("mediaStoreId"),
+                                    path = str("path") ?: continue,
+                                    contentFingerprint = str("contentFingerprint") ?: "",
+                                    uploadedAt = lng("uploadedAt"),
+                                    telegramMessageId = lng("telegramMessageId")
+                                )
+                            )
+                        }
+                    }
+
+                    // ── Read albums ────────────────────────────────────────────────────
+                    val albums = mutableListOf<AlbumEntity>()
+                    rawDb.rawQuery("SELECT * FROM albums", null).use { c ->
+                        while (c.moveToNext()) {
+                            fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
+                            fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                            albums.add(
+                                AlbumEntity(
+                                    id = lng("id"),
+                                    uuid = str("uuid") ?: java.util.UUID.randomUUID().toString(),
+                                    name = str("name") ?: "Album",
+                                    createdAt = lng("createdAt"),
+                                    telegramMessageId = try { lng("telegramMessageId").takeIf { it != 0L } } catch (_: Exception) { null },
+                                    coverPhotoMessageId = try { lng("coverPhotoMessageId").takeIf { it != 0L } } catch (_: Exception) { null }
+                                )
+                            )
+                        }
+                    }
+
+                    // ── Read album_photos ──────────────────────────────────────────────
+                    val albumPhotos = mutableListOf<AlbumPhotoEntity>()
+                    rawDb.rawQuery("SELECT * FROM album_photos", null).use { c ->
+                        while (c.moveToNext()) {
+                            fun str(col: String) = try { c.getString(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { null }
+                            fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
+                            albumPhotos.add(
+                                AlbumPhotoEntity(
+                                    albumId = lng("albumId"),
+                                    photoUri = str("photoUri") ?: continue
+                                )
+                            )
+                        }
+                    }
+
+                    rawDb.close()
+                    rawDb = null
+
+                    if (cloudPhotos.isEmpty()) return@withContext 0
+
+                    // ── Write to live Room DB via runInTransaction (sync, safe on IO thread) ──
+                    val db = getDatabase(context)
+                    db.runInTransaction {
+                        // Use openHelper to run raw SQL inside the transaction —
+                        // this is synchronous and safe on the IO dispatcher.
+                        val sqLite = db.openHelper.writableDatabase
+                        sqLite.execSQL("DELETE FROM cloud_photos")
+                        sqLite.execSQL("DELETE FROM uploads")
+                        sqLite.execSQL("DELETE FROM album_photos")
+                        sqLite.execSQL("DELETE FROM albums")
+
+                        cloudPhotos.forEach { p ->
+                            sqLite.execSQL(
+                                """INSERT OR REPLACE INTO cloud_photos
+                                   (messageId,telegramFileId,uniqueRemoteId,fileName,uploadedAt,fileSize,
+                                    isDocument,localCachedThumbnailPath,localCachedLargePath,contentFingerprint,
+                                    telegramThumbnailFileId,tags,fileIdCachedAt,isHd,originalSizeBytes,
+                                    dateTaken,mimeType,width,height)
+                                   VALUES(?,?,?,?,?,?,?,NULL,NULL,?,?,?,0,?,?,?,?,?,?)""",
+                                arrayOf(p.messageId, p.telegramFileId, p.uniqueRemoteId, p.fileName,
+                                    p.uploadedAt, p.fileSize, if (p.isDocument) 1 else 0,
+                                    p.contentFingerprint, p.telegramThumbnailFileId, p.tags,
+                                    if (p.isHd) 1 else 0, p.originalSizeBytes,
+                                    p.dateTaken, p.mimeType, p.width, p.height)
+                            )
+                        }
+                        uploads.forEach { u ->
+                            sqLite.execSQL(
+                                "INSERT OR REPLACE INTO uploads (mediaStoreId,path,contentFingerprint,uploadedAt,telegramMessageId) VALUES(?,?,?,?,?)",
+                                arrayOf(u.mediaStoreId, u.path, u.contentFingerprint, u.uploadedAt, u.telegramMessageId)
+                            )
+                        }
+                        albums.forEach { a ->
+                            sqLite.execSQL(
+                                "INSERT OR REPLACE INTO albums (id,uuid,name,createdAt,telegramMessageId,coverPhotoMessageId) VALUES(?,?,?,?,?,?)",
+                                arrayOf(a.id, a.uuid, a.name, a.createdAt, a.telegramMessageId, a.coverPhotoMessageId)
+                            )
+                        }
+                        albumPhotos.forEach { ap ->
+                            sqLite.execSQL(
+                                "INSERT OR IGNORE INTO album_photos (albumId,photoUri) VALUES(?,?)",
+                                arrayOf(ap.albumId, ap.photoUri)
+                            )
+                        }
+                    }
+
+                    cloudPhotos.size
+                } catch (e: Exception) {
+                    android.util.Log.e("UploadDatabase", "restoreDataFromFile failed: ${e.message}", e)
+                    -1
+                } finally {
+                    try { rawDb?.close() } catch (_: Exception) {}
+                }
+            }
         }
     }
 }

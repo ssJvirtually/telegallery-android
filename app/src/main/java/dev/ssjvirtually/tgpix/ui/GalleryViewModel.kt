@@ -13,6 +13,13 @@ import dev.ssjvirtually.tgpix.storage.MergeResult
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.SearchItem
+import androidx.work.WorkManager
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkInfo
+import dev.ssjvirtually.tgpix.worker.RestoreWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -47,6 +54,41 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
     private val _isSyncingCloud = MutableStateFlow(false)
     val isSyncingCloud: StateFlow<Boolean> = _isSyncingCloud.asStateFlow()
+
+    private val _syncProgressText = MutableStateFlow<String?>(null)
+    val syncProgressText: StateFlow<String?> = _syncProgressText.asStateFlow()
+
+    init {
+        val workManager = WorkManager.getInstance(application)
+        viewModelScope.launch {
+            workManager.getWorkInfosForUniqueWorkFlow("tgpix_restore_sync").collect { workInfos ->
+                val workInfo = workInfos.firstOrNull()
+                if (workInfo != null) {
+                    when {
+                        workInfo.state.isFinished -> {
+                            // SUCCEEDED, FAILED, or CANCELLED — always clear the banner
+                            _isSyncingCloud.value = false
+                            _syncProgressText.value = null
+                        }
+                        workInfo.state == WorkInfo.State.RUNNING -> {
+                            _isSyncingCloud.value = true
+                            val progressText = workInfo.progress.getString("progressText")
+                            _syncProgressText.value = progressText ?: "Restoring gallery..."
+                        }
+                        workInfo.state == WorkInfo.State.ENQUEUED -> {
+                            // Work is queued but not started yet — show banner while waiting
+                            _isSyncingCloud.value = true
+                            _syncProgressText.value = "Waiting to sync…"
+                        }
+                        else -> {
+                            _isSyncingCloud.value = false
+                            _syncProgressText.value = null
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Whenever dbVersion updates (e.g. after database restore), flatMapLatest will switch to the new database's Flow
     val cloudLogs: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { _ ->
@@ -123,35 +165,73 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    private fun enqueueRestoreWorker(app: Application) {
+        val workManager = WorkManager.getInstance(app)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val request = OneTimeWorkRequestBuilder<RestoreWorker>()
+            .setConstraints(constraints)
+            .build()
+        workManager.enqueueUniqueWork(
+            "tgpix_restore_sync",
+            ExistingWorkPolicy.KEEP,
+            request
+        )
+    }
+
     fun startCloudSync() {
         if (_isSyncingCloud.value) return
         viewModelScope.launch(Dispatchers.IO) {
             _isSyncingCloud.value = true
             val context = getApplication<Application>()
-            var restored = false
             try {
-                restored = BackupManager.restoreDatabase(context)
+                val restored = try {
+                    BackupManager.restoreDatabase(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+
+                // Backup restore succeeded — banner done, Room Flows already updated the grid
+                if (restored) {
+                    _isSyncingCloud.value = false
+                    return@launch
+                }
+
+                val chatId = PreferencesManager.getChatId(context)
+                if (chatId != 0L) {
+                    val db = UploadDatabase.getDatabase(context)
+                    val currentCount = db.cloudDao().getRecordCountDirect()
+                    val startMsgId = PreferencesManager.getLastScannedMessageId(context)
+
+                    if (currentCount == 0 || startMsgId != 0L) {
+                        // Full channel crawl via WorkManager — the init{} observer will
+                        // clear the banner when the work reaches SUCCEEDED/FAILED/CANCELLED.
+                        enqueueRestoreWorker(getApplication())
+                        // Don't reset _isSyncingCloud here — let the WorkInfo observer do it.
+                    } else {
+                        // Incremental sync — runs in-process, reset banner when done.
+                        try {
+                            TdlibManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        try {
+                            BackupManager.reconstructAlbumsFromBackupChannel(context)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        _isSyncingCloud.value = false
+                    }
+                } else {
+                    _isSyncingCloud.value = false
+                }
             } catch (e: Exception) {
+                // Safety net — always clear the banner if something unexpected throws
                 e.printStackTrace()
+                _isSyncingCloud.value = false
             }
-
-            val chatId = PreferencesManager.getChatId(context)
-            if (chatId != 0L) {
-                try {
-                    TdlibManager.syncCloudHistory(context, chatId, forceFullCrawl = restored)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-
-            if (!restored) {
-                try {
-                    BackupManager.reconstructAlbumsFromBackupChannel(context)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            _isSyncingCloud.value = false
         }
     }
 }

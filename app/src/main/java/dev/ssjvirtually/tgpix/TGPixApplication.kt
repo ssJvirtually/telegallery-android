@@ -10,57 +10,41 @@ class TGPixApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        
-        // Check if there is a pending restore database file to copy
+
+        // Legacy fallback: handle any pending_restore.db that was staged by an older
+        // version of the app (before the in-process restore was introduced). On new
+        // installs this path will never be hit.
         val pendingRestorePath = PreferencesManager.getPendingRestorePath(this)
         if (pendingRestorePath != null) {
             val srcFile = File(pendingRestorePath)
             if (srcFile.exists()) {
                 try {
                     val dbFile = getDatabasePath("upload_database")
-                    Log.d("TGPixApplication", "Found pending database restore. Overwriting database at ${dbFile.absolutePath}")
-                    
-                    // Ensure parent directory exists
+                    Log.d("TGPixApplication", "Legacy pending restore found. Overwriting database at ${dbFile.absolutePath}")
+
                     dbFile.parentFile?.mkdirs()
-                    
-                    // Perform the copy (pure file IO, synchronous and fast)
                     srcFile.inputStream().use { input ->
                         dbFile.outputStream().use { output ->
                             input.copyTo(output)
                         }
                     }
-                    
-                    // Delete any WAL and SHM files to ensure no old journal conflicts
-                    val walFile = getDatabasePath("upload_database-wal")
-                    val shmFile = getDatabasePath("upload_database-shm")
-                    if (walFile.exists()) {
-                        walFile.delete()
-                    }
-                    if (shmFile.exists()) {
-                        shmFile.delete()
-                    }
 
-                    // Open raw SQLite connection to clear cached thumbnail and large photo paths
-                    // (prevents other ViewModels or Repositories reading stale paths before UI initializes)
+                    // Delete WAL/SHM to prevent journal conflicts
+                    getDatabasePath("upload_database-wal").takeIf { it.exists() }?.delete()
+                    getDatabasePath("upload_database-shm").takeIf { it.exists() }?.delete()
+
+                    // Clear device-specific cached file paths before Room opens
                     clearCachedPathsRaw(dbFile)
-                    
-                    // Delete the temporary pending restore file
+
                     srcFile.delete()
-                    Log.d("TGPixApplication", "Pending database restore and post-restore cleanup completed successfully.")
+                    Log.d("TGPixApplication", "Legacy pending restore completed successfully.")
                 } catch (e: Exception) {
-                    Log.e("TGPixApplication", "Failed to restore database from pending restore file", e)
-                    try {
-                        if (srcFile.exists()) {
-                            srcFile.delete()
-                        }
-                    } catch (ex: Exception) {
-                        // Ignore deletion exception
-                    }
+                    Log.e("TGPixApplication", "Legacy pending restore failed", e)
+                    try { srcFile.delete() } catch (_: Exception) {}
                 }
             } else {
-                Log.w("TGPixApplication", "Pending restore file path was set but file does not exist: $pendingRestorePath")
+                Log.w("TGPixApplication", "Pending restore path set but file missing: $pendingRestorePath")
             }
-            // Clear the preference so we don't try to restore again on subsequent startups
             PreferencesManager.setPendingRestorePath(this, null)
         }
     }
@@ -68,9 +52,7 @@ class TGPixApplication : Application() {
     private fun clearCachedPathsRaw(dbFile: File) {
         var db: SQLiteDatabase? = null
         try {
-            db = SQLiteDatabase.openDatabase(
-                dbFile.path, null, SQLiteDatabase.OPEN_READWRITE
-            )
+            db = SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READWRITE)
             db.execSQL("""
                 UPDATE cloud_photos 
                 SET localCachedThumbnailPath = NULL, 
@@ -80,11 +62,7 @@ class TGPixApplication : Application() {
         } catch (e: Exception) {
             Log.e("TGPixApplication", "Failed to clear local cached paths via raw SQLite", e)
         } finally {
-            try {
-                db?.close()
-            } catch (e: Exception) {
-                // Ignore close errors
-            }
+            try { db?.close() } catch (_: Exception) {}
         }
     }
 }

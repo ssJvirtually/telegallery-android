@@ -103,7 +103,11 @@ class UploadWorker(
         // 4. Acquire WakeLock and WifiLock to keep CPU & Network alive when phone is locked
         val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TGPix::BackupWakeLock")
-        
+        // No timeout on acquire() — the finally block unconditionally releases both locks,
+        // so there is no risk of permanent battery drain. A hard 1-hour limit would silently
+        // cut off large photo libraries (500 photos × 5 s delay = 41 min, plus upload time).
+        wakeLock.setReferenceCounted(false)
+
         val wifiManager = applicationContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             @Suppress("DEPRECATION")
@@ -114,8 +118,8 @@ class UploadWorker(
         }
 
         try {
-            // Acquire locks with a 1-hour safety timeout to prevent permanent battery drain in failure states
-            wakeLock.acquire(60 * 60 * 1000L)
+            // Acquire with no timeout — released unconditionally in the finally block
+            wakeLock.acquire()
             wifiLock.acquire()
             TdlibManager.addLog("Worker: Acquired CPU WakeLock and Wi-Fi High-Performance Lock.")
 
@@ -196,6 +200,8 @@ class UploadWorker(
             TdlibManager.addLog("Worker: Found ${unsyncedPhotos.size} unsynced photos out of ${photos.size} total local photos.")
 
             var uploadedCount = 0
+            var failedCount = 0
+            var skippedCount = 0
 
             // 9. Loop and upload unsynced photos sequentially (one-by-one)
             for (photo in unsyncedPhotos) {
@@ -205,44 +211,68 @@ class UploadWorker(
                     break
                 }
 
-                val fileKey = photo.uri
-
-                // Update user-visible notification with active upload progress
-                try {
-                    val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${unsyncedPhotos.size})"
-                    setForeground(createForegroundInfo(progressMsg))
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                // Belt-and-suspenders: re-acquire WakeLock each iteration so it stays held
+                // even if it was somehow released externally. setReferenceCounted(false) means
+                // multiple acquire() calls don't stack — only one release() is ever needed.
+                if (!wakeLock.isHeld) {
+                    wakeLock.acquire()
+                    TdlibManager.addLog("Worker: Re-acquired WakeLock mid-run.")
                 }
 
-                val fingerprint = photo.getFingerprint(applicationContext)
-                val currentIsHd = PreferencesManager.isHdMode(applicationContext)
-                val modeStr = if (currentIsHd) "HD" else "standard quality"
-                TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
-                
-                val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, currentIsHd)
+                // Per-photo isolation: an exception on one photo must never abort the entire
+                // batch. Corrupt files, missing content resolver paths, or transient TDLib
+                // errors should log clearly and skip to the next photo.
+                try {
+                    val fileKey = photo.uri
 
-                if (uploadResult is TdApi.Message) {
-                    TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
-                    dao.insert(
-                        UploadEntity(
-                            mediaStoreId = photo.id,
-                            path = fileKey,
-                            contentFingerprint = fingerprint,
-                            uploadedAt = System.currentTimeMillis(),
-                            telegramMessageId = uploadResult.id
-                        )
-                    )
+                    // Update user-visible notification with active upload progress
                     try {
-                        TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
+                        val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${unsyncedPhotos.size})"
+                        setForeground(createForegroundInfo(progressMsg))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-                    uploadedCount++
-                } else if (uploadResult is TdApi.Error) {
-                    TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")
-                } else {
-                    TdlibManager.addLog("Worker: backup returned unexpected response: ${uploadResult::class.java.simpleName}")
+
+                    val fingerprint = photo.getFingerprint(applicationContext)
+                    val currentIsHd = PreferencesManager.isHdMode(applicationContext)
+                    val modeStr = if (currentIsHd) "HD" else "standard quality"
+                    TdlibManager.addLog("Worker: backing up photo '${photo.name}' in $modeStr...")
+
+                    val uploadResult = UploadManager.uploadPhoto(applicationContext, photo, chatId, currentIsHd)
+
+                    when (uploadResult) {
+                        is TdApi.Message -> {
+                            TdlibManager.addLog("Worker: successfully backed up '${photo.name}'! Message ID: ${uploadResult.id}")
+                            dao.insert(
+                                UploadEntity(
+                                    mediaStoreId = photo.id,
+                                    path = fileKey,
+                                    contentFingerprint = fingerprint,
+                                    uploadedAt = System.currentTimeMillis(),
+                                    telegramMessageId = uploadResult.id
+                                )
+                            )
+                            try {
+                                TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                            uploadedCount++
+                        }
+                        is TdApi.Error -> {
+                            TdlibManager.addLog("Worker: failed to back up '${photo.name}': [${uploadResult.code}] ${uploadResult.message}")
+                            failedCount++
+                        }
+                        else -> {
+                            TdlibManager.addLog("Worker: backup returned unexpected response for '${photo.name}': ${uploadResult::class.java.simpleName}")
+                            skippedCount++
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Isolate this photo — log and continue with the rest of the batch
+                    TdlibManager.addLog("Worker: exception uploading '${photo.name}' — skipping. Error: ${e.message}")
+                    e.printStackTrace()
+                    failedCount++
                 }
 
                 // Add 5-second throttle delay between uploads to prevent rate limiting (FLOOD_WAIT) on Telegram's servers
@@ -250,7 +280,8 @@ class UploadWorker(
                 delay(5000)
             }
 
-            TdlibManager.addLog("Worker: backup run completed. Newly backed up: $uploadedCount photos.")
+            TdlibManager.addLog("Worker: backup run completed. Uploaded: $uploadedCount, Failed: $failedCount, Skipped: $skippedCount.")
+
             return Result.success()
 
         } catch (e: Exception) {

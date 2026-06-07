@@ -469,34 +469,22 @@ object BackupManager {
                             continue
                         }
 
-                        TdlibManager.addLog("Backup downloaded successfully. Staging local database from Msg ID: ${message.id}...")
-                        
-                        // Stage database restore
-                        val pendingFile = File(context.filesDir, "pending_restore.db")
-                        try {
-                            downloadedFile.copyTo(pendingFile, overwrite = true)
-                        } catch (e: Exception) {
-                            TdlibManager.addLog("Failed to stage database restore file: ${e.message}")
-                            continue
-                        }
-                        
+                        TdlibManager.addLog("Backup downloaded and validated. Restoring data in-process from Msg ID: ${message.id}...")
+
                         val recordsCount = captionText.substringAfter("records:", "").trim().substringBefore(" ").toIntOrNull() ?: 0
-                        PreferencesManager.setPendingRestorePath(context, pendingFile.absolutePath)
-                        PreferencesManager.setLastBackupMessageId(context, message.id)
-                        PreferencesManager.setLastBackupRecordCount(context, recordsCount)
-                        
-                        // Close current Room database so we can safely overwrite it on relaunch
-                        UploadDatabase.closeDatabase()
-                        
-                        TdlibManager.addLog("Local database backup staged successfully. Restarting application to apply...")
-                        
-                        // Restart app on main thread
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            Toast.makeText(context, "Database backup ready. Relaunching TGPix...", Toast.LENGTH_LONG).show()
-                            restartApp(context)
+                        val restored = UploadDatabase.restoreDataFromFile(context, downloadedFile)
+                        if (restored >= 0) {
+                            TdlibManager.addLog("In-process restore complete: $restored cloud_photos rows loaded into live database.")
+                            PreferencesManager.setLastBackupMessageId(context, message.id)
+                            PreferencesManager.setLastBackupRecordCount(context, recordsCount)
+                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                Toast.makeText(context, "Gallery restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
+                            }
+                            return true
+                        } else {
+                            TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}. Trying next backup...")
                         }
-                        
-                        return true
+
                     } else {
                         TdlibManager.addLog("Failed to download backup file (Msg ID: ${message.id}). Trying next available backup...")
                     }

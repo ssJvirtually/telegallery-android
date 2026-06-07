@@ -236,4 +236,25 @@ object PreferencesManager {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString(KEY_PENDING_RESTORE_PATH, null)
     }
+
+    private const val KEY_LAST_SCANNED_MSG_ID = "last_scanned_msg_id"
+
+    fun setLastScannedMessageId(context: Context, msgId: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_LAST_SCANNED_MSG_ID, msgId)
+            .apply()
+    }
+
+    fun getLastScannedMessageId(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_LAST_SCANNED_MSG_ID, 0L)
+    }
+
+    fun clearAll(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
+    }
 }
