@@ -864,7 +864,8 @@ object TdlibManager {
                 val capabilities = activeNetwork?.let { cm.getNetworkCapabilities(it) }
                 val tdNetworkType = when {
                     capabilities == null -> TdApi.NetworkTypeNone()
-                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) -> TdApi.NetworkTypeWiFi()
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET) -> TdApi.NetworkTypeWiFi()
                     capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) -> TdApi.NetworkTypeMobile()
                     else -> TdApi.NetworkTypeOther()
                 }
@@ -874,6 +875,17 @@ object TdlibManager {
             }
         } catch (e: Exception) {
             addLog("Failed to force TDLib reconnection: ${e.message}")
+        }
+    }
+
+    fun setNetworkOffline() {
+        if (client == null) return
+        try {
+            getClient().send(TdApi.SetNetworkType(TdApi.NetworkTypeNone())) { result ->
+                addLog("Sent SetNetworkType update: NetworkTypeNone (Result: ${result::class.java.simpleName})")
+            }
+        } catch (e: Exception) {
+            addLog("Failed to set network offline: ${e.message}")
         }
     }
 }

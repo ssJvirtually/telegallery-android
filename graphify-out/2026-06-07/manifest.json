@@ -5,8 +5,8 @@
     "semantic_hash": "128606e16c91add3aafeedcbe7b90691"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt": {
-    "mtime": 1780826562.0984406,
-    "ast_hash": "787ff89423765bb30bdcf67f5288da98",
+    "mtime": 1780829366.9159186,
+    "ast_hash": "bfe45244c4a53b76e4abf33125e169c8",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
@@ -40,8 +40,8 @@
     "semantic_hash": "e6ecf48324df06c1ee7068880bcdf56a"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt": {
-    "mtime": 1780825695.0624862,
-    "ast_hash": "b328be9d2483333455f908eaab5cec04",
+    "mtime": 1780829360.3928385,
+    "ast_hash": "a4a9b44e693fa683460d15808e2110ae",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt": {

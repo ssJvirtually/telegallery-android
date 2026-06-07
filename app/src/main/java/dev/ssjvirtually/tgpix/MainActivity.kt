@@ -34,9 +34,43 @@ class MainActivity : ComponentActivity() {
     private var deleteLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
     private var deleteMultipleLauncher: ManagedActivityResultLauncher<IntentSenderRequest, androidx.activity.result.ActivityResult>? = null
 
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
+
     override fun onResume() {
         super.onResume()
         TdlibManager.forceReconnect(applicationContext)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val cm = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                TdlibManager.forceReconnect(applicationContext)
+            }
+
+            override fun onLost(network: android.net.Network) {
+                TdlibManager.setNetworkOffline()
+            }
+        }
+        try {
+            cm.registerDefaultNetworkCallback(networkCallback!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        networkCallback?.let {
+            val cm = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            try {
+                cm.unregisterNetworkCallback(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        networkCallback = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
