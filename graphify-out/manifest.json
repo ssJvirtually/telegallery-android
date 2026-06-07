@@ -75,8 +75,8 @@
     "semantic_hash": "71cbf15577558eb9178b1276471a1c15"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt": {
-    "mtime": 1780810791.992576,
-    "ast_hash": "c6044bfb7ce66260a5f80bd67112c26b",
+    "mtime": 1780811073.4393992,
+    "ast_hash": "9c60819ea716a8e08f2d5683c8366cf3",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotosGridScreen.kt": {

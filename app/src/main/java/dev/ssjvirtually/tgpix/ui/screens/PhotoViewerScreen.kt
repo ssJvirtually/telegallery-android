@@ -321,18 +321,25 @@ fun PhotoViewerScreen(
                                             modifier = Modifier.align(Alignment.Center),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            CircularProgressIndicator(
-                                                progress = { downloadState.progress },
-                                                color = TelePhotosTheme.AccentBlue,
-                                                trackColor = Color.White.copy(alpha = 0.2f),
-                                                modifier = Modifier.size(64.dp)
-                                            )
-                                            Text(
-                                                text = "${(downloadState.progress * 100).toInt()}%",
-                                                color = Color.White,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
+                                            if (downloadState.progress > 0f) {
+                                                CircularProgressIndicator(
+                                                    progress = { downloadState.progress },
+                                                    color = TelePhotosTheme.AccentBlue,
+                                                    trackColor = Color.White.copy(alpha = 0.2f),
+                                                    modifier = Modifier.size(64.dp)
+                                                )
+                                                Text(
+                                                    text = "${(downloadState.progress * 100).toInt()}%",
+                                                    color = Color.White,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            } else {
+                                                CircularProgressIndicator(
+                                                    color = TelePhotosTheme.AccentBlue,
+                                                    modifier = Modifier.size(64.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
