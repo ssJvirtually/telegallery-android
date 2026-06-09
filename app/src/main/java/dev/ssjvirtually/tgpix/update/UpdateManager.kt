@@ -20,7 +20,8 @@ data class UpdateInfo(
     val versionName: String,
     val apkUrl: String,
     val forceUpdate: Boolean,
-    val releaseNotes: String
+    val releaseNotes: String,
+    val sha256: String? = null
 )
 
 object UpdateManager {
@@ -52,6 +53,7 @@ object UpdateManager {
                 val apkUrl = json.getString("apkUrl")
                 val forceUpdate = json.optBoolean("forceUpdate", false)
                 val releaseNotes = json.optString("releaseNotes", "")
+                val sha256 = json.optString("sha256", "")
                 
                 val currentVersionCode = BuildConfig.VERSION_CODE
                 Log.d(TAG, "Current versionCode: $currentVersionCode, Remote versionCode: $latestVersionCode")
@@ -63,7 +65,8 @@ object UpdateManager {
                         versionName = latestVersionName,
                         apkUrl = apkUrl,
                         forceUpdate = forceUpdate,
-                        releaseNotes = releaseNotes
+                        releaseNotes = releaseNotes,
+                        sha256 = sha256.takeIf { it.isNotEmpty() }
                     )
                 } else {
                     Log.d(TAG, "App is up-to-date.")
@@ -163,5 +166,28 @@ object UpdateManager {
         }
         Log.i(TAG, "Launching package installer intent.")
         context.startActivity(intent)
+    }
+
+    /**
+     * Computes the SHA-256 hash of the downloaded file and verifies it matches the expected hash.
+     */
+    fun verifyFileSha256(file: File, expectedSha256: String): Boolean {
+        if (expectedSha256.isBlank()) return true
+        return try {
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
+                }
+            }
+            val hash = digest.digest().joinToString("") { String.format("%02x", it) }
+            Log.d(TAG, "Calculated APK SHA-256: $hash, Expected: $expectedSha256")
+            hash.equals(expectedSha256, ignoreCase = true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calculating file SHA-256", e)
+            false
+        }
     }
 }

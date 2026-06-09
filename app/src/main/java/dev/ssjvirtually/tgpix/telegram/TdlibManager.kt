@@ -57,6 +57,9 @@ object TdlibManager {
         _dbVersion.value += 1
     }
 
+    private val _profilePhotoPath = MutableStateFlow<String?>(null)
+    val profilePhotoPath: StateFlow<String?> = _profilePhotoPath
+
     // Active upload tracking
     val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
     val completedUploads = java.util.concurrent.ConcurrentHashMap<Long, TdApi.Object>()
@@ -140,6 +143,9 @@ object TdlibManager {
                         if (result is TdApi.User) {
                             myUserId = result.id
                             addLog("Logged in as ${result.firstName} (User ID: ${result.id}, Saved Messages target active)")
+                            managerScope.launch(Dispatchers.IO) {
+                                fetchAndMonitorProfilePhoto(result)
+                            }
                         }
                     }
                 } else if (state is TdApi.AuthorizationStateClosed) {
@@ -718,6 +724,7 @@ object TdlibManager {
 
     fun performLogoutCleanup(context: Context) {
         addLog("Performing logout cleanup...")
+        _profilePhotoPath.value = null
         
         // 1. Cancel background workers
         try {
@@ -886,6 +893,56 @@ object TdlibManager {
             }
         } catch (e: Exception) {
             addLog("Failed to set network offline: ${e.message}")
+        }
+    }
+
+    private suspend fun fetchAndMonitorProfilePhoto(user: TdApi.User) {
+        val photo = user.profilePhoto ?: return
+        val fileId = photo.small.id
+        addLog("Profile photo found (File ID: $fileId). Fetching path...")
+        try {
+            val initialFile = kotlin.coroutines.suspendCoroutine<TdApi.File?> { cont ->
+                try {
+                    getClient().send(TdApi.GetFile(fileId)) { fileRes ->
+                        cont.resume(fileRes as? TdApi.File)
+                    }
+                } catch (e: Exception) {
+                    cont.resume(null)
+                }
+            }
+
+            if (initialFile != null) {
+                if (initialFile.local.isDownloadingCompleted) {
+                    addLog("Profile photo download complete: ${initialFile.local.path}")
+                    _profilePhotoPath.value = initialFile.local.path
+                } else {
+                    addLog("Profile photo not downloaded yet. Requesting download...")
+                    getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { }
+                    var downloaded = false
+                    var attempts = 0
+                    while (!downloaded && attempts < 10) {
+                        delay(1500)
+                        attempts++
+                        val currentFile = kotlin.coroutines.suspendCoroutine<TdApi.File?> { cont ->
+                            try {
+                                getClient().send(TdApi.GetFile(fileId)) { fileRes ->
+                                    cont.resume(fileRes as? TdApi.File)
+                                }
+                            } catch (e: Exception) {
+                                cont.resume(null)
+                            }
+                        }
+                        if (currentFile != null && currentFile.local.isDownloadingCompleted) {
+                            addLog("Profile photo download complete: ${currentFile.local.path}")
+                            _profilePhotoPath.value = currentFile.local.path
+                            downloaded = true
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            addLog("Failed to fetch or monitor profile photo: ${e.message}")
+            e.printStackTrace()
         }
     }
 }

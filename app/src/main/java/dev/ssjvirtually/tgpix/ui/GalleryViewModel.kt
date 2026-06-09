@@ -193,19 +193,6 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             _isSyncingCloud.value = true
             val context = getApplication<Application>()
             try {
-                val restored = try {
-                    BackupManager.restoreDatabase(context)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    false
-                }
-
-                // Backup restore succeeded — banner done, Room Flows already updated the grid
-                if (restored) {
-                    _isSyncingCloud.value = false
-                    return@launch
-                }
-
                 val chatId = PreferencesManager.getChatId(context)
                 if (chatId != 0L) {
                     val db = UploadDatabase.getDatabase(context)
@@ -213,10 +200,8 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                     val startMsgId = PreferencesManager.getLastScannedMessageId(context)
 
                     if (currentCount == 0 || startMsgId != 0L) {
-                        // Full channel crawl via WorkManager — the init{} observer will
-                        // clear the banner when the work reaches SUCCEEDED/FAILED/CANCELLED.
+                        // Live database is empty or sync was interrupted — run RestoreWorker (handles DB file restore and full sync)
                         enqueueRestoreWorker(getApplication())
-                        // Don't reset _isSyncingCloud here — let the WorkInfo observer do it.
                     } else {
                         // Incremental sync — runs in-process, reset banner when done.
                         try {

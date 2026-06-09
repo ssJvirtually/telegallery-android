@@ -93,6 +93,25 @@ class RestoreWorker(
                 return Result.retry()
             }
 
+            // 1. Attempt database file restore first if the local database is empty
+            val db = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(applicationContext)
+            val currentCount = db.cloudDao().getRecordCountDirect()
+            if (currentCount == 0) {
+                TdlibManager.addLog("RestoreWorker: Live database is empty. Attempting to restore from backup files...")
+                val restored = try {
+                    dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(applicationContext)
+                } catch (e: Exception) {
+                    TdlibManager.addLog("RestoreWorker: Error restoring database file: ${e.message}")
+                    false
+                }
+                if (restored) {
+                    TdlibManager.addLog("RestoreWorker: Database file restored successfully. Proceeding with full crawl to resolve session file IDs...")
+                } else {
+                    TdlibManager.addLog("RestoreWorker: No database backup files found. Starting history crawl...")
+                }
+            }
+
+            // 2. Perform history crawl to resolve volatile session IDs or rebuild timeline
             val startMsgId = PreferencesManager.getLastScannedMessageId(applicationContext)
             
             TdlibManager.syncCloudHistory(

@@ -16,6 +16,7 @@ import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.getFingerprint
+import dev.ssjvirtually.tgpix.storage.getPartialHash
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
 import kotlinx.coroutines.delay
@@ -86,8 +87,23 @@ class UploadWorker(
             return Result.failure()
         }
 
-        // Concurrency Guard: Skip if another backup process is already active
-        if (!uploadMutex.tryLock()) {
+        // Concurrency Guard: Skip if another backup process is already active.
+        // We poll the lock briefly to handle WorkManager's REPLACE policy, where a cancelled worker
+        // might take a brief moment to run its finally block and release the mutex.
+        var acquired = false
+        for (i in 1..30) {
+            if (uploadMutex.tryLock()) {
+                acquired = true
+                break
+            }
+            if (isStopped) {
+                TdlibManager.addLog("Worker: Stopped while waiting for lock.")
+                return Result.success()
+            }
+            delay(100)
+        }
+
+        if (!acquired) {
             TdlibManager.addLog("Worker: Another backup sync task is already running. Skipping this instance.")
             return Result.success()
         }
@@ -153,6 +169,9 @@ class UploadWorker(
 
             val cloudPhotos = db.cloudDao().getAll()
             val cloudByFileName = cloudPhotos.groupBy { it.fileName.lowercase() }
+            val cloudByContentFingerprint = cloudPhotos.associateBy { it.contentFingerprint }
+            val cloudByOriginalSize = cloudPhotos.groupBy { it.originalSizeBytes }
+            val cloudByFileSize = cloudPhotos.groupBy { it.fileSize }
 
             val unsyncedPhotos = mutableListOf<dev.ssjvirtually.tgpix.storage.LocalPhoto>()
             val syncedToInsert = mutableListOf<UploadEntity>()
@@ -170,13 +189,35 @@ class UploadWorker(
                     }
                 }
 
-                // Check if already in cloud database (e.g. from another device or prior sync)
-                val candidatesByName = cloudByFileName[photo.name.lowercase()]
+                // Check if already in cloud database (both new content-based and legacy fingerprint formats)
+                // Performance Optimization: check if there is any potential match in the cloud by filename or file sizes
+                // before doing the expensive disk read/MD5 hashing.
+                val hasPotentialMatch = cloudByFileName.containsKey(photo.name.lowercase()) ||
+                        cloudByOriginalSize.containsKey(photo.size) ||
+                        cloudByFileSize.containsKey(photo.size)
+
                 var existingInCloud: dev.ssjvirtually.tgpix.storage.CloudPhotoEntity? = null
-                if (candidatesByName != null) {
-                    val prefix = "${photo.name}_${photo.size}_"
-                    existingInCloud = candidatesByName.firstOrNull { it.contentFingerprint.startsWith(prefix) }
-                        ?: candidatesByName.firstOrNull() // fallback to first match by filename
+
+                if (hasPotentialMatch) {
+                    val partialHash = try { photo.getPartialHash(applicationContext) } catch (e: Exception) { "" }
+                    val fingerprint = if (partialHash.isNotEmpty()) {
+                        "${photo.size}_${photo.dateTaken}_$partialHash"
+                    } else {
+                        "${photo.size}_${photo.dateTaken}"
+                    }
+                    val legacyFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}" + (if (partialHash.isNotEmpty()) "_$partialHash" else "")
+
+                    existingInCloud = cloudByContentFingerprint[fingerprint] ?: cloudByContentFingerprint[legacyFingerprint]
+                    
+                    if (existingInCloud == null) {
+                        // Fallback to name match for backward compatibility/different formats
+                        val candidatesByName = cloudByFileName[photo.name.lowercase()]
+                        if (candidatesByName != null) {
+                            val prefix = "${photo.name}_${photo.size}_"
+                            existingInCloud = candidatesByName.firstOrNull { it.contentFingerprint.startsWith(prefix) }
+                                ?: candidatesByName.firstOrNull() // fallback to first match by filename
+                        }
+                    }
                 }
 
                 if (existingInCloud != null) {
@@ -242,6 +283,10 @@ class UploadWorker(
 
             // 9. Loop and upload unsynced photos sequentially (one-by-one)
             for (photo in unsyncedPhotos) {
+                if (isStopped) {
+                    TdlibManager.addLog("Worker: Cancellation requested (isStopped = true). Aborting backup sequence.")
+                    break
+                }
                 // Re-verify backup toggle mid-run in case it was switched off during active sequence
                 if (!PreferencesManager.isBackupActive(applicationContext)) {
                     TdlibManager.addLog("Worker: Backup was disabled during execution. Aborting active sync.")

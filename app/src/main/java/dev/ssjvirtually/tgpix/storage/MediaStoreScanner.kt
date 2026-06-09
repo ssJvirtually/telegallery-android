@@ -166,8 +166,8 @@ fun LocalPhoto.getPartialHash(context: Context): String {
 fun LocalPhoto.getFingerprint(context: Context): String {
     val partialHash = getPartialHash(context)
     return if (partialHash.isNotEmpty()) {
-        "${name}_${size}_${dateTaken}_$partialHash"
+        "${size}_${dateTaken}_$partialHash"
     } else {
-        "${name}_${size}_${dateTaken}"
+        "${size}_${dateTaken}"
     }
 }

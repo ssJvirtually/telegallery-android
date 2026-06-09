@@ -57,20 +57,23 @@ object UploadManager {
                 return TdApi.Error(409, "Photo already uploaded (found in local database)")
             }
 
-            // Check cloud database using content fingerprint
+            // Check cloud database using content fingerprint (both new and legacy formats)
             val fingerprint = try {
                 photo.getFingerprint(context)
             } catch (e: Exception) {
                 "unknown_fingerprint"
             }
             if (fingerprint != "unknown_fingerprint") {
+                val partialHash = try { photo.getPartialHash(context) } catch (e: Exception) { "" }
+                val legacyFingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}" + (if (partialHash.isNotEmpty()) "_$partialHash" else "")
                 val cloudPhoto = db.cloudDao().findByFingerprint(fingerprint)
+                    ?: db.cloudDao().findByFingerprint(legacyFingerprint)
                 if (cloudPhoto != null) {
                     db.dao().insert(
                         UploadEntity(
                             mediaStoreId = photo.id,
                             path = photo.uri,
-                            contentFingerprint = fingerprint,
+                            contentFingerprint = cloudPhoto.contentFingerprint,
                             uploadedAt = cloudPhoto.uploadedAt,
                             telegramMessageId = cloudPhoto.messageId
                         )

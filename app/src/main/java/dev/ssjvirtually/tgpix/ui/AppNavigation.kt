@@ -152,23 +152,38 @@ fun AppNavigation() {
                             downloadProgress = progress
                         }
                         if (file != null) {
-                            downloadedFile = file
-                            if (UpdateManager.canInstallPackages(context)) {
-                                UpdateManager.installApk(context, file)
-                                if (isBackgroundDownloading) {
-                                    Toast.makeText(context, "Update downloaded. Launching installer...", Toast.LENGTH_LONG).show()
-                                }
-                                if (!activeUpdateInfo!!.forceUpdate) {
-                                    activeUpdateInfo = null
-                                    showUpdateDialog = false
+                            val expectedSha256 = activeUpdateInfo!!.sha256
+                            val isVerified = if (expectedSha256 != null) {
+                                UpdateManager.verifyFileSha256(file, expectedSha256)
+                            } else {
+                                true
+                            }
+                            
+                            if (isVerified) {
+                                downloadedFile = file
+                                if (UpdateManager.canInstallPackages(context)) {
+                                    UpdateManager.installApk(context, file)
+                                    if (isBackgroundDownloading) {
+                                        Toast.makeText(context, "Update downloaded. Launching installer...", Toast.LENGTH_LONG).show()
+                                    }
+                                    if (!activeUpdateInfo!!.forceUpdate) {
+                                        activeUpdateInfo = null
+                                        showUpdateDialog = false
+                                    } else {
+                                        updateState = UpdateState.READY_TO_INSTALL
+                                    }
                                 } else {
-                                    updateState = UpdateState.READY_TO_INSTALL
+                                    updateState = UpdateState.PERMISSION_REQUIRED
+                                    if (isBackgroundDownloading) {
+                                        showUpdateDialog = true
+                                        Toast.makeText(context, "TGPix update downloaded. Permission required to install.", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             } else {
-                                updateState = UpdateState.PERMISSION_REQUIRED
+                                updateState = UpdateState.ERROR
+                                errorMessage = "APK integrity check failed (SHA-256 mismatch). The file may have been tampered with."
                                 if (isBackgroundDownloading) {
                                     showUpdateDialog = true
-                                    Toast.makeText(context, "TGPix update downloaded. Permission required to install.", Toast.LENGTH_LONG).show()
                                 }
                             }
                         } else {
@@ -210,7 +225,7 @@ fun MainAppLayout(
     var fullScreenPhotoIndex by remember { mutableStateOf<Int?>(null) }
     var devicePhotosList by remember { mutableStateOf<List<LocalPhoto>>(emptyList()) }
 
-    var telegramProfilePhotoPath by remember { mutableStateOf<String?>(null) }
+    val telegramProfilePhotoPath by TdlibManager.profilePhotoPath.collectAsState()
     val authState by TdlibManager.authState.collectAsState()
 
     // Initialize stateful GalleryViewModel to handle all data flows reactively
@@ -304,74 +319,6 @@ fun MainAppLayout(
         }
     }
     
-    LaunchedEffect(authState) {
-        if (authState is TdApi.AuthorizationStateReady) {
-            try {
-                // Get active user data from TDLib thread-safely via suspend coroutine
-                val user = withContext(Dispatchers.IO) {
-                    suspendCancellableCoroutine<TdApi.User?> { continuation ->
-                        try {
-                            TdlibManager.getClient().send(TdApi.GetMe()) { result ->
-                                continuation.resume(result as? TdApi.User)
-                            }
-                        } catch (e: Exception) {
-                            continuation.resume(null)
-                        }
-                    }
-                }
-
-                if (user != null) {
-                    val photo = user.profilePhoto
-                    if (photo != null) {
-                        val fileId = photo.small.id
-                        withContext(Dispatchers.IO) {
-                            // Check initial local status of the small profile picture file
-                            val initialFile = suspendCancellableCoroutine<TdApi.File?> { continuation ->
-                                try {
-                                    TdlibManager.getClient().send(TdApi.GetFile(fileId)) { fileRes ->
-                                        continuation.resume(fileRes as? TdApi.File)
-                                    }
-                                } catch (e: Exception) {
-                                    continuation.resume(null)
-                                }
-                            }
-
-                            if (initialFile != null) {
-                                if (initialFile.local.isDownloadingCompleted) {
-                                    // Already downloaded! Publish the path to state.
-                                    telegramProfilePhotoPath = initialFile.local.path
-                                } else {
-                                    // Start downloading exactly ONCE.
-                                    TdlibManager.getClient().send(TdApi.DownloadFile(fileId, 1, 0, 0, false)) { }
-                                    
-                                    // Poll the download status every 1.5 seconds until download completes
-                                    var downloaded = false
-                                    while (!downloaded) {
-                                        delay(1500)
-                                        val currentFile = suspendCancellableCoroutine<TdApi.File?> { continuation ->
-                                            try {
-                                                TdlibManager.getClient().send(TdApi.GetFile(fileId)) { fileRes ->
-                                                    continuation.resume(fileRes as? TdApi.File)
-                                                }
-                                            } catch (e: Exception) {
-                                                continuation.resume(null)
-                                            }
-                                        }
-                                        if (currentFile != null && currentFile.local.isDownloadingCompleted) {
-                                            telegramProfilePhotoPath = currentFile.local.path
-                                            downloaded = true
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
 
     Scaffold(
         bottomBar = {
