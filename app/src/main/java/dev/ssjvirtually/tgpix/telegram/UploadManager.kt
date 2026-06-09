@@ -35,10 +35,12 @@ import dev.ssjvirtually.tgpix.storage.UploadEntity
 private val exifFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss", java.util.Locale.US)
 private val logDateTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
 
-object UploadManager {
+open class UploadManager {
+    companion object : UploadManager()
+
     private val inFlightUploads = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
-    suspend fun uploadPhoto(
+    open suspend fun uploadPhoto(
         context: Context,
         photo: LocalPhoto,
         chatId: Long,
@@ -447,7 +449,7 @@ object UploadManager {
         return null
     }
 
-    suspend fun sharePhotosToTelegramChat(context: Context, photos: List<LocalPhoto>, targetChatId: Long): Boolean {
+    open suspend fun sharePhotosToTelegramChat(context: Context, photos: List<LocalPhoto>, targetChatId: Long): Boolean {
         return withContext(Dispatchers.IO) {
             var allSuccess = true
             val uploadCacheDir = File(context.cacheDir, "tgpix_temp_share")
@@ -658,7 +660,7 @@ object UploadManager {
         }
     }
 
-    suspend fun sharePhotosToSystem(context: Context, photos: List<LocalPhoto>) {
+    open suspend fun sharePhotosToSystem(context: Context, photos: List<LocalPhoto>) {
         withContext(Dispatchers.IO) {
             val shareCacheDir = File(context.cacheDir, "tgpix_temp_share")
             shareCacheDir.mkdirs()

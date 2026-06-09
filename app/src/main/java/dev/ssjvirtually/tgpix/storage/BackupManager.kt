@@ -26,7 +26,8 @@ import androidx.room.withTransaction
 import dev.ssjvirtually.tgpix.storage.AlbumEntity
 import dev.ssjvirtually.tgpix.storage.AlbumPhotoEntity
 
-object BackupManager {
+open class BackupManager {
+    companion object : BackupManager()
 
     private var isBackupRunning = false
 
@@ -51,7 +52,7 @@ object BackupManager {
         return java.nio.ByteBuffer.wrap(bytes).int
     }
 
-    fun getBackupChatId(context: Context): Long {
+    open fun getBackupChatId(context: Context): Long {
         val customId = PreferencesManager.getDbChatId(context)
         if (customId != 0L) return customId
         
@@ -61,7 +62,7 @@ object BackupManager {
         return PreferencesManager.getChatId(context)
     }
 
-    suspend fun resolveBackupChatId(context: Context): Long {
+    open suspend fun resolveBackupChatId(context: Context): Long {
         val customId = PreferencesManager.getDbChatId(context)
         if (customId != 0L) {
             // Ensure TDLib has loaded/cached this chat before we try to send to it.
@@ -112,7 +113,7 @@ object BackupManager {
         }
     }
 
-    suspend fun resolveMyUserId(): Long {
+    open suspend fun resolveMyUserId(): Long {
         var myId = TdlibManager.myUserId
         if (myId == 0L) {
             try {
@@ -132,7 +133,7 @@ object BackupManager {
         return myId
     }
 
-    fun scheduleBackup(context: Context) {
+    open fun scheduleBackup(context: Context) {
         val workManager = WorkManager.getInstance(context.applicationContext)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -154,7 +155,7 @@ object BackupManager {
         )
     }
 
-    suspend fun backupDatabase(context: Context): Boolean {
+    open suspend fun backupDatabase(context: Context): Boolean {
         if (isBackupRunning) return false
         isBackupRunning = true
         var success = false
@@ -516,7 +517,7 @@ object BackupManager {
         return false
     }
 
-    suspend fun restoreDatabase(context: Context): Boolean {
+    open suspend fun restoreDatabase(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
             val db = UploadDatabase.getDatabase(context)
             
@@ -544,7 +545,7 @@ object BackupManager {
         }
     }
 
-    suspend fun restoreDatabaseForce(context: Context): Boolean {
+    open suspend fun restoreDatabaseForce(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
             val targetChatId = resolveBackupChatId(context)
             val myUserId = resolveMyUserId()
@@ -571,7 +572,7 @@ object BackupManager {
         }
     }
 
-    suspend fun reconstructAlbumsFromBackupChannel(context: Context) {
+    open suspend fun reconstructAlbumsFromBackupChannel(context: Context) {
         val targetChatId = resolveBackupChatId(context)
         if (targetChatId == 0L) return
         
@@ -673,7 +674,7 @@ object BackupManager {
         return jsonObj.toString()
     }
 
-    suspend fun onAlbumUpdated(context: Context, albumId: Long) {
+    open suspend fun onAlbumUpdated(context: Context, albumId: Long) {
         val database = UploadDatabase.getDatabase(context)
         val albumDao = database.albumDao()
         val cloudDao = database.cloudDao()
@@ -749,7 +750,7 @@ object BackupManager {
         }
     }
 
-    suspend fun onAlbumDeleted(context: Context, telegramMessageId: Long?) {
+    open suspend fun onAlbumDeleted(context: Context, telegramMessageId: Long?) {
         if (telegramMessageId == null || telegramMessageId == 0L) return
         val targetChatId = resolveBackupChatId(context)
         if (targetChatId == 0L) return
@@ -765,7 +766,7 @@ object BackupManager {
         }
     }
 
-    suspend fun reconstructAlbum(context: Context, message: TdApi.Message) {
+    open suspend fun reconstructAlbum(context: Context, message: TdApi.Message) {
         val documentContent = message.content as? TdApi.MessageDocument ?: return
         val doc = documentContent.document
         

@@ -40,8 +40,8 @@
     "semantic_hash": "e6ecf48324df06c1ee7068880bcdf56a"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt": {
-    "mtime": 1781020435.6939309,
-    "ast_hash": "fd796ca9f7f2935d7152b1ce642edc98",
+    "mtime": 1781022176.968437,
+    "ast_hash": "8d489e487694099d6d8e7d3d9ee3d255",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt": {
@@ -125,13 +125,13 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt": {
-    "mtime": 1780824543.5510426,
-    "ast_hash": "6a76434e15505a4a31872555b54d0d5a",
+    "mtime": 1781022224.957545,
+    "ast_hash": "5b48990a6d01b804ba2f12f9379f696d",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt": {
-    "mtime": 1781021540.2234888,
-    "ast_hash": "248f9f39f2ec7b85276948bbea8349f3",
+    "mtime": 1781022212.379403,
+    "ast_hash": "e7c104ce02fc10116c17639a4bf953ed",
     "semantic_hash": ""
   },
   "build.gradle": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt": {
-    "mtime": 1781020456.5621655,
-    "ast_hash": "35c9a14eae92682420a0a982a994d0a8",
+    "mtime": 1781022188.151614,
+    "ast_hash": "9e3a029e738f1f9aaca154e68cbd7e25",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
-    "mtime": 1781020451.308753,
-    "ast_hash": "074a61c966adf9ccb0e1d2154e3447d9",
+    "mtime": 1781022198.360486,
+    "ast_hash": "34ef5b47aee05854fed45451c46643d5",
     "semantic_hash": ""
   },
   "watch_and_install.ps1": {
@@ -307,6 +307,11 @@
   "multi-device-db-backup strategy.md": {
     "mtime": 1781020210.812682,
     "ast_hash": "09545040edb0c7b26166af4d29d1f3d2",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt": {
+    "mtime": 1781022154.84252,
+    "ast_hash": "0b3a8d3b0eb8a4ceca3e212ce96d192b",
     "semantic_hash": ""
   }
 }

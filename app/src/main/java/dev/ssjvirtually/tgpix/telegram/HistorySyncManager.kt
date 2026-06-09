@@ -10,7 +10,8 @@ import org.drinkless.tdlib.TdApi
 import org.json.JSONObject
 import java.io.File
 
-object HistorySyncManager {
+open class HistorySyncManager {
+    companion object : HistorySyncManager()
 
     private data class ParsedMetadata(
         val id: Long,
@@ -53,7 +54,7 @@ object HistorySyncManager {
         return null
     }
 
-    suspend fun syncCloudHistory(
+    open suspend fun syncCloudHistory(
         context: Context,
         chatId: Long,
         forceFullCrawl: Boolean = false,
@@ -265,7 +266,7 @@ object HistorySyncManager {
         }
     }
 
-    suspend fun parseAndIndexUploadedMessage(context: Context, msg: TdApi.Message) {
+    open suspend fun parseAndIndexUploadedMessage(context: Context, msg: TdApi.Message) {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
         

@@ -9,7 +9,7 @@ data class MergeResult(
     val uploadedUris: Set<String>
 )
 
-object PhotosRepository {
+class PhotosRepository {
 
     private fun String.normalize(): String {
         val lower = this.lowercase()

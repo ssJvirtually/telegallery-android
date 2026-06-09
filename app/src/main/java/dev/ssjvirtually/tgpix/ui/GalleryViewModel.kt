@@ -46,7 +46,13 @@ import java.util.Locale
 private val searchDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy", Locale.getDefault())
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GalleryViewModel(application: Application) : AndroidViewModel(application) {
+class GalleryViewModel @JvmOverloads constructor(
+    application: Application,
+    private val photosRepository: PhotosRepository = PhotosRepository(),
+    private val preferencesManager: PreferencesManager = PreferencesManager,
+    private val backupManager: BackupManager = BackupManager,
+    private val historySyncManager: HistorySyncManager = HistorySyncManager
+) : AndroidViewModel(application) {
 
     private val _localPhotos = MutableStateFlow<List<LocalPhoto>>(emptyList())
     val localPhotos: StateFlow<List<LocalPhoto>> = _localPhotos.asStateFlow()
@@ -103,7 +109,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
 
     // 1. mergeResult combines local photos, cloud logs, and local uploads, executing in the background (Default dispatcher)
     val mergeResult: StateFlow<MergeResult> = combine(_localPhotos, cloudLogs, uploadedPaths) { local, cloud, uploads ->
-        PhotosRepository.mergeAndDeduplicate(local, cloud, uploads)
+        photosRepository.mergeAndDeduplicate(local, cloud, uploads)
     }.flowOn(Dispatchers.Default)
      .stateIn(
          scope = viewModelScope,
@@ -194,11 +200,11 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
             _isSyncingCloud.value = true
             val context = getApplication<Application>()
             try {
-                val chatId = PreferencesManager.getChatId(context)
+                val chatId = preferencesManager.getChatId(context)
                 if (chatId != 0L) {
                     val db = UploadDatabase.getDatabase(context)
                     val currentCount = db.cloudDao().getRecordCountDirect()
-                    val startMsgId = PreferencesManager.getLastScannedMessageId(context)
+                    val startMsgId = preferencesManager.getLastScannedMessageId(context)
 
                     if (currentCount == 0 || startMsgId != 0L) {
                         // Live database is empty or sync was interrupted — run RestoreWorker (handles DB file restore and full sync)
@@ -206,12 +212,12 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                     } else {
                         // Incremental sync — runs in-process, reset banner when done.
                         try {
-                            HistorySyncManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
+                            historySyncManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
                         try {
-                            BackupManager.reconstructAlbumsFromBackupChannel(context)
+                            backupManager.reconstructAlbumsFromBackupChannel(context)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

@@ -25,7 +25,8 @@ import dev.ssjvirtually.tgpix.storage.PreferencesManager
 
 data class ChatInfo(val id: Long, val title: String)
 
-object TdlibManager {
+open class TdlibManager {
+    companion object : TdlibManager()
 
     enum class ConnectionStatus { CONNECTED, CONNECTING, WAITING_FOR_NETWORK }
 
@@ -53,7 +54,7 @@ object TdlibManager {
     private val _dbVersion = MutableStateFlow(0)
     val dbVersion: StateFlow<Int> = _dbVersion
 
-    fun notifyDatabaseReplaced() {
+    open fun notifyDatabaseReplaced() {
         _dbVersion.value += 1
     }
 
@@ -64,7 +65,7 @@ object TdlibManager {
     val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
     val completedUploads = java.util.concurrent.ConcurrentHashMap<Long, TdApi.Object>()
 
-    fun registerPendingUpload(messageId: Long, callback: (TdApi.Object) -> Unit) {
+    open fun registerPendingUpload(messageId: Long, callback: (TdApi.Object) -> Unit) {
         val completed = completedUploads.remove(messageId)
         if (completed != null) {
             callback(completed)
@@ -75,7 +76,7 @@ object TdlibManager {
 
     private val logTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss", java.util.Locale.getDefault())
 
-    fun addLog(msg: String) {
+    open fun addLog(msg: String) {
         val time = try {
             logTimeFormatter.format(java.time.LocalTime.now())
         } catch (e: Exception) {
@@ -88,12 +89,12 @@ object TdlibManager {
         _logs.value = current
     }
 
-    fun getClient(): Client {
+    open fun getClient(): Client {
         return client ?: throw IllegalStateException("TDLib Client not initialized!")
     }
 
     @Synchronized
-    fun initialize(context: Context) {
+    open fun initialize(context: Context) {
         if (client != null) return
         addLog("Initializing TDLib library...")
         
@@ -241,7 +242,7 @@ object TdlibManager {
         }
     }
 
-    fun loadChats() {
+    open fun loadChats() {
         val getChats = TdApi.GetChats(TdApi.ChatListMain(), 100)
         getClient().send(getChats) { result ->
             // Results will flow via UpdateNewChat events
@@ -272,7 +273,7 @@ object TdlibManager {
         }
     }
 
-    suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+    open suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
         try {
             val cl = client
             if (cl == null) {
@@ -293,7 +294,7 @@ object TdlibManager {
 
 
 
-    fun optimizeStorage(context: Context) {
+    open fun optimizeStorage(context: Context) {
         val client = client ?: return
         addLog("Enforcing 500 MB file cache limits on TDLib storage...")
         val sizeLimit = 500L * 1024L * 1024L // 500 MB threshold
@@ -357,7 +358,7 @@ object TdlibManager {
         notificationManager.notify(888, notification)
     }
 
-    fun performLogoutCleanup(context: Context) {
+    open fun performLogoutCleanup(context: Context) {
         addLog("Performing logout cleanup...")
         _profilePhotoPath.value = null
         
@@ -413,7 +414,7 @@ object TdlibManager {
         }
     }
 
-    fun checkAndHandleChatError(context: Context, error: TdApi.Error): Boolean {
+    open fun checkAndHandleChatError(context: Context, error: TdApi.Error): Boolean {
         val msg = error.message.uppercase()
         val isForbidden = error.code == 400 && (
             msg.contains("CHAT_WRITE_FORBIDDEN") || 
@@ -496,7 +497,7 @@ object TdlibManager {
         notificationManager.notify(777, notification)
     }
 
-    fun forceReconnect(context: Context) {
+    open fun forceReconnect(context: Context) {
         if (client == null) return
         try {
             val cl = getClient()
@@ -520,7 +521,7 @@ object TdlibManager {
         }
     }
 
-    fun setNetworkOffline() {
+    open fun setNetworkOffline() {
         if (client == null) return
         try {
             getClient().send(TdApi.SetNetworkType(TdApi.NetworkTypeNone())) { result ->
