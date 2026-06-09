@@ -21,6 +21,7 @@ import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
+import dev.ssjvirtually.tgpix.telegram.HistorySyncManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -170,7 +171,7 @@ class ShareWorker(
                             )
                         )
                         try {
-                            TdlibManager.parseAndIndexUploadedMessage(applicationContext, backupResult)
+                            HistorySyncManager.parseAndIndexUploadedMessage(applicationContext, backupResult)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

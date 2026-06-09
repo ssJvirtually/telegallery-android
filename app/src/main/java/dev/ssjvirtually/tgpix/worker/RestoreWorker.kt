@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
+import dev.ssjvirtually.tgpix.telegram.HistorySyncManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import org.drinkless.tdlib.TdApi
@@ -114,7 +115,7 @@ class RestoreWorker(
             // 2. Perform history crawl to resolve volatile session IDs or rebuild timeline
             val startMsgId = PreferencesManager.getLastScannedMessageId(applicationContext)
             
-            TdlibManager.syncCloudHistory(
+            HistorySyncManager.syncCloudHistory(
                 context = applicationContext,
                 chatId = chatId,
                 forceFullCrawl = true,

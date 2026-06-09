@@ -13,6 +13,7 @@ import dev.ssjvirtually.tgpix.storage.MergeResult
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
 import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
+import dev.ssjvirtually.tgpix.telegram.HistorySyncManager
 import dev.ssjvirtually.tgpix.ui.screens.SearchItem
 import androidx.work.WorkManager
 import androidx.work.OneTimeWorkRequestBuilder
@@ -205,7 +206,7 @@ class GalleryViewModel(application: Application) : AndroidViewModel(application)
                     } else {
                         // Incremental sync — runs in-process, reset banner when done.
                         try {
-                            TdlibManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
+                            HistorySyncManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

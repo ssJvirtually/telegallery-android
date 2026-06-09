@@ -18,6 +18,7 @@ import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.getFingerprint
 import dev.ssjvirtually.tgpix.storage.getPartialHash
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
+import dev.ssjvirtually.tgpix.telegram.HistorySyncManager
 import dev.ssjvirtually.tgpix.telegram.UploadManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -342,7 +343,7 @@ class UploadWorker(
                                 )
                             )
                             try {
-                                TdlibManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
+                                HistorySyncManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }

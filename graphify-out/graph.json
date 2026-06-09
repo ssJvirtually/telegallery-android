@@ -218,7 +218,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L76",
       "id": "tgpix_mainactivity_mainactivity_oncreate",
-      "community": 60,
+      "community": 10,
       "norm_label": ".oncreate()"
     },
     {
@@ -227,7 +227,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L76",
       "id": "bundle",
-      "community": 60,
+      "community": 10,
       "norm_label": "bundle"
     },
     {
@@ -236,7 +236,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L129",
       "id": "tgpix_mainactivity_mainactivity_triggerdelete",
-      "community": 61,
+      "community": 10,
       "norm_label": ".triggerdelete()"
     },
     {
@@ -245,7 +245,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L129",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_localphoto",
-      "community": 61,
+      "community": 10,
       "norm_label": "localphoto"
     },
     {
@@ -254,7 +254,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L147",
       "id": "tgpix_mainactivity_mainactivity_triggerbatchdelete",
-      "community": 61,
+      "community": 10,
       "norm_label": ".triggerbatchdelete()"
     },
     {
@@ -263,7 +263,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L147",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_list",
-      "community": 61,
+      "community": 10,
       "norm_label": "list"
     },
     {
@@ -1901,7 +1901,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L1",
       "id": "telegram_authmanager",
-      "community": 31,
+      "community": 57,
       "norm_label": "authmanager.kt"
     },
     {
@@ -1910,7 +1910,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L5",
       "id": "telegram_authmanager_authmanager",
-      "community": 31,
+      "community": 57,
       "norm_label": "authmanager"
     },
     {
@@ -1919,7 +1919,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "telegram_authmanager_authmanager_sendphone",
-      "community": 31,
+      "community": 57,
       "norm_label": ".sendphone()"
     },
     {
@@ -1928,7 +1928,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_authmanager_kt_string",
-      "community": 31,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -1937,7 +1937,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L13",
       "id": "telegram_authmanager_authmanager_verifyotp",
-      "community": 31,
+      "community": 57,
       "norm_label": ".verifyotp()"
     },
     {
@@ -1946,8 +1946,143 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L20",
       "id": "telegram_authmanager_authmanager_logout",
-      "community": 31,
+      "community": 57,
       "norm_label": ".logout()"
+    },
+    {
+      "label": "HistorySyncManager.kt",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L1",
+      "id": "telegram_historysyncmanager",
+      "community": 4,
+      "norm_label": "historysyncmanager.kt"
+    },
+    {
+      "label": "HistorySyncManager",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L13",
+      "id": "telegram_historysyncmanager_historysyncmanager",
+      "community": 4,
+      "norm_label": "historysyncmanager"
+    },
+    {
+      "label": "ParsedMetadata",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L15",
+      "id": "telegram_historysyncmanager_parsedmetadata",
+      "community": 4,
+      "norm_label": "parsedmetadata"
+    },
+    {
+      "label": ".parseMetadataFromCaption()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L26",
+      "id": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "community": 4,
+      "norm_label": ".parsemetadatafromcaption()"
+    },
+    {
+      "label": "String",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L26",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_string",
+      "community": 4,
+      "norm_label": "string"
+    },
+    {
+      "label": ".syncCloudHistory()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "community": 4,
+      "norm_label": ".synccloudhistory()"
+    },
+    {
+      "label": "Context",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_context",
+      "community": 4,
+      "norm_label": "context"
+    },
+    {
+      "label": "Long",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_long",
+      "community": 4,
+      "norm_label": "long"
+    },
+    {
+      "label": "Boolean",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_boolean",
+      "community": 4,
+      "norm_label": "boolean"
+    },
+    {
+      "label": "recoveredCount",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "recoveredcount",
+      "community": 4,
+      "norm_label": "recoveredcount"
+    },
+    {
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_int",
+      "community": 4,
+      "norm_label": "int"
+    },
+    {
+      "label": "lastMessageId",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "lastmessageid",
+      "community": 4,
+      "norm_label": "lastmessageid"
+    },
+    {
+      "label": "Unit",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "id": "unit",
+      "community": 4,
+      "norm_label": "unit"
+    },
+    {
+      "label": ".parseAndIndexUploadedMessage()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L268",
+      "id": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "community": 4,
+      "norm_label": ".parseandindexuploadedmessage()"
+    },
+    {
+      "label": "TdApi",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L268",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_tdapi",
+      "community": 4,
+      "norm_label": "tdapi"
     },
     {
       "label": "TdlibManager.kt",
@@ -2157,91 +2292,19 @@
       "norm_label": ".sendrequest()"
     },
     {
-      "label": ".syncCloudHistory()",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
-      "id": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "community": 4,
-      "norm_label": ".synccloudhistory()"
-    },
-    {
-      "label": "Boolean",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
-      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean",
-      "community": 4,
-      "norm_label": "boolean"
-    },
-    {
-      "label": "recoveredCount",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
-      "id": "recoveredcount",
-      "community": 4,
-      "norm_label": "recoveredcount"
-    },
-    {
-      "label": "lastMessageId",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
-      "id": "lastmessageid",
-      "community": 4,
-      "norm_label": "lastmessageid"
-    },
-    {
-      "label": "Unit",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
-      "id": "unit",
-      "community": 4,
-      "norm_label": "unit"
-    },
-    {
       "label": ".optimizeStorage()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L504",
+      "source_location": "L296",
       "id": "telegram_tdlibmanager_tdlibmanager_optimizestorage",
       "community": 4,
       "norm_label": ".optimizestorage()"
     },
     {
-      "label": ".parseAndIndexUploadedMessage()",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L525",
-      "id": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
-      "community": 4,
-      "norm_label": ".parseandindexuploadedmessage()"
-    },
-    {
-      "label": "ParsedMetadata",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L643",
-      "id": "telegram_tdlibmanager_parsedmetadata",
-      "community": 4,
-      "norm_label": "parsedmetadata"
-    },
-    {
-      "label": ".parseMetadataFromCaption()",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L654",
-      "id": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
-      "community": 4,
-      "norm_label": ".parsemetadatafromcaption()"
-    },
-    {
       "label": ".showSessionExpiredNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L684",
+      "source_location": "L319",
       "id": "telegram_tdlibmanager_tdlibmanager_showsessionexpirednotification",
       "community": 4,
       "norm_label": ".showsessionexpirednotification()"
@@ -2250,7 +2313,7 @@
       "label": ".performLogoutCleanup()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L725",
+      "source_location": "L360",
       "id": "telegram_tdlibmanager_tdlibmanager_performlogoutcleanup",
       "community": 4,
       "norm_label": ".performlogoutcleanup()"
@@ -2259,16 +2322,25 @@
       "label": ".checkAndHandleChatError()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L781",
+      "source_location": "L416",
       "id": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
       "community": 4,
       "norm_label": ".checkandhandlechaterror()"
     },
     {
+      "label": "Boolean",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L416",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean",
+      "community": 4,
+      "norm_label": "boolean"
+    },
+    {
       "label": ".showChatUnavailableNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L823",
+      "source_location": "L458",
       "id": "telegram_tdlibmanager_tdlibmanager_showchatunavailablenotification",
       "community": 4,
       "norm_label": ".showchatunavailablenotification()"
@@ -2277,7 +2349,7 @@
       "label": ".forceReconnect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L864",
+      "source_location": "L499",
       "id": "telegram_tdlibmanager_tdlibmanager_forcereconnect",
       "community": 4,
       "norm_label": ".forcereconnect()"
@@ -2286,7 +2358,7 @@
       "label": ".setNetworkOffline()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L888",
+      "source_location": "L523",
       "id": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
       "community": 4,
       "norm_label": ".setnetworkoffline()"
@@ -2295,7 +2367,7 @@
       "label": ".fetchAndMonitorProfilePhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L899",
+      "source_location": "L534",
       "id": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
       "community": 4,
       "norm_label": ".fetchandmonitorprofilephoto()"
@@ -2522,7 +2594,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L1",
       "id": "ui_appnavigation",
-      "community": 60,
+      "community": 57,
       "norm_label": "appnavigation.kt"
     },
     {
@@ -2531,7 +2603,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L55",
       "id": "ui_appnavigation_appnavigation",
-      "community": 60,
+      "community": 57,
       "norm_label": "appnavigation()"
     },
     {
@@ -2540,7 +2612,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L216",
       "id": "ui_appnavigation_mainapplayout",
-      "community": 60,
+      "community": 57,
       "norm_label": "mainapplayout()"
     },
     {
@@ -2549,7 +2621,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L216",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_appnavigation_kt_string",
-      "community": 60,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -2565,7 +2637,7 @@
       "label": "GalleryViewModel",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L47",
+      "source_location": "L48",
       "id": "ui_galleryviewmodel_galleryviewmodel",
       "community": 55,
       "norm_label": "galleryviewmodel"
@@ -2583,7 +2655,7 @@
       "label": "StateFlow",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L51",
+      "source_location": "L52",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_stateflow",
       "community": 55,
       "norm_label": "stateflow"
@@ -2592,7 +2664,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L51",
+      "source_location": "L52",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_list",
       "community": 55,
       "norm_label": "list"
@@ -2601,7 +2673,7 @@
       "label": "LocalPhoto",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L51",
+      "source_location": "L52",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_localphoto",
       "community": 55,
       "norm_label": "localphoto"
@@ -2610,7 +2682,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L54",
+      "source_location": "L55",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_boolean",
       "community": 55,
       "norm_label": "boolean"
@@ -2619,7 +2691,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L60",
+      "source_location": "L61",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_string",
       "community": 55,
       "norm_label": "string"
@@ -2628,7 +2700,7 @@
       "label": "Flow",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L95",
+      "source_location": "L96",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_flow",
       "community": 55,
       "norm_label": "flow"
@@ -2637,7 +2709,7 @@
       "label": "CloudPhotoEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L95",
+      "source_location": "L96",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_cloudphotoentity",
       "community": 55,
       "norm_label": "cloudphotoentity"
@@ -2646,7 +2718,7 @@
       "label": "MergeResult",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L104",
+      "source_location": "L105",
       "id": "mergeresult",
       "community": 55,
       "norm_label": "mergeresult"
@@ -2655,7 +2727,7 @@
       "label": "Set",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L121",
+      "source_location": "L122",
       "id": "set",
       "community": 55,
       "norm_label": "set"
@@ -2664,7 +2736,7 @@
       "label": "SearchItem",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L131",
+      "source_location": "L132",
       "id": "searchitem",
       "community": 55,
       "norm_label": "searchitem"
@@ -2673,7 +2745,7 @@
       "label": "Job",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L146",
+      "source_location": "L147",
       "id": "job",
       "community": 55,
       "norm_label": "job"
@@ -2682,7 +2754,7 @@
       "label": ".loadLocalPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L148",
+      "source_location": "L149",
       "id": "ui_galleryviewmodel_galleryviewmodel_loadlocalphotos",
       "community": 55,
       "norm_label": ".loadlocalphotos()"
@@ -2691,7 +2763,7 @@
       "label": ".triggerScan()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L161",
+      "source_location": "L162",
       "id": "ui_galleryviewmodel_galleryviewmodel_triggerscan",
       "community": 55,
       "norm_label": ".triggerscan()"
@@ -2700,7 +2772,7 @@
       "label": ".enqueueRestoreWorker()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L175",
+      "source_location": "L176",
       "id": "ui_galleryviewmodel_galleryviewmodel_enqueuerestoreworker",
       "community": 55,
       "norm_label": ".enqueuerestoreworker()"
@@ -2709,7 +2781,7 @@
       "label": "Application",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L175",
+      "source_location": "L176",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_application",
       "community": 55,
       "norm_label": "application"
@@ -2718,7 +2790,7 @@
       "label": ".startCloudSync()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L190",
+      "source_location": "L191",
       "id": "ui_galleryviewmodel_galleryviewmodel_startcloudsync",
       "community": 55,
       "norm_label": ".startcloudsync()"
@@ -2891,7 +2963,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L1",
       "id": "screens_otpverifyscreen",
-      "community": 31,
+      "community": 57,
       "norm_label": "otpverifyscreen.kt"
     },
     {
@@ -2900,7 +2972,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L24",
       "id": "screens_otpverifyscreen_otpverifyscreen",
-      "community": 31,
+      "community": 57,
       "norm_label": "otpverifyscreen()"
     },
     {
@@ -2909,7 +2981,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L1",
       "id": "screens_phoneloginscreen",
-      "community": 59,
+      "community": 57,
       "norm_label": "phoneloginscreen.kt"
     },
     {
@@ -2918,7 +2990,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L26",
       "id": "screens_phoneloginscreen_phoneloginscreen",
-      "community": 59,
+      "community": 57,
       "norm_label": "phoneloginscreen()"
     },
     {
@@ -3494,7 +3566,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L1",
       "id": "update_updatedialog",
-      "community": 32,
+      "community": 57,
       "norm_label": "updatedialog.kt"
     },
     {
@@ -3503,7 +3575,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "update_updatedialog_updatedialog",
-      "community": 32,
+      "community": 57,
       "norm_label": "updatedialog()"
     },
     {
@@ -3512,7 +3584,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updateinfo",
-      "community": 32,
+      "community": 57,
       "norm_label": "updateinfo"
     },
     {
@@ -3521,7 +3593,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updatestate",
-      "community": 32,
+      "community": 57,
       "norm_label": "updatestate"
     },
     {
@@ -3530,7 +3602,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_float",
-      "community": 32,
+      "community": 57,
       "norm_label": "float"
     },
     {
@@ -3539,7 +3611,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_file",
-      "community": 32,
+      "community": 57,
       "norm_label": "file"
     },
     {
@@ -3548,7 +3620,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_string",
-      "community": 32,
+      "community": 57,
       "norm_label": "string"
     },
     {
@@ -3557,7 +3629,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L319",
       "id": "update_updatedialog_updatestate",
-      "community": 32,
+      "community": 57,
       "norm_label": "updatestate"
     },
     {
@@ -3798,7 +3870,7 @@
       "label": "RestoreWorker",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L19",
+      "source_location": "L20",
       "id": "worker_restoreworker_restoreworker",
       "community": 3,
       "norm_label": "restoreworker"
@@ -3807,7 +3879,7 @@
       "label": ".getForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L27",
+      "source_location": "L28",
       "id": "worker_restoreworker_restoreworker_getforegroundinfo",
       "community": 3,
       "norm_label": ".getforegroundinfo()"
@@ -3816,7 +3888,7 @@
       "label": "ForegroundInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L27",
+      "source_location": "L28",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_restoreworker_kt_foregroundinfo",
       "community": 3,
       "norm_label": "foregroundinfo"
@@ -3825,7 +3897,7 @@
       "label": ".createForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L31",
+      "source_location": "L32",
       "id": "worker_restoreworker_restoreworker_createforegroundinfo",
       "community": 3,
       "norm_label": ".createforegroundinfo()"
@@ -3834,7 +3906,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L31",
+      "source_location": "L32",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_restoreworker_kt_int",
       "community": 3,
       "norm_label": "int"
@@ -3843,7 +3915,7 @@
       "label": ".doWork()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L66",
+      "source_location": "L67",
       "id": "worker_restoreworker_restoreworker_dowork",
       "community": 3,
       "norm_label": ".dowork()"
@@ -3852,7 +3924,7 @@
       "label": "Result",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
-      "source_location": "L66",
+      "source_location": "L67",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_restoreworker_kt_result",
       "community": 3,
       "norm_label": "result"
@@ -3870,7 +3942,7 @@
       "label": "ShareWorker",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L31",
+      "source_location": "L32",
       "id": "worker_shareworker_shareworker",
       "community": 3,
       "norm_label": "shareworker"
@@ -3879,7 +3951,7 @@
       "label": ".getForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L39",
+      "source_location": "L40",
       "id": "worker_shareworker_shareworker_getforegroundinfo",
       "community": 3,
       "norm_label": ".getforegroundinfo()"
@@ -3888,7 +3960,7 @@
       "label": "ForegroundInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L39",
+      "source_location": "L40",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_shareworker_kt_foregroundinfo",
       "community": 3,
       "norm_label": "foregroundinfo"
@@ -3897,7 +3969,7 @@
       "label": ".createForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L43",
+      "source_location": "L44",
       "id": "worker_shareworker_shareworker_createforegroundinfo",
       "community": 3,
       "norm_label": ".createforegroundinfo()"
@@ -3906,7 +3978,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L43",
+      "source_location": "L44",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_shareworker_kt_string",
       "community": 3,
       "norm_label": "string"
@@ -3915,7 +3987,7 @@
       "label": ".doWork()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L72",
+      "source_location": "L73",
       "id": "worker_shareworker_shareworker_dowork",
       "community": 3,
       "norm_label": ".dowork()"
@@ -3924,7 +3996,7 @@
       "label": "Result",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt",
-      "source_location": "L72",
+      "source_location": "L73",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_shareworker_kt_result",
       "community": 3,
       "norm_label": "result"
@@ -3942,7 +4014,7 @@
       "label": "UploadWorker",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L28",
+      "source_location": "L29",
       "id": "worker_uploadworker_uploadworker",
       "community": 3,
       "norm_label": "uploadworker"
@@ -3951,7 +4023,7 @@
       "label": ".getForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L40",
+      "source_location": "L41",
       "id": "worker_uploadworker_uploadworker_getforegroundinfo",
       "community": 3,
       "norm_label": ".getforegroundinfo()"
@@ -3960,7 +4032,7 @@
       "label": "ForegroundInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L40",
+      "source_location": "L41",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_uploadworker_kt_foregroundinfo",
       "community": 3,
       "norm_label": "foregroundinfo"
@@ -3969,7 +4041,7 @@
       "label": ".createForegroundInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L44",
+      "source_location": "L45",
       "id": "worker_uploadworker_uploadworker_createforegroundinfo",
       "community": 3,
       "norm_label": ".createforegroundinfo()"
@@ -3978,7 +4050,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L44",
+      "source_location": "L45",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_uploadworker_kt_string",
       "community": 3,
       "norm_label": "string"
@@ -3987,7 +4059,7 @@
       "label": ".doWork()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L73",
+      "source_location": "L74",
       "id": "worker_uploadworker_uploadworker_dowork",
       "community": 3,
       "norm_label": ".dowork()"
@@ -3996,7 +4068,7 @@
       "label": "Result",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt",
-      "source_location": "L73",
+      "source_location": "L74",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_uploadworker_kt_result",
       "community": 3,
       "norm_label": "result"
@@ -6207,6 +6279,42 @@
       "norm_label": "appendix c \u2014 recommended tdlib aar source"
     },
     {
+      "label": ".syncCloudHistory()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L294",
+      "community": 4,
+      "norm_label": ".synccloudhistory()",
+      "id": "telegram_tdlibmanager_tdlibmanager_synccloudhistory"
+    },
+    {
+      "label": ".parseAndIndexUploadedMessage()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L525",
+      "community": 4,
+      "norm_label": ".parseandindexuploadedmessage()",
+      "id": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage"
+    },
+    {
+      "label": "ParsedMetadata",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L643",
+      "community": 4,
+      "norm_label": "parsedmetadata",
+      "id": "telegram_tdlibmanager_parsedmetadata"
+    },
+    {
+      "label": ".parseMetadataFromCaption()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L654",
+      "community": 4,
+      "norm_label": ".parsemetadatafromcaption()",
+      "id": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption"
+    },
+    {
       "label": "androidx",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
@@ -6229,7 +6337,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
       "source_location": "L129",
-      "community": 61,
+      "community": 10,
       "norm_label": "localphoto",
       "id": "localphoto"
     },
@@ -7188,7 +7296,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "tgpix readme",
       "id": "readme_readme"
     },
@@ -7292,7 +7400,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "telegallery phone number login screen screenshot",
       "id": "screenshots_login_screen"
     },
@@ -7305,7 +7413,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "telegallery shutter logo with paper plane",
       "id": "screenshots_login_screen_brand_logo"
     },
@@ -7318,7 +7426,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "otp sms verification form",
       "id": "screenshots_login_screen_otp_login_form"
     },
@@ -7331,7 +7439,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "alternative telegallery logo design asset",
       "id": "screenshots_logo"
     },
@@ -7344,7 +7452,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 59,
+      "community": 57,
       "norm_label": "alternative three-petal purple logo design",
       "id": "screenshots_logo_purple_leaves_logo"
     },
@@ -12379,6 +12487,232 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager",
+      "target": "telegram_historysyncmanager_historysyncmanager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager",
+      "target": "telegram_historysyncmanager_parsedmetadata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L268",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager",
+      "target": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager",
+      "target": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager",
+      "target": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "target": "telegram_historysyncmanager_parsedmetadata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L298",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L26",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_boolean",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_int",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_long",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "lastmessageid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "recoveredcount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L56",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "unit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L268",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_context",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "recoveredcount"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "lastmessageid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "unit"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L268",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_tdapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L26",
       "weight": 1.0,
@@ -12687,9 +13021,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L899",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager",
-      "target": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto"
     },
     {
       "relation": "method",
@@ -12953,9 +13287,9 @@
       "source_location": "L899",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_tdapi",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_tdapi"
     },
     {
       "relation": "references",
@@ -13095,9 +13429,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L902",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
-      "target": "telegram_tdlibmanager_tdlibmanager_addlog",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_addlog"
     },
     {
       "relation": "calls",
@@ -13205,9 +13539,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L906",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
-      "target": "telegram_tdlibmanager_tdlibmanager_getclient",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_getclient"
     },
     {
       "relation": "calls",
@@ -13458,9 +13792,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L147",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_handleupdate",
-      "target": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
-      "confidence_score": 1.0
+      "target": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto"
     },
     {
       "relation": "calls",
@@ -13598,78 +13932,12 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
+      "source_location": "L498",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "boolean"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "source": "telegram_tdlibmanager_tdlibmanager_optimizestorage",
       "target": "context"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "int"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "lastmessageid"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "long"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "recoveredcount"
     },
     {
       "relation": "calls",
@@ -13681,105 +13949,6 @@
       "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
       "target": "telegram_tdlibmanager_tdlibmanager_optimizestorage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L336",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "unit"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L774",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L498",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_optimizestorage",
-      "target": "context"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L519",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
-      "target": "context"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L519",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
-      "target": "tdapi"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L505",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
-      "target": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption"
-    },
-    {
-      "relation": "references",
-      "context": "return_type",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L604",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
-      "target": "telegram_tdlibmanager_parsedmetadata"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L648",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
-      "target": "string"
     },
     {
       "relation": "references",
@@ -13802,6 +13971,17 @@
       "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_performlogoutcleanup",
       "target": "context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L774",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean"
     },
     {
       "relation": "references",
@@ -13846,6 +14026,17 @@
       "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
       "target": "telegram_tdlibmanager_tdlibmanager_showchatunavailablenotification"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean"
     },
     {
       "relation": "references",
@@ -16693,9 +16884,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateManager.kt",
       "source_location": "L174",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "update_updatemanager_updatemanager",
-      "target": "update_updatemanager_updatemanager_verifyfilesha256",
-      "confidence_score": 1.0
+      "target": "update_updatemanager_updatemanager_verifyfilesha256"
     },
     {
       "relation": "references",
@@ -16770,9 +16961,9 @@
       "source_location": "L174",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "update_updatemanager_updatemanager_verifyfilesha256",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_string"
     },
     {
       "relation": "references",
@@ -16792,9 +16983,9 @@
       "source_location": "L174",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "update_updatemanager_updatemanager_verifyfilesha256",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_file",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_file"
     },
     {
       "relation": "references",
@@ -16814,9 +17005,9 @@
       "source_location": "L174",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "update_updatemanager_updatemanager_verifyfilesha256",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_boolean",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatemanager_kt_boolean"
     },
     {
       "relation": "contains",
@@ -17500,9 +17691,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review",
-      "target": "application_flows_review_tgpix_application_flows_architecture_review",
-      "confidence_score": 1.0
+      "target": "application_flows_review_tgpix_application_flows_architecture_review"
     },
     {
       "relation": "contains",
@@ -17510,9 +17701,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_1_unresolved_issues_from_previous_review",
-      "confidence_score": 1.0
+      "target": "application_flows_review_1_unresolved_issues_from_previous_review"
     },
     {
       "relation": "contains",
@@ -17520,9 +17711,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L94",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_2_critical_new_issues",
-      "confidence_score": 1.0
+      "target": "application_flows_review_2_critical_new_issues"
     },
     {
       "relation": "contains",
@@ -17530,9 +17721,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L302",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_3_important_new_issues",
-      "confidence_score": 1.0
+      "target": "application_flows_review_3_important_new_issues"
     },
     {
       "relation": "contains",
@@ -17540,9 +17731,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L498",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_4_flow_specific_issues",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_flow_specific_issues"
     },
     {
       "relation": "contains",
@@ -17550,9 +17741,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L699",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_5_documentation_contradictions",
-      "confidence_score": 1.0
+      "target": "application_flows_review_5_documentation_contradictions"
     },
     {
       "relation": "contains",
@@ -17560,9 +17751,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L712",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_6_improvements",
-      "confidence_score": 1.0
+      "target": "application_flows_review_6_improvements"
     },
     {
       "relation": "contains",
@@ -17570,9 +17761,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L771",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_7_updated_pre_launch_checklist",
-      "confidence_score": 1.0
+      "target": "application_flows_review_7_updated_pre_launch_checklist"
     },
     {
       "relation": "contains",
@@ -17580,9 +17771,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L788",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_8_summary_table",
-      "confidence_score": 1.0
+      "target": "application_flows_review_8_summary_table"
     },
     {
       "relation": "contains",
@@ -17590,9 +17781,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_cross_document_production_audit_application_flows_md_database_and_backup_strategy_md",
-      "confidence_score": 1.0
+      "target": "application_flows_review_cross_document_production_audit_application_flows_md_database_and_backup_strategy_md"
     },
     {
       "relation": "contains",
@@ -17600,9 +17791,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_tgpix_application_flows_architecture_review",
-      "target": "application_flows_review_table_of_contents",
-      "confidence_score": 1.0
+      "target": "application_flows_review_table_of_contents"
     },
     {
       "relation": "contains",
@@ -17610,9 +17801,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_1_unresolved_issues_from_previous_review",
-      "target": "application_flows_review_u_c1_fallbacktodestructivemigration_still_present",
-      "confidence_score": 1.0
+      "target": "application_flows_review_u_c1_fallbacktodestructivemigration_still_present"
     },
     {
       "relation": "contains",
@@ -17620,9 +17811,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_1_unresolved_issues_from_previous_review",
-      "target": "application_flows_review_u_c3_backup_still_triggered_from_ui_composable_layer",
-      "confidence_score": 1.0
+      "target": "application_flows_review_u_c3_backup_still_triggered_from_ui_composable_layer"
     },
     {
       "relation": "contains",
@@ -17630,9 +17821,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_1_unresolved_issues_from_previous_review",
-      "target": "application_flows_review_u_i6_album_photos_photouri_ambiguity_still_not_fixed",
-      "confidence_score": 1.0
+      "target": "application_flows_review_u_i6_album_photos_photouri_ambiguity_still_not_fixed"
     },
     {
       "relation": "contains",
@@ -17640,9 +17831,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_1_unresolved_issues_from_previous_review",
-      "target": "application_flows_review_u_u1_wakelock_still_1_hour_hard_limit",
-      "confidence_score": 1.0
+      "target": "application_flows_review_u_u1_wakelock_still_1_hour_hard_limit"
     },
     {
       "relation": "contains",
@@ -17650,9 +17841,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L98",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_2_critical_new_issues",
-      "target": "application_flows_review_n_c1_auto_update_downloads_apk_with_no_integrity_verification",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_c1_auto_update_downloads_apk_with_no_integrity_verification"
     },
     {
       "relation": "contains",
@@ -17660,9 +17851,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_2_critical_new_issues",
-      "target": "application_flows_review_n_c2_restore_triggered_from_appnavigation_kt_ui_layer_blocks_navigation",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_c2_restore_triggered_from_appnavigation_kt_ui_layer_blocks_navigation"
     },
     {
       "relation": "contains",
@@ -17670,9 +17861,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L214",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_2_critical_new_issues",
-      "target": "application_flows_review_n_c3_force_full_crawl_after_every_restore_is_catastrophic_for_large_libraries",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_c3_force_full_crawl_after_every_restore_is_catastrophic_for_large_libraries"
     },
     {
       "relation": "contains",
@@ -17680,9 +17871,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L264",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_2_critical_new_issues",
-      "target": "application_flows_review_n_c4_auto_vault_discovery_by_channel_name_is_a_security_risk",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_c4_auto_vault_discovery_by_channel_name_is_a_security_risk"
     },
     {
       "relation": "contains",
@@ -17690,9 +17881,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L306",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_3_important_new_issues",
-      "target": "application_flows_review_n_i1_ml_kit_triggered_on_grid_and_search_screen_loads_not_once_per_photo",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_i1_ml_kit_triggered_on_grid_and_search_screen_loads_not_once_per_photo"
     },
     {
       "relation": "contains",
@@ -17700,9 +17891,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L348",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_3_important_new_issues",
-      "target": "application_flows_review_n_i2_parseandindexuploadedmessage_business_logic_inside_tdlibmanager",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_i2_parseandindexuploadedmessage_business_logic_inside_tdlibmanager"
     },
     {
       "relation": "contains",
@@ -17710,9 +17901,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L383",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_3_important_new_issues",
-      "target": "application_flows_review_n_i3_no_handling_of_vault_channel_deletion_by_user",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_i3_no_handling_of_vault_channel_deletion_by_user"
     },
     {
       "relation": "contains",
@@ -17720,9 +17911,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L417",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_3_important_new_issues",
-      "target": "application_flows_review_n_i4_tdlib_auth_state_machine_missing_intermediate_states",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_i4_tdlib_auth_state_machine_missing_intermediate_states"
     },
     {
       "relation": "contains",
@@ -17730,9 +17921,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L459",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_3_important_new_issues",
-      "target": "application_flows_review_n_i5_telegram_channel_creation_limits_not_handled",
-      "confidence_score": 1.0
+      "target": "application_flows_review_n_i5_telegram_channel_creation_limits_not_handled"
     },
     {
       "relation": "contains",
@@ -17740,9 +17931,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L500",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_1_app_startup_routing_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_1_app_startup_routing_flow"
     },
     {
       "relation": "contains",
@@ -17750,9 +17941,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L524",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_2_authentication_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_2_authentication_flow"
     },
     {
       "relation": "contains",
@@ -17760,9 +17951,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L543",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_3_auto_vault_setup_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_3_auto_vault_setup_flow"
     },
     {
       "relation": "contains",
@@ -17770,9 +17961,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L564",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_4_background_sync_upload_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_4_background_sync_upload_flow"
     },
     {
       "relation": "contains",
@@ -17780,9 +17971,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L587",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_5_backup_recovery_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_5_backup_recovery_flow"
     },
     {
       "relation": "contains",
@@ -17790,9 +17981,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L623",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_6_ml_search_labeling_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_6_ml_search_labeling_flow"
     },
     {
       "relation": "contains",
@@ -17800,9 +17991,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L660",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_4_flow_specific_issues",
-      "target": "application_flows_review_4_7_auto_update_flow",
-      "confidence_score": 1.0
+      "target": "application_flows_review_4_7_auto_update_flow"
     },
     {
       "relation": "contains",
@@ -17810,9 +18001,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L726",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_6_improvements",
-      "target": "application_flows_review_add_backup_events_audit_table",
-      "confidence_score": 1.0
+      "target": "application_flows_review_add_backup_events_audit_table"
     },
     {
       "relation": "contains",
@@ -17820,9 +18011,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L714",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_6_improvements",
-      "target": "application_flows_review_add_retrycount_and_permanentlyfailed_to_uploads_table",
-      "confidence_score": 1.0
+      "target": "application_flows_review_add_retrycount_and_permanentlyfailed_to_uploads_table"
     },
     {
       "relation": "contains",
@@ -17830,9 +18021,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L741",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_6_improvements",
-      "target": "application_flows_review_incremental_crawl_instead_of_full_crawl",
-      "confidence_score": 1.0
+      "target": "application_flows_review_incremental_crawl_instead_of_full_crawl"
     },
     {
       "relation": "contains",
@@ -17840,9 +18031,9 @@
       "source_file": "APPLICATION_FLOWS_REVIEW.md",
       "source_location": "L755",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "application_flows_review_6_improvements",
-      "target": "application_flows_review_version_json_should_include_a_changelog_hash",
-      "confidence_score": 1.0
+      "target": "application_flows_review_version_json_should_include_a_changelog_hash"
     },
     {
       "relation": "contains",
@@ -19735,6 +19926,116 @@
       "target": "tgpix_implementation_plan_runtime_permission_flow"
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "boolean"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "long"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L336",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L519",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
+      "target": "context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L519",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
+      "target": "tdapi"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L505",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_parseandindexuploadedmessage",
+      "target": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption"
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L604",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
+      "target": "telegram_tdlibmanager_parsedmetadata"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L648",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
+      "target": "string"
+    },
+    {
       "relation": "rationale_for",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
@@ -20204,5 +20505,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "e37e5acbeb1eb2637791dbb57bea6f4b97e78d18"
+  "built_at_commit": "0a47780ee222ba0649cfd47df4b90fd3322278f8"
 }
