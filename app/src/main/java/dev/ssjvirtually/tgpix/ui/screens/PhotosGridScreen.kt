@@ -100,7 +100,8 @@ fun PhotosGridScreen(
     hasPermission: Boolean,
     onRequestPermission: () -> Unit,
     gridState: LazyGridState = rememberLazyGridState(),
-    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    albumViewModel: dev.ssjvirtually.tgpix.ui.AlbumViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
     val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
@@ -179,12 +180,9 @@ fun PhotosGridScreen(
                 isSelectionMode = false
             }
         }
-        val dbVersion by TdlibManager.dbVersion.collectAsState()
-        val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
-        
 
-        val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
-        val albumsList by db.albumDao().getAllAlbumsFlow().collectAsState(initial = emptyList())
+        val cloudLogs by viewModel.cloudLogs.collectAsState(initial = emptyList())
+        val albumsList by albumViewModel.albumsFlow.collectAsState(initial = emptyList())
         val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
         val coroutineScope = rememberCoroutineScope()
@@ -307,6 +305,7 @@ fun PhotosGridScreen(
                                     isBackingUpMultiple = true
                                     val isHd = PreferencesManager.isHdMode(context)
                                     coroutineScope.launch(Dispatchers.IO) {
+                                        val db = UploadDatabase.getDatabase(context)
                                         val unsyncedSelected = selectedPhotos.filter { photo ->
                                             val isCloud = isCloudPhoto(photo.uri)
                                             !(isCloud || uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
@@ -1147,15 +1146,8 @@ fun PhotosGridScreen(
                                 .clickable {
                                     showAddToAlbumDialog = false
                                     showCreateAlbumDialog(context) { name ->
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val newAlbumId = db.albumDao().insertAlbum(AlbumEntity(name = name))
-                                            val albumPhotos = selectedPhotos.map { photo ->
-                                                AlbumPhotoEntity(albumId = newAlbumId, photoUri = photo.name)
-                                            }
-                                            db.albumDao().insertAlbumPhotos(albumPhotos)
-                                            dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, newAlbumId)
-                                            
-                                            withContext(Dispatchers.Main) {
+                                        albumViewModel.createAlbum(name) { newAlbumId ->
+                                            albumViewModel.addPhotosToAlbum(newAlbumId, selectedPhotos.toList()) {
                                                 Toast.makeText(context, "Added to new album '$name'!", Toast.LENGTH_SHORT).show()
                                                 selectedPhotos.clear()
                                                 isSelectionMode = false
@@ -1193,18 +1185,10 @@ fun PhotosGridScreen(
                                         .fillMaxWidth()
                                         .clickable {
                                             showAddToAlbumDialog = false
-                                            coroutineScope.launch(Dispatchers.IO) {
-                                                val albumPhotos = selectedPhotos.map { photo ->
-                                                    AlbumPhotoEntity(albumId = album.id, photoUri = photo.name)
-                                                }
-                                                db.albumDao().insertAlbumPhotos(albumPhotos)
-                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, album.id)
-                                                
-                                                withContext(Dispatchers.Main) {
-                                                    Toast.makeText(context, "Added to '${album.name}'!", Toast.LENGTH_SHORT).show()
-                                                    selectedPhotos.clear()
-                                                    isSelectionMode = false
-                                                }
+                                            albumViewModel.addPhotosToAlbum(album.id, selectedPhotos.toList()) {
+                                                Toast.makeText(context, "Added to '${album.name}'!", Toast.LENGTH_SHORT).show()
+                                                selectedPhotos.clear()
+                                                isSelectionMode = false
                                             }
                                         }
                                         .padding(vertical = 12.dp, horizontal = 8.dp),

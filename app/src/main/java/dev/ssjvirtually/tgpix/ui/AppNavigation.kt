@@ -228,8 +228,10 @@ fun MainAppLayout(
     val telegramProfilePhotoPath by TdlibManager.profilePhotoPath.collectAsState()
     val authState by TdlibManager.authState.collectAsState()
 
-    // Initialize stateful GalleryViewModel to handle all data flows reactively
+    // Initialize stateful ViewModels to handle data flows reactively
     val galleryViewModel: GalleryViewModel = viewModel()
+    val albumViewModel: AlbumViewModel = viewModel()
+    val searchViewModel: SearchViewModel = viewModel()
 
     // Hoisted grid scroll state — survives tab switches so Photos grid remembers scroll position
     val photosGridState = rememberLazyGridState()
@@ -491,7 +493,8 @@ fun MainAppLayout(
                                     permissionLauncher.launch(permissionsToRequest)
                                 },
                                 gridState = photosGridState,
-                                viewModel = galleryViewModel
+                                viewModel = galleryViewModel,
+                                albumViewModel = albumViewModel
                             )
                         }
                         "Search" -> {
@@ -500,7 +503,8 @@ fun MainAppLayout(
                                     fullScreenPhotoIndex = index
                                     devicePhotosList = photos
                                 },
-                                viewModel = galleryViewModel
+                                viewModel = galleryViewModel,
+                                searchViewModel = searchViewModel
                             )
                         }
                         "Albums" -> {
@@ -509,7 +513,8 @@ fun MainAppLayout(
                                     fullScreenPhotoIndex = index
                                     devicePhotosList = photos
                                 },
-                                viewModel = galleryViewModel
+                                viewModel = galleryViewModel,
+                                albumViewModel = albumViewModel
                             )
                         }
                         "Settings" -> {

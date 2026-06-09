@@ -81,14 +81,14 @@ data class SearchItem(val photo: LocalPhoto, val keywords: String)
 @Composable
 fun SearchScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
-    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    searchViewModel: dev.ssjvirtually.tgpix.ui.SearchViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val searchIndex by viewModel.searchIndex.collectAsState()
     val uploadedUris by viewModel.uploadedUrisSet.collectAsState()
     val isScanning by viewModel.isScanningLocal.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var searchQuery by remember { mutableStateOf("") }
     var typedQuery by remember { mutableStateOf("") }
     
     var isSelectionMode by remember { mutableStateOf(false) }
@@ -122,58 +122,17 @@ fun SearchScreen(
         }
     }
     
-    // 200ms keyboard input debounce to keep typing butter-smooth
+    // Sync keyboard input to searchViewModel (which handles 200ms debounce internally)
     LaunchedEffect(typedQuery) {
-        delay(200)
-        searchQuery = typedQuery
+        searchViewModel.setSearchQuery(typedQuery)
     }
     
-    val dbVersion by TdlibManager.dbVersion.collectAsState()
-    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
-    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+    val cloudLogs by viewModel.cloudLogs.collectAsState(initial = emptyList())
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
-
-    // Filter photos based on search query using SQLite FTS for cloud photos and in-memory search for local photos
-    val filteredPhotos by produceState<List<LocalPhoto>>(initialValue = emptyList(), searchIndex, searchQuery, dbVersion) {
-        val query = searchQuery.trim().lowercase()
-        if (query.isEmpty()) {
-            value = emptyList()
-        } else {
-            // Search local photos in memory
-            val queryWords = query.split("\\s+".toRegex())
-            val localFiltered = searchIndex.filter { item ->
-                queryWords.all { word -> item.keywords.contains(word) }
-            }.map { it.photo }
-            
-            // Search cloud photos using FTS!
-            val ftsQuery = query.split("\\s+".toRegex()).joinToString(" AND ") { "$it*" }
-            val cloudResults = try {
-                db.cloudDao().searchCloudPhotos(ftsQuery)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                emptyList()
-            }
-            
-            val mappedCloud = cloudResults.map { cloud ->
-                val parsedDate = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(cloud.fileName)
-                val displayDate = if (cloud.dateTaken > 0L) cloud.dateTaken else (parsedDate ?: cloud.uploadedAt)
-                LocalPhoto(
-                    id = -cloud.messageId,
-                    uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
-                    name = cloud.fileName,
-                    size = cloud.fileSize,
-                    dateTaken = displayDate,
-                    tags = cloud.tags
-                )
-            }
-            
-            // Merge both lists, deduplicate by URI, and sort by dateTaken descending
-            value = (localFiltered + mappedCloud)
-                .distinctBy { it.uri }
-                .sortedByDescending { it.dateTaken }
-        }
-    }
-
+ 
+    // Filter photos based on search query using SearchViewModel (combining in-memory local and SQLite FTS cloud searches)
+    val filteredPhotos by searchViewModel.searchPhotos(viewModel.searchIndex).collectAsState(initial = emptyList())
+ 
     // Group filtered photos by clean human-readable date header
     val groupedPhotosList = remember(filteredPhotos) {
         val list = mutableListOf<GalleryItem>()
@@ -278,6 +237,7 @@ fun SearchScreen(
                                 isBackingUpMultiple = true
                                 val isHd = PreferencesManager.isHdMode(context)
                                 nestedCoroutineScope.launch(Dispatchers.IO) {
+                                    val db = UploadDatabase.getDatabase(context)
                                     val unsyncedSelected = selectedPhotos.filter { photo ->
                                         val isCloud = isCloudPhoto(photo.uri)
                                         !(isCloud || uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
@@ -363,7 +323,6 @@ fun SearchScreen(
                     if (typedQuery.isNotEmpty()) {
                         IconButton(onClick = { 
                             typedQuery = "" 
-                            searchQuery = "" 
                         }) {
                             Icon(Icons.Default.Close, contentDescription = "Clear", tint = TelePhotosTheme.TextSecondary)
                         }

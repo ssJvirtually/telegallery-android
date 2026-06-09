@@ -65,23 +65,22 @@ data class AlbumUiModel(
 @Composable
 fun AlbumsScreen(
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
-    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    albumViewModel: dev.ssjvirtually.tgpix.ui.AlbumViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
     val context = LocalContext.current
-    val dbVersion by TdlibManager.dbVersion.collectAsState()
-    val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
     val coroutineScope = rememberCoroutineScope()
 
-    // 1. Load albums from DB
-    val albums by db.albumDao().getAllAlbumsFlow().collectAsState(initial = emptyList())
+    // 1. Load albums from DB flow via ViewModel
+    val albums by albumViewModel.albumsFlow.collectAsState(initial = emptyList())
     var albumUiModels by remember { mutableStateOf<List<AlbumUiModel>>(emptyList()) }
 
     // Re-query database when albums or photos list change to get correct item count and cover photo
     LaunchedEffect(albums, mergedPhotosList) {
         withContext(Dispatchers.IO) {
             val uiModels = albums.map { album ->
-                val photos = db.albumDao().getAlbumPhotosDirect(album.id)
+                val photos = albumViewModel.getAlbumPhotosDirect(album.id)
                 val coverFileName = photos.lastOrNull()?.photoUri
                 val coverPhoto = coverFileName?.let { key ->
                     mergedPhotosList.firstOrNull { it.name == key || it.uri == key }?.uri
@@ -119,7 +118,7 @@ fun AlbumsScreen(
                 selectedAlbumId = null
                 selectedAlbumName = ""
             },
-            db = db
+            albumViewModel = albumViewModel
         )
     } else {
         // Main Grid view of all albums
@@ -128,12 +127,8 @@ fun AlbumsScreen(
                 FloatingActionButton(
                     onClick = {
                         showCreateAlbumDialog(context) { name ->
-                            coroutineScope.launch(Dispatchers.IO) {
-                                val newId = db.albumDao().insertAlbum(AlbumEntity(name = name))
-                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, newId)
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Album '$name' created!", Toast.LENGTH_SHORT).show()
-                                }
+                            albumViewModel.createAlbum(name) {
+                                Toast.makeText(context, "Album '$name' created!", Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
@@ -214,6 +209,7 @@ fun AlbumsScreen(
                                 }
                             )
                         }
+                    }
                 }
             }
             
@@ -238,20 +234,18 @@ fun AlbumsScreen(
                                     .clickable {
                                         val albumId = selectedAlbumForActions!!.id
                                         selectedAlbumForActions = null
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val photosMapping = db.albumDao().getAlbumPhotosDirect(albumId)
+                                        coroutineScope.launch {
+                                            val photosMapping = albumViewModel.getAlbumPhotosDirect(albumId)
                                             val photoUris = photosMapping.map { it.photoUri }
                                             val photosList = mergedPhotosList.filter { photo ->
                                                 photoUris.any { it == photo.name || it == photo.uri }
                                             }
                                             
-                                            withContext(Dispatchers.Main) {
-                                                if (photosList.isEmpty()) {
-                                                    Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    photosToShareInTelegram = photosList
-                                                    showTelegramAlbumShareDialog = true
-                                                }
+                                            if (photosList.isEmpty()) {
+                                                Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                photosToShareInTelegram = photosList
+                                                showTelegramAlbumShareDialog = true
                                             }
                                         }
                                     }
@@ -275,19 +269,17 @@ fun AlbumsScreen(
                                     .clickable {
                                         val albumId = selectedAlbumForActions!!.id
                                         selectedAlbumForActions = null
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val photosMapping = db.albumDao().getAlbumPhotosDirect(albumId)
+                                        coroutineScope.launch {
+                                            val photosMapping = albumViewModel.getAlbumPhotosDirect(albumId)
                                             val photoUris = photosMapping.map { it.photoUri }
                                             val photosList = mergedPhotosList.filter { photo ->
                                                 photoUris.any { it == photo.name || it == photo.uri }
                                             }
                                             
-                                            withContext(Dispatchers.Main) {
-                                                if (photosList.isEmpty()) {
-                                                    Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    UploadManager.sharePhotosToSystem(context, photosList)
-                                                }
+                                            if (photosList.isEmpty()) {
+                                                Toast.makeText(context, "This album has no photos to share!", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                UploadManager.sharePhotosToSystem(context, photosList)
                                             }
                                         }
                                     }
@@ -312,15 +304,8 @@ fun AlbumsScreen(
                                         val albumId = selectedAlbumForActions!!.id
                                         val albumName = selectedAlbumForActions!!.name
                                         selectedAlbumForActions = null
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val album = db.albumDao().getAlbumById(albumId)
-                                            db.albumDao().deleteAlbum(albumId)
-                                            if (album != null) {
-                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumDeleted(context, album.telegramMessageId)
-                                            }
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
-                                            }
+                                        albumViewModel.deleteAlbum(albumId) {
+                                            Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
@@ -363,7 +348,6 @@ fun AlbumsScreen(
             }
         }
     }
-}
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -496,13 +480,13 @@ fun AlbumDetailsView(
     mergedPhotosList: List<LocalPhoto>,
     onPhotoSelected: (Int, List<LocalPhoto>) -> Unit,
     onBack: () -> Unit,
-    db: UploadDatabase
+    albumViewModel: dev.ssjvirtually.tgpix.ui.AlbumViewModel
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     
-    // Get all photo Uris currently mapped to this album
-    val albumPhotoUris by db.albumDao().getPhotoUrisForAlbumFlow(albumId).collectAsState(initial = emptyList())
+    // Get all photo Uris currently mapped to this album via ViewModel flow
+    val albumPhotoUris by albumViewModel.getPhotoUrisForAlbumFlow(albumId).collectAsState(initial = emptyList())
     
     // Filter overall timeline photos down to exactly the ones inside this album
     val albumPhotos = remember(albumPhotoUris, mergedPhotosList) {
@@ -575,17 +559,10 @@ fun AlbumDetailsView(
                     if (isSelectionMode) {
                         // Remove from Album action
                         IconButton(onClick = {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                selectedPhotos.forEach { photo ->
-                                    db.albumDao().removePhotoFromAlbum(albumId, photo.name)
-                                    db.albumDao().removePhotoFromAlbum(albumId, photo.uri)
-                                }
-                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumUpdated(context, albumId)
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Removed ${selectedPhotos.size} photos from '$albumName'", Toast.LENGTH_SHORT).show()
-                                    selectedPhotos.clear()
-                                    isSelectionMode = false
-                                }
+                            albumViewModel.removePhotosFromAlbum(albumId, selectedPhotos.toList()) {
+                                Toast.makeText(context, "Removed ${selectedPhotos.size} photos from '$albumName'", Toast.LENGTH_SHORT).show()
+                                selectedPhotos.clear()
+                                isSelectionMode = false
                             }
                         }) {
                             Icon(
@@ -615,16 +592,9 @@ fun AlbumDetailsView(
                                     leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = TelePhotosTheme.GoogleRed) },
                                     onClick = {
                                         showMenu = false
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val album = db.albumDao().getAlbumById(albumId)
-                                            db.albumDao().deleteAlbum(albumId)
-                                            if (album != null) {
-                                                dev.ssjvirtually.tgpix.storage.BackupManager.onAlbumDeleted(context, album.telegramMessageId)
-                                            }
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
-                                                onBack()
-                                            }
+                                        albumViewModel.deleteAlbum(albumId) {
+                                            Toast.makeText(context, "Album '$albumName' deleted.", Toast.LENGTH_SHORT).show()
+                                            onBack()
                                         }
                                     }
                                 )
