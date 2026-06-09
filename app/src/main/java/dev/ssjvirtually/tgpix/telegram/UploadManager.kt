@@ -297,6 +297,14 @@ open class UploadManager {
 
                         TdlibManager.getClient().send(request) { result ->
                             if (result is TdApi.Message) {
+                                val fileId = when (val c = result.content) {
+                                    is TdApi.MessageDocument -> c.document.document.id
+                                    is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                                    else -> null
+                                }
+                                if (fileId != null) {
+                                    TdlibManager.registerPendingTempFile(fileId, tempFile.absolutePath)
+                                }
                                 // Register continuation to resume when UpdateMessageSendSucceeded fires
                                 TdlibManager.registerPendingUpload(result.id) { res ->
                                     continuation.resume(res)
@@ -512,6 +520,14 @@ open class UploadManager {
                         val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
                             TdlibManager.getClient().send(request) { result ->
                                 if (result is TdApi.Message) {
+                                    val fileId = when (val c = result.content) {
+                                        is TdApi.MessageDocument -> c.document.document.id
+                                        is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                                        else -> null
+                                    }
+                                    if (fileId != null) {
+                                        TdlibManager.registerPendingTempFile(fileId, tempFile.absolutePath)
+                                    }
                                     TdlibManager.registerPendingUpload(result.id) { res ->
                                         cont.resume(res)
                                     }
@@ -605,6 +621,17 @@ open class UploadManager {
                             val res = suspendCancellableCoroutine<TdApi.Object> { cont ->
                                 TdlibManager.getClient().send(request) { result ->
                                     if (result is TdApi.Message) {
+                                        val fileId = when (val c = result.content) {
+                                            is TdApi.MessageDocument -> c.document.document.id
+                                            is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                                            else -> null
+                                        }
+                                        if (fileId != null) {
+                                            val tFile = tempFiles.firstOrNull()
+                                            if (tFile != null) {
+                                                TdlibManager.registerPendingTempFile(fileId, tFile.absolutePath)
+                                            }
+                                        }
                                         TdlibManager.registerPendingUpload(result.id) { res ->
                                             cont.resume(res)
                                         }
@@ -625,9 +652,18 @@ open class UploadManager {
                             val messagesResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
                                 TdlibManager.getClient().send(request) { result ->
                                     if (result is TdApi.Messages) {
-                                        for (msg in result.messages) {
+                                        for (i in result.messages.indices) {
+                                            val msg = result.messages[i]
                                             val deferred = CompletableDeferred<TdApi.Object>()
                                             deferreds.add(deferred)
+                                            val fileId = when (val c = msg.content) {
+                                                is TdApi.MessageDocument -> c.document.document.id
+                                                is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                                                else -> null
+                                            }
+                                            if (fileId != null && i < tempFiles.size) {
+                                                TdlibManager.registerPendingTempFile(fileId, tempFiles[i].absolutePath)
+                                            }
                                             TdlibManager.registerPendingUpload(msg.id) { res ->
                                                 deferred.complete(res)
                                             }

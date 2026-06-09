@@ -858,6 +858,14 @@ open class BackupManager {
             
             TdlibManager.getClient().send(request) { result ->
                 if (result is TdApi.Message) {
+                    val fileId = when (val c = result.content) {
+                        is TdApi.MessageDocument -> c.document.document.id
+                        is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                        else -> null
+                    }
+                    if (fileId != null) {
+                        TdlibManager.registerPendingTempFile(fileId, file.absolutePath)
+                    }
                     TdlibManager.registerPendingUpload(result.id) { res ->
                         continuation.resume(res)
                     }

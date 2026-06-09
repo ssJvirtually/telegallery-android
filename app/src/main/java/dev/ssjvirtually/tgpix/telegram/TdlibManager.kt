@@ -65,6 +65,12 @@ open class TdlibManager {
     val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, (TdApi.Object) -> Unit>()
     val completedUploads = java.util.concurrent.ConcurrentHashMap<Long, TdApi.Object>()
 
+    private val pendingTempFiles = java.util.concurrent.ConcurrentHashMap<Int, String>() // fileId -> path
+
+    open fun registerPendingTempFile(fileId: Int, path: String) {
+        pendingTempFiles[fileId] = path
+    }
+
     open fun registerPendingUpload(messageId: Long, callback: (TdApi.Object) -> Unit) {
         val completed = completedUploads.remove(messageId)
         if (completed != null) {
@@ -251,20 +257,18 @@ open class TdlibManager {
 
     private fun cleanupSentMessageFile(context: Context, message: TdApi.Message) {
         try {
-            val content = message.content
-            if (content is TdApi.MessageDocument) {
-                val path = content.document.document.local.path
-                if (path.isNotEmpty()) {
-                    // Backup files are stored in filesDir; photo uploads are in cacheDir/tgpix_uploads.
-                    // Clean up temp files from either location.
-                    val isInFilesDir = path.contains(context.filesDir.absolutePath)
-                    val isInCacheDir = path.contains(context.cacheDir.absolutePath)
-                    if (isInFilesDir || isInCacheDir) {
-                        val file = java.io.File(path)
-                        if (file.exists()) {
-                            file.delete()
-                            addLog("Cleaned up temp upload file: ${file.name}")
-                        }
+            val fileId = when (val content = message.content) {
+                is TdApi.MessageDocument -> content.document.document.id
+                is TdApi.MessagePhoto -> content.photo.sizes.lastOrNull()?.photo?.id
+                else -> null
+            }
+            if (fileId != null) {
+                val path = pendingTempFiles.remove(fileId)
+                if (path != null) {
+                    val file = java.io.File(path)
+                    if (file.exists()) {
+                        file.delete()
+                        addLog("Cleaned up temp upload file via fileId matching: ${file.name}")
                     }
                 }
             }
