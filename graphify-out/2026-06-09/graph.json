@@ -1955,7 +1955,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L1",
       "id": "telegram_historysyncmanager",
-      "community": 4,
+      "community": 31,
       "norm_label": "historysyncmanager.kt"
     },
     {
@@ -1964,7 +1964,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L13",
       "id": "telegram_historysyncmanager_historysyncmanager",
-      "community": 4,
+      "community": 31,
       "norm_label": "historysyncmanager"
     },
     {
@@ -1973,7 +1973,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L16",
       "id": "telegram_historysyncmanager_parsedmetadata",
-      "community": 4,
+      "community": 31,
       "norm_label": "parsedmetadata"
     },
     {
@@ -1982,7 +1982,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L27",
       "id": "telegram_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
-      "community": 4,
+      "community": 31,
       "norm_label": ".parsemetadatafromcaption()"
     },
     {
@@ -1991,7 +1991,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_string",
-      "community": 4,
+      "community": 31,
       "norm_label": "string"
     },
     {
@@ -2000,7 +2000,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
-      "community": 4,
+      "community": 31,
       "norm_label": ".synccloudhistory()"
     },
     {
@@ -2009,7 +2009,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_context",
-      "community": 4,
+      "community": 31,
       "norm_label": "context"
     },
     {
@@ -2018,7 +2018,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_long",
-      "community": 4,
+      "community": 31,
       "norm_label": "long"
     },
     {
@@ -2027,7 +2027,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_boolean",
-      "community": 4,
+      "community": 31,
       "norm_label": "boolean"
     },
     {
@@ -2036,7 +2036,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "recoveredcount",
-      "community": 4,
+      "community": 31,
       "norm_label": "recoveredcount"
     },
     {
@@ -2045,7 +2045,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_int",
-      "community": 4,
+      "community": 31,
       "norm_label": "int"
     },
     {
@@ -2054,7 +2054,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "lastmessageid",
-      "community": 4,
+      "community": 31,
       "norm_label": "lastmessageid"
     },
     {
@@ -2063,7 +2063,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L57",
       "id": "unit",
-      "community": 4,
+      "community": 31,
       "norm_label": "unit"
     },
     {
@@ -2072,7 +2072,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L269",
       "id": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
-      "community": 4,
+      "community": 31,
       "norm_label": ".parseandindexuploadedmessage()"
     },
     {
@@ -2081,7 +2081,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L269",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_tdapi",
-      "community": 4,
+      "community": 31,
       "norm_label": "tdapi"
     },
     {
@@ -2193,10 +2193,19 @@
       "norm_label": ".notifydatabasereplaced()"
     },
     {
+      "label": ".registerPendingTempFile()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L70",
+      "id": "telegram_tdlibmanager_tdlibmanager_registerpendingtempfile",
+      "community": 4,
+      "norm_label": ".registerpendingtempfile()"
+    },
+    {
       "label": ".registerPendingUpload()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L68",
+      "source_location": "L74",
       "id": "telegram_tdlibmanager_tdlibmanager_registerpendingupload",
       "community": 4,
       "norm_label": ".registerpendingupload()"
@@ -2205,7 +2214,7 @@
       "label": ".addLog()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L79",
+      "source_location": "L85",
       "id": "telegram_tdlibmanager_tdlibmanager_addlog",
       "community": 4,
       "norm_label": ".addlog()"
@@ -2214,7 +2223,7 @@
       "label": ".getClient()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L92",
+      "source_location": "L98",
       "id": "telegram_tdlibmanager_tdlibmanager_getclient",
       "community": 4,
       "norm_label": ".getclient()"
@@ -2223,7 +2232,7 @@
       "label": ".initialize()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L96",
+      "source_location": "L102",
       "id": "telegram_tdlibmanager_tdlibmanager_initialize",
       "community": 4,
       "norm_label": ".initialize()"
@@ -2232,7 +2241,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L96",
+      "source_location": "L102",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_context",
       "community": 4,
       "norm_label": "context"
@@ -2241,7 +2250,7 @@
       "label": ".handleUpdate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L133",
+      "source_location": "L139",
       "id": "telegram_tdlibmanager_tdlibmanager_handleupdate",
       "community": 4,
       "norm_label": ".handleupdate()"
@@ -2250,7 +2259,7 @@
       "label": ".handleConnectionState()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L218",
+      "source_location": "L224",
       "id": "telegram_tdlibmanager_tdlibmanager_handleconnectionstate",
       "community": 4,
       "norm_label": ".handleconnectionstate()"
@@ -2259,7 +2268,7 @@
       "label": ".setParameters()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L228",
+      "source_location": "L234",
       "id": "telegram_tdlibmanager_tdlibmanager_setparameters",
       "community": 4,
       "norm_label": ".setparameters()"
@@ -2268,7 +2277,7 @@
       "label": ".loadChats()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L245",
+      "source_location": "L251",
       "id": "telegram_tdlibmanager_tdlibmanager_loadchats",
       "community": 4,
       "norm_label": ".loadchats()"
@@ -2277,7 +2286,7 @@
       "label": ".cleanupSentMessageFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L252",
+      "source_location": "L258",
       "id": "telegram_tdlibmanager_tdlibmanager_cleanupsentmessagefile",
       "community": 4,
       "norm_label": ".cleanupsentmessagefile()"
@@ -2286,7 +2295,7 @@
       "label": ".sendRequest()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L276",
+      "source_location": "L280",
       "id": "telegram_tdlibmanager_tdlibmanager_sendrequest",
       "community": 4,
       "norm_label": ".sendrequest()"
@@ -2295,7 +2304,7 @@
       "label": ".optimizeStorage()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L297",
+      "source_location": "L301",
       "id": "telegram_tdlibmanager_tdlibmanager_optimizestorage",
       "community": 4,
       "norm_label": ".optimizestorage()"
@@ -2304,7 +2313,7 @@
       "label": ".showSessionExpiredNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L320",
+      "source_location": "L324",
       "id": "telegram_tdlibmanager_tdlibmanager_showsessionexpirednotification",
       "community": 4,
       "norm_label": ".showsessionexpirednotification()"
@@ -2313,7 +2322,7 @@
       "label": ".performLogoutCleanup()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L361",
+      "source_location": "L365",
       "id": "telegram_tdlibmanager_tdlibmanager_performlogoutcleanup",
       "community": 4,
       "norm_label": ".performlogoutcleanup()"
@@ -2322,7 +2331,7 @@
       "label": ".checkAndHandleChatError()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L417",
+      "source_location": "L421",
       "id": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
       "community": 4,
       "norm_label": ".checkandhandlechaterror()"
@@ -2331,7 +2340,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L417",
+      "source_location": "L421",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean",
       "community": 4,
       "norm_label": "boolean"
@@ -2340,7 +2349,7 @@
       "label": ".showChatUnavailableNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L459",
+      "source_location": "L463",
       "id": "telegram_tdlibmanager_tdlibmanager_showchatunavailablenotification",
       "community": 4,
       "norm_label": ".showchatunavailablenotification()"
@@ -2349,7 +2358,7 @@
       "label": ".forceReconnect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L500",
+      "source_location": "L504",
       "id": "telegram_tdlibmanager_tdlibmanager_forcereconnect",
       "community": 4,
       "norm_label": ".forcereconnect()"
@@ -2358,7 +2367,7 @@
       "label": ".setNetworkOffline()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L524",
+      "source_location": "L528",
       "id": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
       "community": 4,
       "norm_label": ".setnetworkoffline()"
@@ -2367,7 +2376,7 @@
       "label": ".fetchAndMonitorProfilePhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L535",
+      "source_location": "L539",
       "id": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
       "community": 4,
       "norm_label": ".fetchandmonitorprofilephoto()"
@@ -2448,7 +2457,7 @@
       "label": ".classifyImage()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L344",
+      "source_location": "L352",
       "id": "telegram_uploadmanager_uploadmanager_classifyimage",
       "community": 8,
       "norm_label": ".classifyimage()"
@@ -2457,7 +2466,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L344",
+      "source_location": "L352",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_string",
       "community": 8,
       "norm_label": "string"
@@ -2466,7 +2475,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L344",
+      "source_location": "L352",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_list",
       "community": 8,
       "norm_label": "list"
@@ -2475,7 +2484,7 @@
       "label": ".downloadCloudPhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L397",
+      "source_location": "L405",
       "id": "telegram_uploadmanager_uploadmanager_downloadcloudphoto",
       "community": 8,
       "norm_label": ".downloadcloudphoto()"
@@ -2484,7 +2493,7 @@
       "label": "File",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L397",
+      "source_location": "L405",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_file",
       "community": 8,
       "norm_label": "file"
@@ -2493,7 +2502,7 @@
       "label": ".sharePhotosToTelegramChat()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L452",
+      "source_location": "L460",
       "id": "telegram_uploadmanager_uploadmanager_sharephotostotelegramchat",
       "community": 8,
       "norm_label": ".sharephotostotelegramchat()"
@@ -2502,7 +2511,7 @@
       "label": ".sharePhotosToSystem()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L663",
+      "source_location": "L699",
       "id": "telegram_uploadmanager_uploadmanager_sharephotostosystem",
       "community": 8,
       "norm_label": ".sharephotostosystem()"
@@ -2511,7 +2520,7 @@
       "label": "ThumbnailResult",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L713",
+      "source_location": "L749",
       "id": "telegram_uploadmanager_thumbnailresult",
       "community": 8,
       "norm_label": "thumbnailresult"
@@ -2520,7 +2529,7 @@
       "label": ".createThumbnail()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L719",
+      "source_location": "L755",
       "id": "telegram_uploadmanager_uploadmanager_createthumbnail",
       "community": 8,
       "norm_label": ".createthumbnail()"
@@ -2529,7 +2538,7 @@
       "label": ".scaleAndRotateBitmap()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L790",
+      "source_location": "L826",
       "id": "telegram_uploadmanager_uploadmanager_scaleandrotatebitmap",
       "community": 8,
       "norm_label": ".scaleandrotatebitmap()"
@@ -2538,7 +2547,7 @@
       "label": "Bitmap",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L790",
+      "source_location": "L826",
       "id": "bitmap",
       "community": 8,
       "norm_label": "bitmap"
@@ -2547,7 +2556,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L790",
+      "source_location": "L826",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_int",
       "community": 8,
       "norm_label": "int"
@@ -2556,7 +2565,7 @@
       "label": "Float",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L790",
+      "source_location": "L826",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_float",
       "community": 8,
       "norm_label": "float"
@@ -2565,7 +2574,7 @@
       "label": ".calculateInSampleSize()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L810",
+      "source_location": "L846",
       "id": "telegram_uploadmanager_uploadmanager_calculateinsamplesize",
       "community": 8,
       "norm_label": ".calculateinsamplesize()"
@@ -2574,7 +2583,7 @@
       "label": "BitmapFactory",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L810",
+      "source_location": "L846",
       "id": "bitmapfactory",
       "community": 8,
       "norm_label": "bitmapfactory"
@@ -2583,7 +2592,7 @@
       "label": ".copyAndMaybeCompress()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
-      "source_location": "L824",
+      "source_location": "L860",
       "id": "telegram_uploadmanager_uploadmanager_copyandmaybecompress",
       "community": 8,
       "norm_label": ".copyandmaybecompress()"
@@ -13139,6 +13148,16 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager",
+      "target": "telegram_tdlibmanager_tdlibmanager_registerpendingtempfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
       "source_location": "L52",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13356,6 +13375,28 @@
       "confidence_score": 1.0,
       "source": "telegram_tdlibmanager_tdlibmanager_parsemetadatafromcaption",
       "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_string"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L70",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_tdlibmanager_tdlibmanager_registerpendingtempfile",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L70",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "telegram_tdlibmanager_tdlibmanager_registerpendingtempfile",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_int",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -20505,5 +20546,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "d4ab85b86205f4b6299fec8658e2a469a519cc38"
+  "built_at_commit": "8db73b3120a14c81fad36681709f82d477184551"
 }

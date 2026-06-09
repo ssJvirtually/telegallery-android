@@ -11,6 +11,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.BackupManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.telegram.HistorySyncManager
 import kotlinx.coroutines.flow.first
@@ -112,13 +113,13 @@ class RestoreWorker(
                 }
             }
 
-            // 2. Perform history crawl to resolve volatile session IDs or rebuild timeline
+            val forceFullCrawl = inputData.getBoolean("forceFullCrawl", true)
             val startMsgId = PreferencesManager.getLastScannedMessageId(applicationContext)
             
             HistorySyncManager.syncCloudHistory(
                 context = applicationContext,
                 chatId = chatId,
-                forceFullCrawl = true,
+                forceFullCrawl = forceFullCrawl,
                 startMessageId = startMsgId,
                 onProgress = { count, lastId ->
                     PreferencesManager.setLastScannedMessageId(applicationContext, lastId)
@@ -142,6 +143,13 @@ class RestoreWorker(
 
             // Clear checkpoint upon successful completion of history crawl
             PreferencesManager.setLastScannedMessageId(applicationContext, 0L)
+            
+            try {
+                BackupManager.reconstructAlbumsFromBackupChannel(applicationContext)
+            } catch (e: Exception) {
+                TdlibManager.addLog("RestoreWorker: Failed to reconstruct albums: ${e.message}")
+            }
+
             TdlibManager.addLog("RestoreWorker: Completed history crawl successfully.")
             return Result.success()
 

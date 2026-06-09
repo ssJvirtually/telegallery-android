@@ -179,13 +179,14 @@ class GalleryViewModel @JvmOverloads constructor(
         }
     }
 
-    private fun enqueueRestoreWorker(app: Application) {
+    private fun enqueueRestoreWorker(app: Application, forceFullCrawl: Boolean) {
         val workManager = WorkManager.getInstance(app)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
         val request = OneTimeWorkRequestBuilder<RestoreWorker>()
             .setConstraints(constraints)
+            .setInputData(androidx.work.workDataOf("forceFullCrawl" to forceFullCrawl))
             .build()
         workManager.enqueueUniqueWork(
             "tgpix_restore_sync",
@@ -206,23 +207,8 @@ class GalleryViewModel @JvmOverloads constructor(
                     val currentCount = db.cloudDao().getRecordCountDirect()
                     val startMsgId = preferencesManager.getLastScannedMessageId(context)
 
-                    if (currentCount == 0 || startMsgId != 0L) {
-                        // Live database is empty or sync was interrupted — run RestoreWorker (handles DB file restore and full sync)
-                        enqueueRestoreWorker(getApplication())
-                    } else {
-                        // Incremental sync — runs in-process, reset banner when done.
-                        try {
-                            historySyncManager.syncCloudHistory(context, chatId, forceFullCrawl = false)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                        try {
-                            backupManager.reconstructAlbumsFromBackupChannel(context)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                        _isSyncingCloud.value = false
-                    }
+                    val forceFullCrawl = currentCount == 0 || startMsgId != 0L
+                    enqueueRestoreWorker(getApplication(), forceFullCrawl)
                 } else {
                     _isSyncingCloud.value = false
                 }
