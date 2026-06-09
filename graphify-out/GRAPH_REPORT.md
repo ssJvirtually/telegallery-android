@@ -1,7 +1,7 @@
 # Graph Report - telegallery-calude  (2026-06-09)
 
 ## Corpus Check
-- 50 files · ~212,448 words
+- 50 files · ~212,451 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4bdcf874`
+- Built from commit: `dd1ffe51`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -197,7 +197,7 @@ Nodes (11): Boolean, Context, Int, Long, String, TdApi, lastMessageId, recovered
 
 ### Community 32 - "Community 32"
 Cohesion: 0.29
-Nodes (3): String, OtpVerifyScreen(), AuthManager
+Nodes (3): String, PhoneLoginScreen(), AuthManager
 
 ### Community 34 - "Community 34"
 Cohesion: 0.06
@@ -281,7 +281,7 @@ Nodes (7): File, Float, String, UpdateDialog(), UpdateState, UpdateInfo, UpdateS
 
 ### Community 60 - "Community 60"
 Cohesion: 0.25
-Nodes (7): TGPix README, PhoneLoginScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane, OTP SMS Verification Form, Alternative TeleGallery Logo Design Asset, Alternative Three-Petal Purple Logo Design
+Nodes (7): TGPix README, OtpVerifyScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane, OTP SMS Verification Form, Alternative TeleGallery Logo Design Asset, Alternative Three-Petal Purple Logo Design
 
 ### Community 61 - "Community 61"
 Cohesion: 0.40

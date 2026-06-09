@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -45,7 +46,7 @@ import java.util.Locale
 
 private val searchDateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy", Locale.getDefault())
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
 class GalleryViewModel @JvmOverloads constructor(
     application: Application,
     private val photosRepository: PhotosRepository = PhotosRepository(),
@@ -65,6 +66,15 @@ class GalleryViewModel @JvmOverloads constructor(
 
     private val _syncProgressText = MutableStateFlow<String?>(null)
     val syncProgressText: StateFlow<String?> = _syncProgressText.asStateFlow()
+
+    // Whenever dbVersion updates (e.g. after database restore), flatMapLatest will switch to the new database's Flow
+    val cloudLogs: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { _ ->
+        UploadDatabase.getDatabase(application).cloudDao().getAllFlow()
+    }
+
+    val uploadedPaths: Flow<List<String>> = TdlibManager.dbVersion.flatMapLatest { _ ->
+        UploadDatabase.getDatabase(application).dao().getUploadedPathsFlow()
+    }
 
     init {
         val workManager = WorkManager.getInstance(application)
@@ -96,15 +106,25 @@ class GalleryViewModel @JvmOverloads constructor(
                 }
             }
         }
-    }
 
-    // Whenever dbVersion updates (e.g. after database restore), flatMapLatest will switch to the new database's Flow
-    val cloudLogs: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { _ ->
-        UploadDatabase.getDatabase(application).cloudDao().getAllFlow()
-    }
-
-    val uploadedPaths: Flow<List<String>> = TdlibManager.dbVersion.flatMapLatest { _ ->
-        UploadDatabase.getDatabase(application).dao().getUploadedPathsFlow()
+        // Event-driven debounced backup synchronization (checks 5 seconds after databases stop updating)
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(cloudLogs, uploadedPaths) { cloud, uploads ->
+                cloud.size + uploads.size
+            }.debounce(5000L)
+             .collect { totalRecords ->
+                 if (totalRecords > 0) {
+                     val lastBackupCount = preferencesManager.getLastBackupRecordCount(application)
+                     if (totalRecords != lastBackupCount) {
+                         try {
+                             backupManager.scheduleBackup(application)
+                         } catch (e: Exception) {
+                             e.printStackTrace()
+                         }
+                     }
+                 }
+             }
+        }
     }
 
     // 1. mergeResult combines local photos, cloud logs, and local uploads, executing in the background (Default dispatcher)

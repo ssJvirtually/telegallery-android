@@ -182,7 +182,7 @@ fun PhotosGridScreen(
         val dbVersion by TdlibManager.dbVersion.collectAsState()
         val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
         
-        val uploadedLogs by db.dao().getAllFlow().collectAsState(initial = emptyList())
+
         val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
         val albumsList by db.albumDao().getAllAlbumsFlow().collectAsState(initial = emptyList())
         val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
@@ -191,21 +191,6 @@ fun PhotosGridScreen(
         val chatId = remember { PreferencesManager.getChatId(context) }
 
 
-
-        // 2. Event-driven debounced backup synchronization (checks every 5 minutes after last idle state change)
-        val totalRecords = cloudLogs.size + uploadedLogs.size
-        LaunchedEffect(totalRecords) {
-            if (totalRecords > 0) {
-                val lastBackupCount = PreferencesManager.getLastBackupRecordCount(context)
-                if (totalRecords != lastBackupCount) {
-                    try {
-                        dev.ssjvirtually.tgpix.storage.BackupManager.scheduleBackup(context)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-        }
 
 
 

@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt": {
-    "mtime": 1781022733.915697,
-    "ast_hash": "c8f023b4f5ea7fb0204440a852316fcb",
+    "mtime": 1781024298.6695106,
+    "ast_hash": "ef04b390920b9ae2e945798766f8d118",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
-    "mtime": 1781022198.360486,
-    "ast_hash": "34ef5b47aee05854fed45451c46643d5",
+    "mtime": 1781024289.1522772,
+    "ast_hash": "d1610720d9a99ec47d67dcb9445113fc",
     "semantic_hash": ""
   },
   "watch_and_install.ps1": {
