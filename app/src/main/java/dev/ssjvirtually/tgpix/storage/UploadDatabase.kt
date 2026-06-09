@@ -90,6 +90,13 @@ data class CloudPhotoEntity(
     val height: Int = 0
 )
 
+@androidx.room.Fts4(contentEntity = CloudPhotoEntity::class)
+@Entity(tableName = "cloud_photos_fts")
+data class CloudPhotoFtsEntity(
+    val tags: String,
+    val fileName: String
+)
+
 @Dao
 interface CloudPhotoDao {
     @Query("SELECT * FROM cloud_photos ORDER BY uploadedAt DESC")
@@ -127,6 +134,13 @@ interface CloudPhotoDao {
 
     @Query("SELECT * FROM cloud_photos WHERE messageId = :messageId LIMIT 1")
     suspend fun findByMessageId(messageId: Long): CloudPhotoEntity?
+
+    @Query("""
+        SELECT cp.* FROM cloud_photos cp
+        JOIN cloud_photos_fts fts ON cp.messageId = fts.rowid
+        WHERE cloud_photos_fts MATCH :query
+    """)
+    suspend fun searchCloudPhotos(query: String): List<CloudPhotoEntity>
 
     @Query("""
         SELECT messageId FROM cloud_photos 
@@ -249,7 +263,7 @@ interface BackupEventDao {
 }
 
 @Database(
-    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class, BackupEventEntity::class],
+    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class, BackupEventEntity::class, CloudPhotoFtsEntity::class],
     version = UploadDatabase.DATABASE_VERSION,
     exportSchema = false
 )
@@ -260,7 +274,7 @@ abstract class UploadDatabase : RoomDatabase() {
     abstract fun eventDao(): BackupEventDao
 
     companion object {
-        const val DATABASE_VERSION = 17
+        const val DATABASE_VERSION = 18
 
         @Volatile
         private var INSTANCE: UploadDatabase? = null
@@ -477,6 +491,17 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE VIRTUAL TABLE IF NOT EXISTS `cloud_photos_fts` USING FTS4(`tags` TEXT NOT NULL, `fileName` TEXT NOT NULL, content=`cloud_photos`)")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_cloud_photos_fts_BEFORE_UPDATE BEFORE UPDATE ON `cloud_photos` BEGIN DELETE FROM `cloud_photos_fts` WHERE `docid`=OLD.`rowid`; END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_cloud_photos_fts_BEFORE_DELETE BEFORE DELETE ON `cloud_photos` BEGIN DELETE FROM `cloud_photos_fts` WHERE `docid`=OLD.`rowid`; END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_cloud_photos_fts_AFTER_UPDATE AFTER UPDATE ON `cloud_photos` BEGIN INSERT INTO `cloud_photos_fts`(`docid`, `tags`, `fileName`) VALUES (NEW.`rowid`, NEW.`tags`, NEW.`fileName`); END")
+                db.execSQL("CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_cloud_photos_fts_AFTER_INSERT AFTER INSERT ON `cloud_photos` BEGIN INSERT INTO `cloud_photos_fts`(`docid`, `tags`, `fileName`) VALUES (NEW.`rowid`, NEW.`tags`, NEW.`fileName`); END")
+                db.execSQL("INSERT INTO `cloud_photos_fts` (rowid, `tags`, `fileName`) SELECT `messageId`, `tags`, `fileName` FROM `cloud_photos`")
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -500,7 +525,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_13_14,
                     MIGRATION_14_15,
                     MIGRATION_15_16,
-                    MIGRATION_16_17
+                    MIGRATION_16_17,
+                    MIGRATION_17_18
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {

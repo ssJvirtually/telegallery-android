@@ -133,13 +133,44 @@ fun SearchScreen(
     val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
 
-    // Filter photos based on search query using sub-millisecond pre-computed string matching
-    val filteredPhotos = remember(searchIndex, searchQuery) {
+    // Filter photos based on search query using SQLite FTS for cloud photos and in-memory search for local photos
+    val filteredPhotos by produceState<List<LocalPhoto>>(initialValue = emptyList(), searchIndex, searchQuery, dbVersion) {
         val query = searchQuery.trim().lowercase()
         if (query.isEmpty()) {
-            emptyList()
+            value = emptyList()
         } else {
-            searchIndex.filter { it.keywords.contains(query) }.map { it.photo }
+            // Search local photos in memory
+            val queryWords = query.split("\\s+".toRegex())
+            val localFiltered = searchIndex.filter { item ->
+                queryWords.all { word -> item.keywords.contains(word) }
+            }.map { it.photo }
+            
+            // Search cloud photos using FTS!
+            val ftsQuery = query.split("\\s+".toRegex()).joinToString(" AND ") { "$it*" }
+            val cloudResults = try {
+                db.cloudDao().searchCloudPhotos(ftsQuery)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                emptyList()
+            }
+            
+            val mappedCloud = cloudResults.map { cloud ->
+                val parsedDate = dev.ssjvirtually.tgpix.ui.utils.parseDateFromFilename(cloud.fileName)
+                val displayDate = if (cloud.dateTaken > 0L) cloud.dateTaken else (parsedDate ?: cloud.uploadedAt)
+                LocalPhoto(
+                    id = -cloud.messageId,
+                    uri = "cloud://${cloud.messageId}/${cloud.telegramFileId}/${cloud.fileName}",
+                    name = cloud.fileName,
+                    size = cloud.fileSize,
+                    dateTaken = displayDate,
+                    tags = cloud.tags
+                )
+            }
+            
+            // Merge both lists, deduplicate by URI, and sort by dateTaken descending
+            value = (localFiltered + mappedCloud)
+                .distinctBy { it.uri }
+                .sortedByDescending { it.dateTaken }
         }
     }
 
