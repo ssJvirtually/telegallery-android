@@ -1,7 +1,7 @@
 {
   "app/build.gradle": {
-    "mtime": 1781261375.2266173,
-    "ast_hash": "eb761d75bd170a6d2fa2bf922678e378",
+    "mtime": 1781263891.8704386,
+    "ast_hash": "609305051ccd3bf4981732d50c371f59",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt": {
