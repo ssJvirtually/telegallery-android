@@ -9,6 +9,11 @@ import kotlinx.coroutines.launch
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import androidx.compose.ui.platform.LocalContext
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
+import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 
 sealed class GalleryItem {
     data class Header(val date: String) : GalleryItem()
@@ -99,6 +104,13 @@ fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
         if (chatId == 0L) return@LaunchedEffect
 
         try {
+            // 1. Check memory cache (pending write buffer) first
+            val pendingPath = ThumbnailWriteBuffer.get(messageId, isThumbnail)
+            if (!pendingPath.isNullOrEmpty() && java.io.File(pendingPath).exists()) {
+                localPath = pendingPath
+                return@LaunchedEffect
+            }
+
             val db = UploadDatabase.getDatabase(context)
             val cachedPhoto = db.cloudDao().findByMessageId(messageId)
 
@@ -159,24 +171,13 @@ fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
 
             if (path != null) {
                 localPath = path
-                if (cachedPhoto != null) {
-                    val updated = if (isThumbnail) {
-                        cachedPhoto.copy(
-                            telegramFileId = fullFileId,
-                            telegramThumbnailFileId = thumbFileId,
-                            fileIdCachedAt = System.currentTimeMillis(),
-                            localCachedThumbnailPath = path
-                        )
-                    } else {
-                        cachedPhoto.copy(
-                            telegramFileId = fullFileId,
-                            telegramThumbnailFileId = thumbFileId,
-                            fileIdCachedAt = System.currentTimeMillis(),
-                            localCachedLargePath = path
-                        )
-                    }
-                    db.cloudDao().insert(updated)
-                }
+                ThumbnailWriteBuffer.enqueue(
+                    messageId = messageId,
+                    isThumbnail = isThumbnail,
+                    fullFileId = fullFileId,
+                    thumbFileId = thumbFileId,
+                    path = path
+                )
             }
         } catch (e: Exception) {
             android.util.Log.e("TGPix", "Exception in rememberCloudThumbnailPath: ${e.message}", e)
@@ -202,6 +203,14 @@ fun rememberCloudPhotoDownloadState(messageId: Long, isThumbnail: Boolean): Clou
         if (chatId == 0L) return@LaunchedEffect
 
         try {
+            // 1. Check memory cache (pending write buffer) first
+            val pendingPath = ThumbnailWriteBuffer.get(messageId, isThumbnail)
+            if (!pendingPath.isNullOrEmpty() && java.io.File(pendingPath).exists()) {
+                localPath = pendingPath
+                progress = 1.0f
+                return@LaunchedEffect
+            }
+
             val db = UploadDatabase.getDatabase(context)
             val cachedPhoto = db.cloudDao().findByMessageId(messageId)
 
@@ -278,24 +287,13 @@ fun rememberCloudPhotoDownloadState(messageId: Long, isThumbnail: Boolean): Clou
             if (path != null) {
                 localPath = path
                 progress = 1.0f
-                if (cachedPhoto != null) {
-                    val updated = if (isThumbnail) {
-                        cachedPhoto.copy(
-                            telegramFileId = fullFileId,
-                            telegramThumbnailFileId = thumbFileId,
-                            fileIdCachedAt = System.currentTimeMillis(),
-                            localCachedThumbnailPath = path
-                        )
-                    } else {
-                        cachedPhoto.copy(
-                            telegramFileId = fullFileId,
-                            telegramThumbnailFileId = thumbFileId,
-                            fileIdCachedAt = System.currentTimeMillis(),
-                            localCachedLargePath = path
-                        )
-                    }
-                    db.cloudDao().insert(updated)
-                }
+                ThumbnailWriteBuffer.enqueue(
+                    messageId = messageId,
+                    isThumbnail = isThumbnail,
+                    fullFileId = fullFileId,
+                    thumbFileId = thumbFileId,
+                    path = path
+                )
             }
         } catch (e: Exception) {
             android.util.Log.e("TGPix", "Exception in rememberCloudPhotoDownloadState: ${e.message}", e)
@@ -303,4 +301,90 @@ fun rememberCloudPhotoDownloadState(messageId: Long, isThumbnail: Boolean): Clou
     }
 
     return CloudPhotoDownloadState(localPath, progress)
+}
+
+object ThumbnailWriteBuffer {
+    data class PendingPath(
+        val fullFileId: Int,
+        val thumbFileId: Int,
+        val path: String
+    )
+    
+    private val pendingThumbnails = ConcurrentHashMap<Long, PendingPath>()
+    private val pendingLarges = ConcurrentHashMap<Long, PendingPath>()
+    
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var isLoopStarted = false
+
+    fun get(messageId: Long, isThumbnail: Boolean): String? {
+        return if (isThumbnail) pendingThumbnails[messageId]?.path else pendingLarges[messageId]?.path
+    }
+
+    fun enqueue(messageId: Long, isThumbnail: Boolean, fullFileId: Int, thumbFileId: Int, path: String) {
+        val pending = PendingPath(fullFileId, thumbFileId, path)
+        if (isThumbnail) {
+            pendingThumbnails[messageId] = pending
+        } else {
+            pendingLarges[messageId] = pending
+        }
+    }
+
+    fun startTimeoutLoop(context: android.content.Context) {
+        synchronized(this) {
+            if (isLoopStarted) return
+            isLoopStarted = true
+        }
+        scope.launch {
+            while (isActive) {
+                delay(2000)
+                try {
+                    flush(context.applicationContext)
+                } catch (e: Exception) {
+                    android.util.Log.e("ThumbnailWriteBuffer", "Failed to flush thumbnail updates", e)
+                }
+            }
+        }
+    }
+
+    private suspend fun flush(context: android.content.Context) = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        if (pendingThumbnails.isEmpty() && pendingLarges.isEmpty()) return@withContext
+
+        val thumbsSnapshot = pendingThumbnails.toMap()
+        val largesSnapshot = pendingLarges.toMap()
+
+        thumbsSnapshot.keys.forEach { pendingThumbnails.remove(it) }
+        largesSnapshot.keys.forEach { pendingLarges.remove(it) }
+
+        val db = UploadDatabase.getDatabase(context)
+        try {
+            db.runInTransaction {
+                val sqLite = db.openHelper.writableDatabase
+                val now = System.currentTimeMillis()
+
+                val messageIds = thumbsSnapshot.keys + largesSnapshot.keys
+                messageIds.forEach { msgId ->
+                    val thumbData = thumbsSnapshot[msgId]
+                    val largeData = largesSnapshot[msgId]
+
+                    if (thumbData != null) {
+                        sqLite.execSQL(
+                            "UPDATE cloud_photos SET telegramFileId = ?, telegramThumbnailFileId = ?, fileIdCachedAt = ?, localCachedThumbnailPath = ? WHERE messageId = ?",
+                            arrayOf(thumbData.fullFileId, thumbData.thumbFileId, now, thumbData.path, msgId)
+                        )
+                    }
+                    if (largeData != null) {
+                        sqLite.execSQL(
+                            "UPDATE cloud_photos SET telegramFileId = ?, telegramThumbnailFileId = ?, fileIdCachedAt = ?, localCachedLargePath = ? WHERE messageId = ?",
+                            arrayOf(largeData.fullFileId, largeData.thumbFileId, now, largeData.path, msgId)
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ThumbnailWriteBuffer", "Transaction update failed", e)
+            // Re-enqueue in case of failure
+            thumbsSnapshot.forEach { (id, data) -> pendingThumbnails.putIfAbsent(id, data) }
+            largesSnapshot.forEach { (id, data) -> pendingLarges.putIfAbsent(id, data) }
+        }
+    }
 }

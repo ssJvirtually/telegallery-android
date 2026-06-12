@@ -58,6 +58,9 @@ class TGPixApplication : Application() {
                 Log.e("TGPixApplication", "Failed to pre-warm database", e)
             }
         }.start()
+
+        // Start the thumbnail database write batching loop
+        dev.ssjvirtually.tgpix.ui.utils.ThumbnailWriteBuffer.startTimeoutLoop(this)
     }
 
     private fun clearCachedPathsRaw(dbFile: File) {
