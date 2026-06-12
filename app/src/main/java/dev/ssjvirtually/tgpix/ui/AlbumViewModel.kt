@@ -62,6 +62,7 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 db.albumDao().insertAlbumPhotos(albumPhotos)
                 BackupManager.onAlbumUpdated(context, albumId)
+                dev.ssjvirtually.tgpix.worker.BackupScheduler.schedulePhotoBackup(context)
             }
             withContext(Dispatchers.Main) {
                 onResult()

@@ -225,6 +225,9 @@ interface AlbumDao {
     @Query("SELECT * FROM album_photos WHERE albumId = :albumId")
     suspend fun getAlbumPhotosDirect(albumId: Long): List<AlbumPhotoEntity>
 
+    @Query("SELECT DISTINCT photoUri FROM album_photos")
+    suspend fun getAllAlbumPhotoUris(): List<String>
+
     @Query("SELECT telegramMessageId FROM albums WHERE id = :albumId")
     suspend fun getTelegramMessageId(albumId: Long): Long?
 

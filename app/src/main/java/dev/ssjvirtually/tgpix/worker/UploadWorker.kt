@@ -250,6 +250,23 @@ class UploadWorker(
                 return Result.success()
             }
 
+            // Prioritize photos in albums
+            val albumPhotoUris = db.albumDao().getAllAlbumPhotoUris().toSet()
+            if (albumPhotoUris.isNotEmpty()) {
+                val prioritizedPhotos = unsyncedPhotos.filter { photo ->
+                    albumPhotoUris.contains(photo.name) || albumPhotoUris.contains(photo.uri)
+                }
+                val regularPhotos = unsyncedPhotos.filter { photo ->
+                    !albumPhotoUris.contains(photo.name) && !albumPhotoUris.contains(photo.uri)
+                }
+                if (prioritizedPhotos.isNotEmpty()) {
+                    unsyncedPhotos.clear()
+                    unsyncedPhotos.addAll(prioritizedPhotos)
+                    unsyncedPhotos.addAll(regularPhotos)
+                    TdlibManager.addLog("Worker: Prioritized ${prioritizedPhotos.size} album photos for backup.")
+                }
+            }
+
             TdlibManager.addLog("Worker: Found ${unsyncedPhotos.size} unsynced photos out of ${photos.size} total local photos.")
 
             var uploadedCount = 0
