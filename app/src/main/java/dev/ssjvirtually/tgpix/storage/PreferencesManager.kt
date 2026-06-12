@@ -329,6 +329,18 @@ open class PreferencesManager {
             .apply()
     }
 
+    open fun setRestoreActive(context: Context, active: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("restore_active", active)
+            .apply()
+    }
+
+    open fun isRestoreActive(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean("restore_active", false)
+    }
+
     open fun clearAll(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()

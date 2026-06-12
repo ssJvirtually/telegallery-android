@@ -156,7 +156,87 @@ open class BackupManager {
         )
     }
 
+    data class SnapshotInfo(
+        val messageId: Long,
+        val version: Int,
+        val timestamp: Long,
+        val deviceId: String,
+        val recordCount: Int
+    )
+
+    open suspend fun getLatestSnapshotInfo(chatId: Long): SnapshotInfo? {
+        val getHistory = TdApi.GetChatHistory().apply {
+            this.chatId = chatId
+            this.fromMessageId = 0L
+            this.offset = 0
+            this.limit = 100
+            this.onlyLocal = false
+        }
+        
+        val result = TdlibManager.sendRequest(getHistory)
+        
+        if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+            val sortedMsgs = result.messages.sortedByDescending { it.id }
+            for (message in sortedMsgs) {
+                val docContent = message.content as? TdApi.MessageDocument
+                if (docContent != null) {
+                    val captionText = docContent.caption?.text ?: ""
+                    if (captionText.contains("#tgpix_snapshot")) {
+                        val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
+                        val jsonObj = try { org.json.JSONObject(jsonStr) } catch (e: Exception) { null } ?: continue
+                        val schemaVersion = jsonObj.optInt("schemaVersion", 0)
+                        if (schemaVersion == UploadDatabase.DATABASE_VERSION) {
+                            return SnapshotInfo(
+                                messageId = message.id,
+                                version = jsonObj.optInt("snapshotVersion", 0),
+                                timestamp = jsonObj.optLong("timestamp", 0L),
+                                deviceId = jsonObj.optString("deviceId", ""),
+                                recordCount = jsonObj.optInt("recordCount", 0)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    open suspend fun countMessagesSince(chatId: Long, sinceMessageId: Long): Int {
+        var count = 0
+        var lastMessageId = 0L
+        var crawling = true
+        
+        while (crawling) {
+            val getHistory = TdApi.GetChatHistory().apply {
+                this.chatId = chatId
+                this.fromMessageId = lastMessageId
+                this.offset = 0
+                this.limit = 50
+                this.onlyLocal = false
+            }
+            
+            val result = TdlibManager.sendRequest(getHistory)
+            if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+                for (msg in result.messages) {
+                    if (msg.id <= sinceMessageId) {
+                        crawling = false
+                        break
+                    }
+                    count++
+                }
+                lastMessageId = result.messages.last().id
+            } else {
+                crawling = false
+            }
+        }
+        return count
+    }
+
     open suspend fun backupDatabase(context: Context): Boolean {
+        if (PreferencesManager.isRestoreActive(context)) {
+            TdlibManager.addLog("BackupManager: Database backup aborted because a restore is active.")
+            return false
+        }
         if (isBackupRunning) return false
         isBackupRunning = true
         var success = false
@@ -171,25 +251,37 @@ open class BackupManager {
             success = withContext(Dispatchers.IO) {
                 val db = UploadDatabase.getDatabase(context)
                 val myDeviceId = PreferencesManager.getDeviceId(context)
-                
-                // 1. Leader Election check
-                val explicitLeaderId = PreferencesManager.getCurrentLeaderDeviceId(context)
-                val isLeader = if (!explicitLeaderId.isNullOrEmpty()) {
-                    explicitLeaderId == myDeviceId
-                } else {
-                    // Default behavior: Oldest registered device (by registration timestamp)
-                    val allDevices = db.deviceDao().getAllDevices()
-                    val oldestDevice = allDevices.minByOrNull { it.registeredAt }
-                    oldestDevice == null || oldestDevice.deviceId == myDeviceId
+
+                // 1. Fully-synced pre-condition: Ensure our local database has replayed all recent channel events
+                try {
+                    dev.ssjvirtually.tgpix.telegram.HistorySyncManager.syncMetadataHistory(context, targetChatId)
+                } catch (e: Exception) {
+                    TdlibManager.addLog("Failed to sync metadata history before backup: ${e.message}")
                 }
-                
-                if (!isLeader) {
-                    val leaderDeviceName = if (!explicitLeaderId.isNullOrEmpty()) {
-                        db.deviceDao().getAllDevices().firstOrNull { it.deviceId == explicitLeaderId }?.deviceName ?: "another device"
-                    } else {
-                        db.deviceDao().getAllDevices().minByOrNull { it.registeredAt }?.deviceName ?: "unknown"
-                    }
-                    TdlibManager.addLog("This device is not the Snapshot Leader (Leader is $leaderDeviceName). Skipping database backup.")
+
+                // 2. Fetch latest snapshot info from the backup channel
+                val latestSnapshot = getLatestSnapshotInfo(targetChatId)
+
+                // 3. Verify snapshot conditions (age >= 3 days or pending events/uploads >= 50)
+                val currentCount = db.cloudDao().getRecordCountDirect()
+                val shouldSnapshot = if (latestSnapshot == null) {
+                    TdlibManager.addLog("No existing remote database snapshot found. Will initiate first snapshot.")
+                    true
+                } else {
+                    val ageMs = System.currentTimeMillis() - latestSnapshot.timestamp
+                    val ageDays = ageMs / (24 * 60 * 60 * 1000L)
+                    val newPhotosCount = currentCount - latestSnapshot.recordCount
+                    val pendingEventsCount = countMessagesSince(targetChatId, latestSnapshot.messageId)
+                    val totalUnsnapshottedChanges = newPhotosCount + pendingEventsCount
+                    
+                    TdlibManager.addLog("Snapshot check: last snapshot v${latestSnapshot.version} is $ageDays days old. " +
+                            "New photos: $newPhotosCount, pending metadata events: $pendingEventsCount (Total changes: $totalUnsnapshottedChanges).")
+                    
+                    ageDays >= 3 || totalUnsnapshottedChanges >= 50
+                }
+
+                if (!shouldSnapshot) {
+                    TdlibManager.addLog("Database backup condition not met (age < 3 days and < 50 total changes). Skipping snapshot creation.")
                     return@withContext false
                 }
                 
@@ -198,7 +290,7 @@ open class BackupManager {
                     return@withContext false
                 }
 
-                // 2. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
+                // 4. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
                 val checkpointSuccess = try {
                     val cursor = db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)")
                     cursor.use { c ->
@@ -226,20 +318,20 @@ open class BackupManager {
                     return@withContext false
                 }
 
-                // 3. Safely lock the database and perform a copy while in a Room transaction
+                // 5. Safely lock the database and perform a copy while in a Room transaction
                 val transactionResult = try {
                     db.withTransaction {
-                        val currentCount = db.cloudDao().getRecordCountDirect()
+                        val innerCount = db.cloudDao().getRecordCountDirect()
                         val lastCount = PreferencesManager.getLastBackupRecordCount(context)
 
                         // If database is empty but we previously had backups, abort to protect remote
-                        if (currentCount == 0 && lastCount > 0) {
+                        if (innerCount == 0 && lastCount > 0) {
                             TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
                             null
                         } else {
                             val tempFile = File(context.filesDir, "tgpix_backup.db")
                             dbFile.copyTo(tempFile, overwrite = true)
-                            Pair(tempFile, currentCount)
+                            Pair(tempFile, innerCount)
                         }
                     }
                 } catch (e: Exception) {
@@ -251,13 +343,13 @@ open class BackupManager {
                     return@withContext false
                 }
 
-                val (tempBackupFile, currentCount) = transactionResult
+                val (tempBackupFile, finalCount) = transactionResult
 
                 if (!tempBackupFile.exists() || tempBackupFile.length() == 0L) {
                     return@withContext false
                 }
                 
-                // 4. Compress DB backup file using GZIP
+                // 6. Compress DB backup file using GZIP
                 val compressedFile = File(context.filesDir, "snapshot_${System.currentTimeMillis()}.db.gz")
                 try {
                     java.util.zip.GZIPOutputStream(FileOutputStream(compressedFile)).use { gzip ->
@@ -280,38 +372,57 @@ open class BackupManager {
                     }
                 }
                 
-                // 5. Compute integrity checksum
+                // 7. Compute integrity checksum
                 val sha256 = computeSha256(compressedFile)
-                val nextVersion = getLatestSnapshotVersion(targetChatId) + 1
+
+                // 8. Optimistic Concurrency Control Check: Fetch latest snapshot info again before uploading
+                val latestSnapshotBeforeUpload = getLatestSnapshotInfo(targetChatId)
+                val expectedVersion = if (latestSnapshot == null) 1 else latestSnapshot.version + 1
+
+                if (latestSnapshotBeforeUpload != null) {
+                    val currentLatestVersion = latestSnapshotBeforeUpload.version
+                    val currentLatestMsgId = latestSnapshotBeforeUpload.messageId
+                    val initialMsgId = latestSnapshot?.messageId
+
+                    if (currentLatestVersion >= expectedVersion || currentLatestMsgId != initialMsgId) {
+                        TdlibManager.addLog("Aborting snapshot upload: another device successfully uploaded a newer snapshot (v$currentLatestVersion) while we were generating ours.")
+                        if (compressedFile.exists()) {
+                            compressedFile.delete()
+                        }
+                        return@withContext false
+                    }
+                }
+
+                val nextVersion = expectedVersion
                 
                 val jsonMeta = org.json.JSONObject().apply {
                     put("snapshotVersion", nextVersion)
                     put("deviceId", myDeviceId)
-                    put("recordCount", currentCount)
+                    put("recordCount", finalCount)
                     put("schemaVersion", UploadDatabase.DATABASE_VERSION)
                     put("sha256", sha256)
                     put("timestamp", System.currentTimeMillis())
                 }
                 val captionText = "#tgpix_snapshot $jsonMeta"
                 
-                // 6. Upload compressed snapshot to Metadata Channel
+                // 9. Upload compressed snapshot to Metadata Channel
                 val uploadResult = uploadFile(compressedFile, targetChatId, captionText)
                 var uploadSuccess = false
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
                     
                     PreferencesManager.setLastBackupMessageId(context, newMsgId)
-                    PreferencesManager.setLastBackupRecordCount(context, currentCount)
+                    PreferencesManager.setLastBackupRecordCount(context, finalCount)
                     
-                    TdlibManager.addLog("SQLite snapshot v$nextVersion updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
+                    TdlibManager.addLog("SQLite snapshot v$nextVersion updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $finalCount).")
  
-                    // 7. Prune older snapshots (keep last 10)
+                    // 10. Prune older snapshots (keep last 10)
                     pruneOldSnapshots(targetChatId)
                     
                     UploadDatabase.recordEvent(
                         context,
                         "db_backup_success",
-                        "Successfully backed up database snapshot v$nextVersion to Telegram Message ID $newMsgId (Records: $currentCount)"
+                        "Successfully backed up database snapshot v$nextVersion to Telegram Message ID $newMsgId (Records: $finalCount)"
                     )
                     uploadSuccess = true
                 } else if (uploadResult is TdApi.Error) {
@@ -345,30 +456,9 @@ open class BackupManager {
     open suspend fun getLatestSnapshotVersion(chatId: Long): Int {
         var highestVersion = 0
         try {
-            val searchQuery = TdApi.SearchChatMessages().apply {
-                this.chatId = chatId
-                query = "#tgpix_snapshot"
-                filter = TdApi.SearchMessagesFilterDocument()
-                limit = 20
-            }
-            val searchResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
-                TdlibManager.getClient().send(searchQuery) { res ->
-                    cont.resume(res)
-                }
-            }
-            if (searchResult is TdApi.FoundChatMessages) {
-                for (msg in searchResult.messages) {
-                    val docContent = msg.content as? TdApi.MessageDocument
-                    val captionText = docContent?.caption?.text ?: ""
-                    if (captionText.contains("#tgpix_snapshot")) {
-                        val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
-                        val jsonObj = org.json.JSONObject(jsonStr)
-                        val version = jsonObj.optInt("snapshotVersion", 0)
-                        if (version > highestVersion) {
-                            highestVersion = version
-                        }
-                    }
-                }
+            val info = getLatestSnapshotInfo(chatId)
+            if (info != null) {
+                highestVersion = info.version
             }
         } catch (e: Exception) {
             ErrorMonitor.log(e)
@@ -378,28 +468,32 @@ open class BackupManager {
 
     open suspend fun pruneOldSnapshots(chatId: Long) {
         try {
-            val searchQuery = TdApi.SearchChatMessages().apply {
+            val getHistory = TdApi.GetChatHistory().apply {
                 this.chatId = chatId
-                query = "#tgpix_snapshot"
-                filter = TdApi.SearchMessagesFilterDocument()
-                limit = 50
+                this.fromMessageId = 0L
+                this.offset = 0
+                this.limit = 100
+                this.onlyLocal = false
             }
-            val searchResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
-                TdlibManager.getClient().send(searchQuery) { res ->
-                    cont.resume(res)
+            val result = TdlibManager.sendRequest(getHistory)
+            if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+                val snapshotMessages = result.messages.filter { msg ->
+                    val docContent = msg.content as? TdApi.MessageDocument
+                    val caption = docContent?.caption?.text ?: ""
+                    caption.contains("#tgpix_snapshot")
                 }
-            }
-            if (searchResult is TdApi.FoundChatMessages && searchResult.messages.size > 10) {
-                val sortedMsgs = searchResult.messages.sortedByDescending { it.id }
-                val toDelete = sortedMsgs.subList(10, sortedMsgs.size)
-                val msgIds = toDelete.map { it.id }.toLongArray()
-                
-                if (msgIds.isNotEmpty()) {
-                    TdlibManager.getClient().send(TdApi.DeleteMessages(chatId, msgIds, true)) { deleteResult ->
-                        if (deleteResult is TdApi.Ok) {
-                            TdlibManager.addLog("Old SQLite snapshots pruned successfully from Telegram.")
-                        } else if (deleteResult is TdApi.Error) {
-                            TdlibManager.addLog("Failed to prune old SQLite snapshots: ${deleteResult.message}")
+                if (snapshotMessages.size > 10) {
+                    val sortedMsgs = snapshotMessages.sortedByDescending { it.id }
+                    val toDelete = sortedMsgs.subList(10, sortedMsgs.size)
+                    val msgIds = toDelete.map { it.id }.toLongArray()
+                    
+                    if (msgIds.isNotEmpty()) {
+                        TdlibManager.getClient().send(TdApi.DeleteMessages(chatId, msgIds, true)) { deleteResult ->
+                            if (deleteResult is TdApi.Ok) {
+                                TdlibManager.addLog("Old SQLite snapshots pruned successfully from Telegram.")
+                            } else if (deleteResult is TdApi.Error) {
+                                TdlibManager.addLog("Failed to prune old SQLite snapshots: ${deleteResult.message}")
+                            }
                         }
                     }
                 }
@@ -437,120 +531,124 @@ open class BackupManager {
             ErrorMonitor.log(e)
         }
 
-        TdlibManager.addLog("Searching for remote database snapshots (#tgpix_snapshot) in chat $chatId...")
-        val searchQuery = TdApi.SearchChatMessages().apply {
+        TdlibManager.addLog("Searching for remote database snapshots (#tgpix_snapshot) in chat $chatId via history crawl...")
+        val getHistory = TdApi.GetChatHistory().apply {
             this.chatId = chatId
-            query = "#tgpix_snapshot"
-            filter = TdApi.SearchMessagesFilterDocument()
-            limit = 20
+            this.fromMessageId = 0L
+            this.offset = 0
+            this.limit = 100
+            this.onlyLocal = false
         }
         
-        val searchResult = suspendCancellableCoroutine<TdApi.Object> { continuation ->
-            TdlibManager.getClient().send(searchQuery) { result ->
-                continuation.resume(result)
+        val result = TdlibManager.sendRequest(getHistory)
+        
+        if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+            val snapshotMessages = result.messages.filter { msg ->
+                val docContent = msg.content as? TdApi.MessageDocument
+                val caption = docContent?.caption?.text ?: ""
+                caption.contains("#tgpix_snapshot")
             }
-        }
-        
-        if (searchResult is TdApi.FoundChatMessages && searchResult.messages.isNotEmpty()) {
-            val sortedMsgs = searchResult.messages.sortedByDescending { it.id }
-            TdlibManager.addLog("Found ${sortedMsgs.size} snapshot messages. Selecting latest compatible snapshot...")
-            
-            for (message in sortedMsgs) {
-                val docContent = message.content as? TdApi.MessageDocument
-                val document = docContent?.document
-                if (document != null) {
-                    val captionText = docContent.caption?.text ?: ""
-                    if (!captionText.contains("#tgpix_snapshot")) continue
-                    
-                    val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
-                    val jsonObj = try { org.json.JSONObject(jsonStr) } catch (e: Exception) { null } ?: continue
-                    
-                    val schemaVersion = jsonObj.optInt("schemaVersion", 0)
-                    if (schemaVersion != UploadDatabase.DATABASE_VERSION) {
-                        TdlibManager.addLog("Skipping snapshot (Msg ID: ${message.id}): schema version ($schemaVersion) does not match app version (${UploadDatabase.DATABASE_VERSION}).")
-                        continue
-                    }
-
-                    TdlibManager.addLog("Attempting to download snapshot (Msg ID: ${message.id}, File ID: ${document.document.id})...")
-                    
-                    val downloadedFile = downloadFile(document.document.id)
-                    if (downloadedFile != null && downloadedFile.exists()) {
-                        val expectedHash = jsonObj.optString("sha256", "")
-                        if (expectedHash.isNotEmpty()) {
-                            val actualHash = computeSha256(downloadedFile)
-                            if (actualHash != expectedHash) {
-                                TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash.")
-                                continue
-                            }
-                            TdlibManager.addLog("Snapshot integrity verified (SHA-256 match).")
+            if (snapshotMessages.isNotEmpty()) {
+                val sortedMsgs = snapshotMessages.sortedByDescending { it.id }
+                TdlibManager.addLog("Found ${sortedMsgs.size} snapshot messages. Selecting latest compatible snapshot...")
+                
+                for (message in sortedMsgs) {
+                    val docContent = message.content as? TdApi.MessageDocument
+                    val document = docContent?.document
+                    if (document != null) {
+                        val captionText = docContent.caption?.text ?: ""
+                        if (!captionText.contains("#tgpix_snapshot")) continue
+                        
+                        val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
+                        val jsonObj = try { org.json.JSONObject(jsonStr) } catch (e: Exception) { null } ?: continue
+                        
+                        val schemaVersion = jsonObj.optInt("schemaVersion", 0)
+                        if (schemaVersion != UploadDatabase.DATABASE_VERSION) {
+                            TdlibManager.addLog("Skipping snapshot (Msg ID: ${message.id}): schema version ($schemaVersion) does not match app version (${UploadDatabase.DATABASE_VERSION}).")
+                            continue
                         }
 
-                        val decompressedFile = File(context.cacheDir, "temp_restored_db.db")
-                        val decompressedSuccess = try {
-                            java.util.zip.GZIPInputStream(FileInputStream(downloadedFile)).use { gzip ->
-                                FileOutputStream(decompressedFile).use { fos ->
-                                    val buffer = ByteArray(8192)
-                                    var len: Int
-                                    while (gzip.read(buffer).also { len = it } != -1) {
-                                        fos.write(buffer, 0, len)
+                        TdlibManager.addLog("Attempting to download snapshot (Msg ID: ${message.id}, File ID: ${document.document.id})...")
+                        
+                        val downloadedFile = downloadFile(document.document.id)
+                        if (downloadedFile != null && downloadedFile.exists()) {
+                            val expectedHash = jsonObj.optString("sha256", "")
+                            if (expectedHash.isNotEmpty()) {
+                                val actualHash = computeSha256(downloadedFile)
+                                if (actualHash != expectedHash) {
+                                    TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash.")
+                                    continue
+                                }
+                                TdlibManager.addLog("Snapshot integrity verified (SHA-256 match).")
+                            }
+
+                            val decompressedFile = File(context.cacheDir, "temp_restored_db.db")
+                            val decompressedSuccess = try {
+                                java.util.zip.GZIPInputStream(FileInputStream(downloadedFile)).use { gzip ->
+                                    FileOutputStream(decompressedFile).use { fos ->
+                                        val buffer = ByteArray(8192)
+                                        var len: Int
+                                        while (gzip.read(buffer).also { len = it } != -1) {
+                                            fos.write(buffer, 0, len)
+                                        }
                                     }
                                 }
+                                true
+                            } catch (e: Exception) {
+                                TdlibManager.addLog("Failed to decompress snapshot: ${e.message}")
+                                false
+                            } finally {
+                                if (downloadedFile.exists()) downloadedFile.delete()
                             }
-                            true
-                        } catch (e: Exception) {
-                            TdlibManager.addLog("Failed to decompress snapshot: ${e.message}")
-                            false
-                        } finally {
-                            if (downloadedFile.exists()) downloadedFile.delete()
-                        }
 
-                        if (!decompressedSuccess || !decompressedFile.exists()) {
-                            continue
-                        }
-
-                        val header = ByteArray(15)
-                        try {
-                            FileInputStream(decompressedFile).use { it.read(header) }
-                        } catch (e: Exception) {
-                            TdlibManager.addLog("Failed to read header of snapshot: ${e.message}")
-                            decompressedFile.delete()
-                            continue
-                        }
-                        if (!String(header).startsWith("SQLite format 3")) {
-                            TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) magic header check FAILED. Not a valid SQLite database.")
-                            decompressedFile.delete()
-                            continue
-                        }
-
-                        TdlibManager.addLog("Snapshot decompressed and validated. Restoring data in-process from Msg ID: ${message.id}...")
-
-                        val recordsCount = jsonObj.optInt("recordCount", 0)
-                        val snapshotVersion = jsonObj.optInt("snapshotVersion", 0)
-                        
-                        val restored = UploadDatabase.restoreDataFromFile(context, decompressedFile)
-                        decompressedFile.delete()
-                        
-                        if (restored >= 0) {
-                            TdlibManager.addLog("In-process snapshot restore complete: $restored cloud_photos rows loaded into live database.")
-                            
-                            PreferencesManager.setLastBackupMessageId(context, message.id)
-                            PreferencesManager.setLastBackupRecordCount(context, recordsCount)
-                            PreferencesManager.setLastReplayedMetadataMsgId(context, message.id)
-                            
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                Toast.makeText(context, "Snapshot restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
+                            if (!decompressedSuccess || !decompressedFile.exists()) {
+                                continue
                             }
-                            UploadDatabase.recordEvent(
-                                context,
-                                "restore_success",
-                                "Successfully restored snapshot v$snapshotVersion ($restored records) from Msg ID: ${message.id}"
-                            )
-                            return true
+
+                            val header = ByteArray(15)
+                            try {
+                                FileInputStream(decompressedFile).use { it.read(header) }
+                            } catch (e: Exception) {
+                                TdlibManager.addLog("Failed to read header of snapshot: ${e.message}")
+                                decompressedFile.delete()
+                                continue
+                            }
+                            if (!String(header).startsWith("SQLite format 3")) {
+                                TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) magic header check FAILED. Not a valid SQLite database.")
+                                decompressedFile.delete()
+                                continue
+                            }
+
+                            TdlibManager.addLog("Snapshot decompressed and validated. Restoring data in-process from Msg ID: ${message.id}...")
+
+                            val recordsCount = jsonObj.optInt("recordCount", 0)
+                            val snapshotVersion = jsonObj.optInt("snapshotVersion", 0)
+                            
+                            val restored = UploadDatabase.restoreDataFromFile(context, decompressedFile)
+                            decompressedFile.delete()
+                            
+                            if (restored >= 0) {
+                                TdlibManager.addLog("In-process snapshot restore complete: $restored cloud_photos rows loaded into live database.")
+                                
+                                PreferencesManager.setLastBackupMessageId(context, message.id)
+                                PreferencesManager.setLastBackupRecordCount(context, recordsCount)
+                                PreferencesManager.setLastReplayedMetadataMsgId(context, message.id)
+                                
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    Toast.makeText(context, "Snapshot restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
+                                }
+                                UploadDatabase.recordEvent(
+                                    context,
+                                    "restore_success",
+                                    "Successfully restored snapshot v$snapshotVersion ($restored records) from Msg ID: ${message.id}"
+                                )
+                                return true
+                            } else {
+                                TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}.")
+                            }
                         } else {
-                            TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}.")
+                            TdlibManager.addLog("Failed to download snapshot file (Msg ID: ${message.id}).")
                         }
-                    } else {
-                        TdlibManager.addLog("Failed to download snapshot file (Msg ID: ${message.id}).")
                     }
                 }
             }
@@ -616,26 +714,30 @@ open class BackupManager {
             ErrorMonitor.log(e)
         }
 
-        val searchQuery = TdApi.SearchChatMessages().apply {
+        val getHistory = TdApi.GetChatHistory().apply {
             this.chatId = targetChatId
-            query = "#tgpix_album"
-            filter = TdApi.SearchMessagesFilterDocument()
-            limit = 100
+            this.fromMessageId = 0L
+            this.offset = 0
+            this.limit = 100
+            this.onlyLocal = false
         }
         
-        val searchResult = suspendCancellableCoroutine<TdApi.Object> { continuation ->
-            TdlibManager.getClient().send(searchQuery) { result ->
-                continuation.resume(result)
+        val result = TdlibManager.sendRequest(getHistory)
+        
+        if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+            val albumMessages = result.messages.filter { msg ->
+                val docContent = msg.content as? TdApi.MessageDocument
+                val caption = docContent?.caption?.text ?: ""
+                caption.contains("#tgpix_album")
             }
-        }
-        
-        if (searchResult is TdApi.FoundChatMessages && searchResult.messages.isNotEmpty()) {
-            TdlibManager.addLog("Found ${searchResult.messages.size} album manifests in Backup Channel. Reconstructing...")
-            for (message in searchResult.messages) {
-                try {
-                    reconstructAlbum(context, message)
-                } catch (e: Exception) {
-                    ErrorMonitor.log(e)
+            if (albumMessages.isNotEmpty()) {
+                TdlibManager.addLog("Found ${albumMessages.size} album manifests in Backup Channel. Reconstructing...")
+                for (message in albumMessages) {
+                    try {
+                        reconstructAlbum(context, message)
+                    } catch (e: Exception) {
+                        ErrorMonitor.log(e)
+                    }
                 }
             }
         }

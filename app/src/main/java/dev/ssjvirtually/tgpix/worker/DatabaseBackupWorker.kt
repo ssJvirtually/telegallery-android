@@ -43,6 +43,11 @@ class DatabaseBackupWorker(
                 return Result.retry()
             }
 
+            if (PreferencesManager.isRestoreActive(applicationContext)) {
+                TdlibManager.addLog("DatabaseBackupWorker: Aborting backup run because a restore/sync is currently active.")
+                return Result.success()
+            }
+
             // 4. Run the backup now that TDLib is fully ready
             val success = BackupManager.backupDatabase(applicationContext)
             if (success) {

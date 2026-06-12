@@ -1,11 +1,11 @@
 # Graph Report - telegallery-calude  (2026-06-12)
 
 ## Corpus Check
-- 57 files · ~218,638 words
+- 57 files · ~218,736 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1137 nodes · 1848 edges · 81 communities (63 shown, 18 thin omitted)
+- 1137 nodes · 1849 edges · 81 communities (63 shown, 18 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
@@ -369,7 +369,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Community 65`, `Community 67`, `Community 69`, `Albums Screen UI and Utils`, `Image Upload Manager`, `Community 72`, `Community 76`?**
   _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **Why does `TdlibManager` connect `Telegram Client Integration` to `Background Backup Workers`, `Database Backup Manager`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+  _High betweenness centrality (0.059) - this node is a cross-community bridge._
 - **Why does `PreferencesManager` connect `Application Preferences` to `Background Backup Workers`, `Telegram Client Integration`?**
   _High betweenness centrality (0.050) - this node is a cross-community bridge._
 - **What connects `String`, `Throwable`, `ManagedActivityResultLauncher` to the rest of the system?**
