@@ -14,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.async
+import kotlinx.coroutines.Deferred
 
 sealed class GalleryItem {
     data class Header(val date: String) : GalleryItem()
@@ -121,63 +123,84 @@ fun rememberCloudThumbnailPath(messageId: Long, isThumbnail: Boolean): String? {
                 return@LaunchedEffect
             }
 
-            // Always resolve current-session file IDs via GetMessage
-            suspend fun resolveFileIds(): Pair<Int, Int>? {
-                val result = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
-                if (result is TdApi.Message) {
-                    when (val content = result.content) {
-                        is TdApi.MessagePhoto -> {
-                            val sizes = content.photo.sizes
-                            if (sizes.isNotEmpty()) {
-                                return Pair(sizes.last().photo.id, sizes.first().photo.id)
+            // Deduplicate concurrent download requests and execute out-of-lifecycle
+            val path = ThumbnailWriteBuffer.getOrDownload(messageId, isThumbnail) {
+                // Always resolve current-session file IDs via GetMessage
+                suspend fun resolveFileIds(): Pair<Int, Int>? {
+                    val result = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+                    if (result is TdApi.Message) {
+                        when (val content = result.content) {
+                            is TdApi.MessagePhoto -> {
+                                val sizes = content.photo.sizes
+                                if (sizes.isNotEmpty()) {
+                                    return Pair(sizes.last().photo.id, sizes.first().photo.id)
+                                }
+                            }
+                            is TdApi.MessageDocument -> {
+                                val doc = content.document
+                                val thumbId = doc.thumbnail?.file?.id ?: doc.document.id
+                                return Pair(doc.document.id, thumbId)
+                            }
+                            is TdApi.MessageVideo -> {
+                                val video = content.video
+                                val thumbId = video.thumbnail?.file?.id ?: video.video.id
+                                return Pair(video.video.id, thumbId)
+                            }
+                            else -> {}
+                        }
+                    }
+                    return null
+                }
+
+                suspend fun performDownload(fileId: Int): String? {
+                    if (fileId == 0) return null
+                    val fileResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                    if (fileResult is TdApi.File) {
+                        if (fileResult.local.isDownloadingCompleted) return fileResult.local.path
+                        val dlResult = TdlibManager.sendRequest(TdApi.DownloadFile(fileId, 1, 0, 0, false))
+                        if (dlResult is TdApi.File) {
+                            if (dlResult.local.isDownloadingCompleted) return dlResult.local.path
+                            var attempts = 0
+                            while (attempts < 15) {
+                                delay(1000)
+                                val poll = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                                if (poll is TdApi.File) {
+                                    if (poll.local.isDownloadingCompleted) return poll.local.path
+                                } else if (poll is TdApi.Error) break
+                                attempts++
                             }
                         }
-                        is TdApi.MessageDocument -> {
-                            val doc = content.document
-                            val thumbId = doc.thumbnail?.file?.id ?: doc.document.id
-                            return Pair(doc.document.id, thumbId)
-                        }
-                        else -> {}
                     }
+                    return null
                 }
-                return null
-            }
 
-            suspend fun performDownload(fileId: Int): String? {
-                if (fileId == 0) return null
-                val fileResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
-                if (fileResult is TdApi.File) {
-                    if (fileResult.local.isDownloadingCompleted) return fileResult.local.path
-                    val dlResult = TdlibManager.sendRequest(TdApi.DownloadFile(fileId, 1, 0, 0, false))
-                    if (dlResult is TdApi.File) {
-                        if (dlResult.local.isDownloadingCompleted) return dlResult.local.path
-                        var attempts = 0
-                        while (attempts < 15) {
-                            delay(1000)
-                            val poll = TdlibManager.sendRequest(TdApi.GetFile(fileId))
-                            if (poll is TdApi.File) {
-                                if (poll.local.isDownloadingCompleted) return poll.local.path
-                            } else if (poll is TdApi.Error) break
-                            attempts++
-                        }
-                    }
+                val hasFreshSessionIds = cachedPhoto != null &&
+                        cachedPhoto.fileIdCachedAt > TdlibManager.sessionStartTime &&
+                        cachedPhoto.telegramFileId != 0
+
+                val (fullFileId, thumbFileId) = if (hasFreshSessionIds && cachedPhoto != null) {
+                    Pair(cachedPhoto.telegramFileId, cachedPhoto.telegramThumbnailFileId)
+                } else {
+                    resolveFileIds() ?: return@getOrDownload null
                 }
-                return null
-            }
 
-            val (fullFileId, thumbFileId) = resolveFileIds() ?: return@LaunchedEffect
-            val targetFileId = if (isThumbnail) thumbFileId else fullFileId
-            val path = performDownload(targetFileId)
+                val targetFileId = if (isThumbnail) thumbFileId else fullFileId
+                val downloadedPath = performDownload(targetFileId)
+
+                if (downloadedPath != null) {
+                    ThumbnailWriteBuffer.enqueue(
+                        messageId = messageId,
+                        isThumbnail = isThumbnail,
+                        fullFileId = fullFileId,
+                        thumbFileId = thumbFileId,
+                        path = downloadedPath
+                    )
+                }
+                downloadedPath
+            }
 
             if (path != null) {
                 localPath = path
-                ThumbnailWriteBuffer.enqueue(
-                    messageId = messageId,
-                    isThumbnail = isThumbnail,
-                    fullFileId = fullFileId,
-                    thumbFileId = thumbFileId,
-                    path = path
-                )
             }
         } catch (e: Exception) {
             android.util.Log.e("TGPix", "Exception in rememberCloudThumbnailPath: ${e.message}", e)
@@ -222,78 +245,99 @@ fun rememberCloudPhotoDownloadState(messageId: Long, isThumbnail: Boolean): Clou
                 return@LaunchedEffect
             }
 
-            // Always resolve current-session file IDs via GetMessage (session-scoped IDs)
-            suspend fun resolveFileIds(): Pair<Int, Int>? {
-                val result = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
-                if (result is TdApi.Message) {
-                    when (val content = result.content) {
-                        is TdApi.MessagePhoto -> {
-                            val sizes = content.photo.sizes
-                            if (sizes.isNotEmpty()) {
-                                return Pair(sizes.last().photo.id, sizes.first().photo.id)
+            // Deduplicate concurrent download requests and execute out-of-lifecycle
+            val path = ThumbnailWriteBuffer.getOrDownload(messageId, isThumbnail) {
+                // Always resolve current-session file IDs via GetMessage (session-scoped IDs)
+                suspend fun resolveFileIds(): Pair<Int, Int>? {
+                    val result = TdlibManager.sendRequest(TdApi.GetMessage(chatId, messageId))
+                    if (result is TdApi.Message) {
+                        when (val content = result.content) {
+                            is TdApi.MessagePhoto -> {
+                                val sizes = content.photo.sizes
+                                if (sizes.isNotEmpty()) {
+                                    return Pair(sizes.last().photo.id, sizes.first().photo.id)
+                                }
+                            }
+                            is TdApi.MessageDocument -> {
+                                val doc = content.document
+                                val thumbId = doc.thumbnail?.file?.id ?: doc.document.id
+                                return Pair(doc.document.id, thumbId)
+                            }
+                            is TdApi.MessageVideo -> {
+                                val video = content.video
+                                val thumbId = video.thumbnail?.file?.id ?: video.video.id
+                                return Pair(video.video.id, thumbId)
+                            }
+                            else -> {}
+                        }
+                    }
+                    return null
+                }
+
+                suspend fun performDownload(fileId: Int): String? {
+                    if (fileId == 0) return null
+                    val fileResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                    if (fileResult is TdApi.File) {
+                        if (fileResult.local.isDownloadingCompleted) {
+                            progress = 1.0f
+                            return fileResult.local.path
+                        }
+                        val dlResult = TdlibManager.sendRequest(TdApi.DownloadFile(fileId, 1, 0, 0, false))
+                        if (dlResult is TdApi.File) {
+                            if (dlResult.local.isDownloadingCompleted) {
+                                progress = 1.0f
+                                return dlResult.local.path
+                            }
+                            var attempts = 0
+                            while (attempts < 60) {
+                                delay(500)
+                                val poll = TdlibManager.sendRequest(TdApi.GetFile(fileId))
+                                if (poll is TdApi.File) {
+                                    val localFile = poll.local
+                                    val totalSize = poll.size
+                                    progress = if (totalSize > 0) {
+                                        (localFile.downloadedSize.toFloat() / totalSize.toFloat()).coerceIn(0f, 1f)
+                                    } else 0f
+                                    if (localFile.isDownloadingCompleted) {
+                                        progress = 1.0f
+                                        return localFile.path
+                                    }
+                                } else if (poll is TdApi.Error) break
+                                attempts++
                             }
                         }
-                        is TdApi.MessageDocument -> {
-                            val doc = content.document
-                            val thumbId = doc.thumbnail?.file?.id ?: doc.document.id
-                            return Pair(doc.document.id, thumbId)
-                        }
-                        else -> {}
                     }
+                    return null
                 }
-                return null
-            }
 
-            suspend fun performDownload(fileId: Int): String? {
-                if (fileId == 0) return null
-                val fileResult = TdlibManager.sendRequest(TdApi.GetFile(fileId))
-                if (fileResult is TdApi.File) {
-                    if (fileResult.local.isDownloadingCompleted) {
-                        progress = 1.0f
-                        return fileResult.local.path
-                    }
-                    val dlResult = TdlibManager.sendRequest(TdApi.DownloadFile(fileId, 1, 0, 0, false))
-                    if (dlResult is TdApi.File) {
-                        if (dlResult.local.isDownloadingCompleted) {
-                            progress = 1.0f
-                            return dlResult.local.path
-                        }
-                        var attempts = 0
-                        while (attempts < 60) {
-                            delay(500)
-                            val poll = TdlibManager.sendRequest(TdApi.GetFile(fileId))
-                            if (poll is TdApi.File) {
-                                val localFile = poll.local
-                                val totalSize = poll.size
-                                progress = if (totalSize > 0) {
-                                    (localFile.downloadedSize.toFloat() / totalSize.toFloat()).coerceIn(0f, 1f)
-                                } else 0f
-                                if (localFile.isDownloadingCompleted) {
-                                    progress = 1.0f
-                                    return localFile.path
-                                }
-                            } else if (poll is TdApi.Error) break
-                            attempts++
-                        }
-                    }
+                val hasFreshSessionIds = cachedPhoto != null &&
+                        cachedPhoto.fileIdCachedAt > TdlibManager.sessionStartTime &&
+                        cachedPhoto.telegramFileId != 0
+
+                val (fullFileId, thumbFileId) = if (hasFreshSessionIds && cachedPhoto != null) {
+                    Pair(cachedPhoto.telegramFileId, cachedPhoto.telegramThumbnailFileId)
+                } else {
+                    resolveFileIds() ?: return@getOrDownload null
                 }
-                return null
-            }
 
-            val (fullFileId, thumbFileId) = resolveFileIds() ?: return@LaunchedEffect
-            val targetFileId = if (isThumbnail) thumbFileId else fullFileId
-            val path = performDownload(targetFileId)
+                val targetFileId = if (isThumbnail) thumbFileId else fullFileId
+                val downloadedPath = performDownload(targetFileId)
+
+                if (downloadedPath != null) {
+                    ThumbnailWriteBuffer.enqueue(
+                        messageId = messageId,
+                        isThumbnail = isThumbnail,
+                        fullFileId = fullFileId,
+                        thumbFileId = thumbFileId,
+                        path = downloadedPath
+                    )
+                }
+                downloadedPath
+            }
 
             if (path != null) {
                 localPath = path
                 progress = 1.0f
-                ThumbnailWriteBuffer.enqueue(
-                    messageId = messageId,
-                    isThumbnail = isThumbnail,
-                    fullFileId = fullFileId,
-                    thumbFileId = thumbFileId,
-                    path = path
-                )
             }
         } catch (e: Exception) {
             android.util.Log.e("TGPix", "Exception in rememberCloudPhotoDownloadState: ${e.message}", e)
@@ -312,6 +356,7 @@ object ThumbnailWriteBuffer {
     
     private val pendingThumbnails = ConcurrentHashMap<Long, PendingPath>()
     private val pendingLarges = ConcurrentHashMap<Long, PendingPath>()
+    private val inFlightDownloads = ConcurrentHashMap<String, Deferred<String?>>()
     
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var isLoopStarted = false
@@ -326,6 +371,44 @@ object ThumbnailWriteBuffer {
             pendingThumbnails[messageId] = pending
         } else {
             pendingLarges[messageId] = pending
+        }
+    }
+
+    suspend fun getOrDownload(
+        messageId: Long,
+        isThumbnail: Boolean,
+        downloadBlock: suspend () -> String?
+    ): String? {
+        val cacheKey = "${messageId}_${isThumbnail}"
+
+        // Check RAM buffer first
+        get(messageId, isThumbnail)?.let { return it }
+
+        // Check in-flight downloads
+        val deferred = inFlightDownloads[cacheKey]
+        if (deferred != null) {
+            try {
+                return deferred.await()
+            } catch (_: Exception) {}
+        }
+
+        // Run download in the global supervisor scope so it survives Composable disposal
+        val newDeferred = scope.async {
+            try {
+                downloadBlock()
+            } catch (e: Exception) {
+                android.util.Log.e("ThumbnailWriteBuffer", "Download block failed for msg $messageId", e)
+                null
+            }
+        }
+
+        val existing = inFlightDownloads.putIfAbsent(cacheKey, newDeferred)
+        val activeDeferred = existing ?: newDeferred
+
+        return try {
+            activeDeferred.await()
+        } finally {
+            inFlightDownloads.remove(cacheKey, activeDeferred)
         }
     }
 
@@ -357,28 +440,31 @@ object ThumbnailWriteBuffer {
 
         val db = UploadDatabase.getDatabase(context)
         try {
-            db.runInTransaction {
-                val sqLite = db.openHelper.writableDatabase
-                val now = System.currentTimeMillis()
+            val now = System.currentTimeMillis()
+            val thumbUpdates = thumbsSnapshot.map { (id, data) ->
+                dev.ssjvirtually.tgpix.storage.ThumbnailPathUpdate(
+                    messageId = id,
+                    fileId = data.fullFileId,
+                    thumbFileId = data.thumbFileId,
+                    cachedAt = now,
+                    path = data.path
+                )
+            }
+            val largeUpdates = largesSnapshot.map { (id, data) ->
+                dev.ssjvirtually.tgpix.storage.ThumbnailPathUpdate(
+                    messageId = id,
+                    fileId = data.fullFileId,
+                    thumbFileId = data.thumbFileId,
+                    cachedAt = now,
+                    path = data.path
+                )
+            }
 
-                val messageIds = thumbsSnapshot.keys + largesSnapshot.keys
-                messageIds.forEach { msgId ->
-                    val thumbData = thumbsSnapshot[msgId]
-                    val largeData = largesSnapshot[msgId]
-
-                    if (thumbData != null) {
-                        sqLite.execSQL(
-                            "UPDATE cloud_photos SET telegramFileId = ?, telegramThumbnailFileId = ?, fileIdCachedAt = ?, localCachedThumbnailPath = ? WHERE messageId = ?",
-                            arrayOf(thumbData.fullFileId, thumbData.thumbFileId, now, thumbData.path, msgId)
-                        )
-                    }
-                    if (largeData != null) {
-                        sqLite.execSQL(
-                            "UPDATE cloud_photos SET telegramFileId = ?, telegramThumbnailFileId = ?, fileIdCachedAt = ?, localCachedLargePath = ? WHERE messageId = ?",
-                            arrayOf(largeData.fullFileId, largeData.thumbFileId, now, largeData.path, msgId)
-                        )
-                    }
-                }
+            if (thumbUpdates.isNotEmpty()) {
+                db.cloudDao().batchUpdateThumbnailPaths(thumbUpdates)
+            }
+            if (largeUpdates.isNotEmpty()) {
+                db.cloudDao().batchUpdateLargePaths(largeUpdates)
             }
         } catch (e: Exception) {
             android.util.Log.e("ThumbnailWriteBuffer", "Transaction update failed", e)

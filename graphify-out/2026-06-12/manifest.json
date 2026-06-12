@@ -100,8 +100,8 @@
     "semantic_hash": "cc81e6c4a7089085c2528f8118d8567c"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt": {
-    "mtime": 1780814319.1925237,
-    "ast_hash": "520b9ac483ae932a19b24b1d5f4b86a3",
+    "mtime": 1781266488.5321245,
+    "ast_hash": "99ccc1724fb9138083934d8bd7e3f258",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt": {
@@ -260,8 +260,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt": {
-    "mtime": 1781266186.339388,
-    "ast_hash": "7cf4828078a32ab219e6fbd1c758b68d",
+    "mtime": 1781266495.995606,
+    "ast_hash": "cf326b5836691506640c0b8c15eb7ce1",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {

@@ -102,6 +102,14 @@ data class CloudPhotoFtsEntity(
     val fileName: String
 )
 
+data class ThumbnailPathUpdate(
+    val messageId: Long,
+    val fileId: Int,
+    val thumbFileId: Int,
+    val cachedAt: Long,
+    val path: String
+)
+
 @Dao
 interface CloudPhotoDao {
     @Transaction
@@ -119,6 +127,26 @@ interface CloudPhotoDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(photo: CloudPhotoEntity)
+
+    @Query("UPDATE cloud_photos SET telegramFileId = :fileId, telegramThumbnailFileId = :thumbFileId, fileIdCachedAt = :cachedAt, localCachedThumbnailPath = :path WHERE messageId = :messageId")
+    suspend fun updateThumbnailPath(messageId: Long, fileId: Int, thumbFileId: Int, cachedAt: Long, path: String)
+
+    @Query("UPDATE cloud_photos SET telegramFileId = :fileId, telegramThumbnailFileId = :thumbFileId, fileIdCachedAt = :cachedAt, localCachedLargePath = :path WHERE messageId = :messageId")
+    suspend fun updateLargePath(messageId: Long, fileId: Int, thumbFileId: Int, cachedAt: Long, path: String)
+
+    @Transaction
+    suspend fun batchUpdateThumbnailPaths(updates: List<ThumbnailPathUpdate>) {
+        updates.forEach { u ->
+            updateThumbnailPath(u.messageId, u.fileId, u.thumbFileId, u.cachedAt, u.path)
+        }
+    }
+
+    @Transaction
+    suspend fun batchUpdateLargePaths(updates: List<ThumbnailPathUpdate>) {
+        updates.forEach { u ->
+            updateLargePath(u.messageId, u.fileId, u.thumbFileId, u.cachedAt, u.path)
+        }
+    }
 
     @Query("SELECT * FROM cloud_photos WHERE fileName = :fileName LIMIT 1")
     suspend fun findByFileName(fileName: String): CloudPhotoEntity?

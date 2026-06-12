@@ -36,6 +36,7 @@ open class TdlibManager {
     private var client: Client? = null
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @Volatile var myUserId: Long = 0L
+    val sessionStartTime: Long = System.currentTimeMillis()
     
     private val _authState = MutableStateFlow<TdApi.AuthorizationState?>(null)
     val authState: StateFlow<TdApi.AuthorizationState?> = _authState

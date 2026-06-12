@@ -5,8 +5,29 @@ import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import java.io.File
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 
-class TGPixApplication : Application() {
+class TGPixApplication : Application(), ImageLoaderFactory {
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.25)   // 25% of available RAM for decoded bitmaps
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("coil_thumbnails"))
+                    .maxSizeBytes(100 * 1024 * 1024)   // 100MB disk cache
+                    .build()
+            }
+            .crossfade(true)
+            .build()
+    }
 
     override fun onCreate() {
         super.onCreate()
