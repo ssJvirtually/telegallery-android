@@ -257,6 +257,8 @@ fun MainAppLayout(
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             list.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+        } else {
+            list.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
         list.toTypedArray()
     }

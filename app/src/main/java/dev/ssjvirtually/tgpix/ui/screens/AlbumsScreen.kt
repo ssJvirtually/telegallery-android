@@ -296,6 +296,39 @@ fun AlbumsScreen(
                                 Text(text = "Share via other apps", color = TelePhotosTheme.TextPrimary, fontSize = 16.sp)
                             }
 
+                            // 2.5 Download Album Action
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val albumId = selectedAlbumForActions!!.id
+                                        selectedAlbumForActions = null
+                                        coroutineScope.launch {
+                                            val photosMapping = albumViewModel.getAlbumPhotosDirect(albumId)
+                                            val photoUris = photosMapping.map { it.photoUri }
+                                            val photosList = mergedPhotosList.filter { photo ->
+                                                photoUris.any { it == photo.name || it == photo.uri }
+                                            }
+                                            if (photosList.isEmpty()) {
+                                                Toast.makeText(context, "This album has no photos to download!", Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                UploadManager.downloadPhotosToDevice(context, photosList)
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = null,
+                                    tint = TelePhotosTheme.AccentBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(text = "Download all to device", color = TelePhotosTheme.TextPrimary, fontSize = 16.sp)
+                            }
+
                             // 3. Delete Album
                             Row(
                                 modifier = Modifier
@@ -557,6 +590,33 @@ fun AlbumDetailsView(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (isSelectionMode) {
+                        // Download selected
+                        var isDownloadingMultiple by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = {
+                                if (selectedPhotos.isNotEmpty()) {
+                                    isDownloadingMultiple = true
+                                    coroutineScope.launch {
+                                        UploadManager.downloadPhotosToDevice(context, selectedPhotos.toList())
+                                        isDownloadingMultiple = false
+                                        selectedPhotos.clear()
+                                        isSelectionMode = false
+                                    }
+                                }
+                            },
+                            enabled = !isDownloadingMultiple
+                        ) {
+                            if (isDownloadingMultiple) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = TelePhotosTheme.AccentBlue)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = "Download selected to device",
+                                    tint = TelePhotosTheme.AccentBlue
+                                )
+                            }
+                        }
+
                         // Remove from Album action
                         IconButton(onClick = {
                             albumViewModel.removePhotosFromAlbum(albumId, selectedPhotos.toList()) {

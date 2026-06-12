@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
-    "mtime": 1781192055.25393,
-    "ast_hash": "24ad8a0b78c5fbd9e4cc86939ed18b18",
+    "mtime": 1781243643.4969094,
+    "ast_hash": "25a57dafdc411c62befa8f06bc197c1e",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/PreferencesManager.kt": {
-    "mtime": 1781191663.6671894,
-    "ast_hash": "208dc95fdb3975d9fc7d604046ec1af4",
+    "mtime": 1781243613.3785558,
+    "ast_hash": "0689aa3e3a8d214ae11606b6c798cf34",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt": {
@@ -45,18 +45,18 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt": {
-    "mtime": 1781023565.5176303,
-    "ast_hash": "c3e7e5473f7642033fb7164746f9b370",
+    "mtime": 1781244274.5127337,
+    "ast_hash": "c25d8c891cc65f2c82e701685dca554f",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt": {
-    "mtime": 1781192146.6666214,
-    "ast_hash": "48d4ff0e074fbd5642fe83b13f4ada82",
+    "mtime": 1781244260.5516891,
+    "ast_hash": "dc33f2f52403b587fc780f5138846276",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt": {
-    "mtime": 1781026527.6034691,
-    "ast_hash": "57324fc0e474927b4a2d2604a29ed47f",
+    "mtime": 1781244338.7692313,
+    "ast_hash": "cbec04ef5978052bd066a4936a114734",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AutoVaultSetupScreen.kt": {
@@ -75,18 +75,18 @@
     "semantic_hash": "71cbf15577558eb9178b1276471a1c15"
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt": {
-    "mtime": 1781192149.2487972,
-    "ast_hash": "de9c746c2b86511d2aef37129e51c9f0",
+    "mtime": 1781244353.9135332,
+    "ast_hash": "5981701f6fa171e7ee6d0cda80061c75",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotosGridScreen.kt": {
-    "mtime": 1781192153.0366397,
-    "ast_hash": "fe96a9430410a2e9c3d7beeae1849532",
+    "mtime": 1781244296.2406144,
+    "ast_hash": "5632820a2faeb30f4525ecf910d3d20b",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt": {
-    "mtime": 1781026531.6293602,
-    "ast_hash": "a7e09f22209ad5aa17e0c87348864054",
+    "mtime": 1781244285.4544685,
+    "ast_hash": "1d85e540ef5dd4f18040b8350bf816d2",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt": {

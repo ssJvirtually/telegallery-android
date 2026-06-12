@@ -222,75 +222,28 @@ fun SearchScreen(
                         )
                     }
                     
-                    // Batch Backup Action
-                    val nestedCoroutineScope = rememberCoroutineScope()
-                    val chatId = remember { PreferencesManager.getChatId(context) }
-                    var isBackingUpMultiple by remember { mutableStateOf(false) }
-                    
+                    // Batch Download Action
+                    var isDownloadingMultiple by remember { mutableStateOf(false) }
                     IconButton(
                         onClick = {
                             if (selectedPhotos.isNotEmpty()) {
-                                if (chatId == 0L) {
-                                    Toast.makeText(context, "Please set a target chat in settings first!", Toast.LENGTH_SHORT).show()
-                                    return@IconButton
-                                }
-                                isBackingUpMultiple = true
-                                val isHd = PreferencesManager.isHdMode(context)
-                                nestedCoroutineScope.launch(Dispatchers.IO) {
-                                    val db = UploadDatabase.getDatabase(context)
-                                    val unsyncedSelected = selectedPhotos.filter { photo ->
-                                        val isCloud = isCloudPhoto(photo.uri)
-                                        !(isCloud || uploadedUris.contains(photo.uri) || syncedCloudFilenames.contains(photo.name))
-                                    }
-                                    val totalToSync = unsyncedSelected.size
-                                    
-                                    if (totalToSync == 0) {
-                                        withContext(Dispatchers.Main) {
-                                            isBackingUpMultiple = false
-                                            Toast.makeText(context, "All selected photos are already synced!", Toast.LENGTH_SHORT).show()
-                                            selectedPhotos.clear()
-                                            isSelectionMode = false
-                                        }
-                                        return@launch
-                                    }
-                                    
-                                    var successCount = 0
-                                    for (photo in unsyncedSelected) {
-                                        val res = UploadManager.uploadPhoto(context, photo, chatId, isHd)
-                                        if (res is TdApi.Message) {
-                                            db.dao().insert(
-                                                UploadEntity(
-                                                    mediaStoreId = photo.id,
-                                                    path = photo.uri,
-                                                    contentFingerprint = photo.getFingerprint(context),
-                                                    uploadedAt = System.currentTimeMillis(),
-                                                    telegramMessageId = res.id
-                                                )
-                                            )
-                                            successCount++
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, "Synced $successCount of $totalToSync photos...", Toast.LENGTH_SHORT).show()
-                                            }
-                                            delay(5000)
-                                        }
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        isBackingUpMultiple = false
-                                        Toast.makeText(context, "Batch backup complete: Synced $successCount of $totalToSync photos!", Toast.LENGTH_LONG).show()
-                                        selectedPhotos.clear()
-                                        isSelectionMode = false
-                                    }
+                                isDownloadingMultiple = true
+                                coroutineScope.launch {
+                                    UploadManager.downloadPhotosToDevice(context, selectedPhotos.toList())
+                                    isDownloadingMultiple = false
+                                    selectedPhotos.clear()
+                                    isSelectionMode = false
                                 }
                             }
                         },
-                        enabled = !isBackingUpMultiple
+                        enabled = !isDownloadingMultiple
                     ) {
-                        if (isBackingUpMultiple) {
+                        if (isDownloadingMultiple) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = TelePhotosTheme.AccentBlue)
                         } else {
                             Icon(
-                                imageVector = Icons.Default.Cloud,
-                                contentDescription = "Backup selected",
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Download selected",
                                 tint = TelePhotosTheme.AccentBlue
                             )
                         }

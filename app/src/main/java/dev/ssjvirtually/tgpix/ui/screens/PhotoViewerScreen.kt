@@ -520,6 +520,37 @@ fun PhotoViewerScreen(
                     }
                 }
 
+                // Action 2.5: Download to Device (for cloud items)
+                if (isCloud) {
+                    var isDownloading by remember { mutableStateOf(false) }
+                    TextButton(
+                        onClick = {
+                            activePhoto?.let { photo ->
+                                isDownloading = true
+                                coroutineScope.launch {
+                                    UploadManager.downloadPhotosToDevice(context, listOf(photo))
+                                    isDownloading = false
+                                }
+                            }
+                        },
+                        enabled = !isDownloading
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            if (isDownloading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = Color.White)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = "Download",
+                                    tint = Color.White
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text("Download", color = Color.White, fontSize = 10.sp)
+                        }
+                    }
+                }
+
                 // Action 3: Soft-delete/Trash or MediaStore File Deletion
                 TextButton(onClick = {
                     activePhoto?.let { photo ->

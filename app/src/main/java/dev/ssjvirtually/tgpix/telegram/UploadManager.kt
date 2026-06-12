@@ -28,6 +28,10 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.content.ContentValues
+import android.provider.MediaStore
+import android.os.Build
+import java.io.FileInputStream
 
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
@@ -743,6 +747,93 @@ open class UploadManager {
                     Toast.makeText(context, "No photos could be prepared for sharing.", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+    }
+
+    open suspend fun downloadPhotosToDevice(context: Context, photos: List<LocalPhoto>) {
+        withContext(Dispatchers.IO) {
+            val cloudPhotos = photos.filter { it.uri.startsWith("cloud://") }
+            if (cloudPhotos.isEmpty()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Selected photos are already on this device.", Toast.LENGTH_SHORT).show()
+                }
+                return@withContext
+            }
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Downloading ${cloudPhotos.size} photo(s) to device...", Toast.LENGTH_SHORT).show()
+            }
+
+            var successCount = 0
+            for (photo in cloudPhotos) {
+                try {
+                    val downloadedFile = downloadCloudPhoto(context, photo.uri)
+                    if (downloadedFile != null && downloadedFile.exists()) {
+                        val saved = saveFileToMediaStore(context, downloadedFile, photo.name)
+                        if (saved) {
+                            successCount++
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                if (successCount == cloudPhotos.size) {
+                    Toast.makeText(context, "Successfully downloaded all photos to device.", Toast.LENGTH_LONG).show()
+                } else if (successCount > 0) {
+                    Toast.makeText(context, "Downloaded $successCount of ${cloudPhotos.size} photos.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Failed to download photos.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun saveFileToMediaStore(context: Context, file: File, fileName: String): Boolean {
+        val contentResolver = context.contentResolver
+        val isVideo = fileName.endsWith(".mp4", ignoreCase = true) || 
+                      fileName.endsWith(".mkv", ignoreCase = true) || 
+                      fileName.endsWith(".3gp", ignoreCase = true) ||
+                      fileName.endsWith(".webm", ignoreCase = true)
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            val mimeType = if (isVideo) "video/mp4" else "image/jpeg"
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, if (isVideo) "Movies/TGPix" else "Pictures/TGPix")
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
+            }
+        }
+
+        val collectionUri = if (isVideo) {
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        } else {
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+
+        val itemUri = contentResolver.insert(collectionUri, contentValues) ?: return false
+
+        return try {
+            contentResolver.openOutputStream(itemUri)?.use { outputStream ->
+                FileInputStream(file).use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                contentValues.clear()
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                contentResolver.update(itemUri, contentValues, null, null)
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                contentResolver.delete(itemUri, null, null)
+            } catch (ignored: Exception) {}
+            false
         }
     }
 

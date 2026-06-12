@@ -294,6 +294,33 @@ fun PhotosGridScreen(
                             )
                         }
 
+                        // 1.8 Batch Download Action
+                        var isDownloadingMultiple by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = {
+                                if (selectedPhotos.isNotEmpty()) {
+                                    isDownloadingMultiple = true
+                                    coroutineScope.launch {
+                                        UploadManager.downloadPhotosToDevice(context, selectedPhotos.toList())
+                                        isDownloadingMultiple = false
+                                        selectedPhotos.clear()
+                                        isSelectionMode = false
+                                    }
+                                }
+                            },
+                            enabled = !isDownloadingMultiple
+                        ) {
+                            if (isDownloadingMultiple) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp, color = TelePhotosTheme.AccentBlue)
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = "Download selected to device",
+                                    tint = TelePhotosTheme.AccentBlue
+                                )
+                            }
+                        }
+
                         // 2. Backup Multi Action
                         var isBackingUpMultiple by remember { mutableStateOf(false) }
                         IconButton(
