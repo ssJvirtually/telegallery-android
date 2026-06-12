@@ -116,7 +116,9 @@ class UploadWorker(
             TdlibManager.addLog("Worker: Promoted backup worker to Foreground Service.")
         } catch (e: Exception) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
-                TdlibManager.addLog("Worker: Foreground service start not allowed (Android 14+ constraints). Running as a standard background worker: ${e.message}")
+                TdlibManager.addLog("Worker: Foreground service start not allowed (Android 14+ constraints). Falling back to standard background execution: ${e.message}")
+            } else if (e is IllegalStateException) {
+                TdlibManager.addLog("Worker: Progress update failed, worker likely stopped: ${e.message}")
             } else {
                 TdlibManager.addLog("Worker: Failed to start as foreground service: ${e.message}")
             }

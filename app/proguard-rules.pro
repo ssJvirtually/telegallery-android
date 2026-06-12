@@ -30,7 +30,34 @@
 -keep class dev.ssjvirtually.tgpix.ui.screens.SearchItem { *; }
 -keep class dev.ssjvirtually.tgpix.ui.screens.FolderInfo { *; }
 
-# 6. Sentry Exception tracking keep rules
+# 6. Keep ViewModels (reflectively instantiated by AndroidViewModelFactory)
+-keep class * extends androidx.lifecycle.ViewModel { *; }
+-keep class * extends androidx.lifecycle.AndroidViewModel { *; }
+-keepclassmembers class * extends androidx.lifecycle.AndroidViewModel {
+    public <init>(android.app.Application);
+}
+
+# 7. Keep WorkManager Workers (reflectively instantiated by WorkManager)
+-keep class * extends androidx.work.Worker { *; }
+-keep class * extends androidx.work.CoroutineWorker { *; }
+-keepclassmembers class * extends androidx.work.CoroutineWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
+# 8. Keep all UI screen data classes and sealed classes
+-keep class dev.ssjvirtually.tgpix.ui.screens.** { *; }
+-keep class dev.ssjvirtually.tgpix.ui.utils.** { *; }
+-keep class dev.ssjvirtually.tgpix.update.** { *; }
+-keep class dev.ssjvirtually.tgpix.worker.** { *; }
+
+# 9. Keep Coil ImageLoaderFactory implementation
+-keep class * implements coil.ImageLoaderFactory { *; }
+
+# 10. Keep Kotlin Metadata for sealed/enum classes
+-keepclassmembers enum * { *; }
+-keepclassmembers class * extends java.lang.Enum { *; }
+
+# 11. Sentry Exception tracking keep rules
 -keepattributes SourceFile,LineNumberTable,*Annotation*,Signature,InnerClasses,EnclosingMethod
 -dontwarn io.sentry.**
 -keep class io.sentry.** { *; }

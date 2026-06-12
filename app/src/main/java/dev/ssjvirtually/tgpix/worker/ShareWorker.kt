@@ -86,7 +86,9 @@ class ShareWorker(
             TdlibManager.addLog("ShareWorker: Promoted manual sharing to Foreground Service.")
         } catch (e: Exception) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
-                TdlibManager.addLog("ShareWorker: Foreground service start not allowed (Android 14+ constraints). Running as a standard background worker: ${e.message}")
+                TdlibManager.addLog("ShareWorker: Foreground service start not allowed (Android 14+ constraints). Falling back to standard background execution: ${e.message}")
+            } else if (e is IllegalStateException) {
+                TdlibManager.addLog("ShareWorker: Progress update failed, worker likely stopped: ${e.message}")
             } else {
                 TdlibManager.addLog("ShareWorker: Failed to set foreground: ${e.message}")
             }
