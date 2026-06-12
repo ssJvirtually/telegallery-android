@@ -72,6 +72,10 @@ class GalleryViewModel @JvmOverloads constructor(
         UploadDatabase.getDatabase(application).cloudDao().getAllFlow()
     }
 
+    val trashedPhotos: Flow<List<CloudPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest { _ ->
+        UploadDatabase.getDatabase(application).cloudDao().getTrashedFlow()
+    }
+
     val uploadedPaths: Flow<List<String>> = TdlibManager.dbVersion.flatMapLatest { _ ->
         UploadDatabase.getDatabase(application).dao().getUploadedPathsFlow()
     }

@@ -70,6 +70,7 @@ import dev.ssjvirtually.tgpix.MainActivity
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.BackupManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.AlbumEntity
@@ -367,6 +368,25 @@ fun PhotosGridScreen(
                         // 3. Delete Multi Action
                         IconButton(onClick = {
                             if (selectedPhotos.isNotEmpty()) {
+                                // For cloud-only or synced photos, trigger remote soft-deletion
+                                coroutineScope.launch {
+                                    selectedPhotos.forEach { photo ->
+                                        if (isCloudPhoto(photo.uri)) {
+                                            val messageId = photo.uri.removePrefix("cloud://").substringBefore("/").toLongOrNull()
+                                            if (messageId != null) {
+                                                BackupManager.deleteCloudPhoto(context, messageId)
+                                            }
+                                        } else if (uploadedUris.contains(photo.uri)) {
+                                            val cloudPhoto = cloudLogs.firstOrNull { 
+                                                "${it.fileName.lowercase()}_${it.fileSize}" == "${photo.name.lowercase()}_${photo.size}" 
+                                            } ?: cloudLogs.firstOrNull { it.fileName == photo.name }
+                                            
+                                            if (cloudPhoto != null) {
+                                                BackupManager.deleteCloudPhoto(context, cloudPhoto.messageId)
+                                            }
+                                        }
+                                    }
+                                }
                                 (context as MainActivity).triggerBatchDelete(selectedPhotos.toList())
                                 selectedPhotos.clear()
                                 isSelectionMode = false

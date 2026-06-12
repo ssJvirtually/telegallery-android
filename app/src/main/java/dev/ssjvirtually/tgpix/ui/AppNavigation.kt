@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import dev.ssjvirtually.tgpix.MainActivity
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.BackupManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.screens.*
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
@@ -279,6 +280,14 @@ fun MainAppLayout(
         if (hasPermission) {
             galleryViewModel.loadLocalPhotos(hasPermission)
             galleryViewModel.startCloudSync()
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    BackupManager.registerDevice(context)
+                    BackupManager.pruneExpiredTrash(context)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -475,6 +484,10 @@ fun MainAppLayout(
                         BackHandler {
                             activeTab = "Photos"
                         }
+                    } else if (activeTab == "Trash") {
+                        BackHandler {
+                            activeTab = "Settings"
+                        }
                     }
 
                     when (activeTab) {
@@ -521,7 +534,18 @@ fun MainAppLayout(
                             SettingsScreen(
                                 selectedChatTitle = selectedChatTitle,
                                 onResetChat = onResetChat,
-                                onBack = { activeTab = "Photos" }
+                                onBack = { activeTab = "Photos" },
+                                onTrashClick = { activeTab = "Trash" }
+                            )
+                        }
+                        "Trash" -> {
+                            TrashScreen(
+                                viewModel = galleryViewModel,
+                                onBack = { activeTab = "Settings" },
+                                onPhotoSelected = { index, photos ->
+                                    fullScreenPhotoIndex = index
+                                    devicePhotosList = photos
+                                }
                             )
                         }
                     }

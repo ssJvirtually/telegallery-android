@@ -98,22 +98,36 @@ class RestoreWorker(
             // 1. Attempt database file restore first if the local database is empty
             val db = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(applicationContext)
             val currentCount = db.cloudDao().getRecordCountDirect()
+            var restoredFromSnapshot = false
             if (currentCount == 0) {
-                TdlibManager.addLog("RestoreWorker: Live database is empty. Attempting to restore from backup files...")
+                TdlibManager.addLog("RestoreWorker: Live database is empty. Attempting to restore from remote snapshot...")
                 val restored = try {
                     dev.ssjvirtually.tgpix.storage.BackupManager.restoreDatabase(applicationContext)
                 } catch (e: Exception) {
-                    TdlibManager.addLog("RestoreWorker: Error restoring database file: ${e.message}")
+                    TdlibManager.addLog("RestoreWorker: Error restoring database snapshot: ${e.message}")
                     false
                 }
                 if (restored) {
-                    TdlibManager.addLog("RestoreWorker: Database file restored successfully. Proceeding with full crawl to resolve session file IDs...")
+                    restoredFromSnapshot = true
+                    TdlibManager.addLog("RestoreWorker: Database snapshot restored successfully.")
                 } else {
-                    TdlibManager.addLog("RestoreWorker: No database backup files found. Starting history crawl...")
+                    TdlibManager.addLog("RestoreWorker: No database snapshot found or restore failed. Proceeding with history crawl...")
                 }
             }
 
-            val forceFullCrawl = inputData.getBoolean("forceFullCrawl", true)
+            // 2. Replay metadata events from Metadata Channel
+            val dbChatId = BackupManager.resolveBackupChatId(applicationContext)
+            if (dbChatId != 0L) {
+                try {
+                    HistorySyncManager.syncMetadataHistory(applicationContext, dbChatId)
+                } catch (e: Exception) {
+                    TdlibManager.addLog("RestoreWorker: Failed to sync metadata history: ${e.message}")
+                }
+            }
+
+            // 3. Sync media uploads from Vault Channel
+            // If we successfully restored from a snapshot, we override forceFullCrawl to false to avoid redundant crawls.
+            val forceFullCrawl = if (restoredFromSnapshot) false else inputData.getBoolean("forceFullCrawl", true)
             val startMsgId = PreferencesManager.getLastScannedMessageId(applicationContext)
             
             HistorySyncManager.syncCloudHistory(
@@ -143,14 +157,14 @@ class RestoreWorker(
 
             // Clear checkpoint upon successful completion of history crawl
             PreferencesManager.setLastScannedMessageId(applicationContext, 0L)
-            
+
             try {
                 BackupManager.reconstructAlbumsFromBackupChannel(applicationContext)
             } catch (e: Exception) {
                 TdlibManager.addLog("RestoreWorker: Failed to reconstruct albums: ${e.message}")
             }
-
-            TdlibManager.addLog("RestoreWorker: Completed history crawl successfully.")
+            
+            TdlibManager.addLog("RestoreWorker: Completed restore sequence successfully.")
             return Result.success()
 
         } catch (e: Exception) {

@@ -263,6 +263,52 @@ open class PreferencesManager {
             .apply()
     }
 
+    open fun getDeviceId(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        var id = prefs.getString("device_id", null)
+        if (id == null) {
+            id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString("device_id", id).apply()
+        }
+        return id
+    }
+
+    open fun isDeviceRegistered(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean("device_registered", false)
+    }
+
+    open fun setDeviceRegistered(context: Context, registered: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("device_registered", registered)
+            .apply()
+    }
+
+    open fun getLastReplayedMetadataMsgId(context: Context): Long {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong("last_replayed_metadata_msg_id", 0L)
+    }
+
+    open fun setLastReplayedMetadataMsgId(context: Context, msgId: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong("last_replayed_metadata_msg_id", msgId)
+            .apply()
+    }
+
+    open fun getCurrentLeaderDeviceId(context: Context): String? {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString("current_leader_device_id", null)
+    }
+
+    open fun setCurrentLeaderDeviceId(context: Context, deviceId: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString("current_leader_device_id", deviceId)
+            .apply()
+    }
+
     open fun clearAll(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()

@@ -22,6 +22,8 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.BackupManager
+import dev.ssjvirtually.tgpix.storage.RegisteredDeviceEntity
 
 data class ChatInfo(val id: Long, val title: String)
 
@@ -217,6 +219,62 @@ open class TdlibManager {
             }
             is TdApi.UpdateConnectionState -> {
                 handleConnectionState(obj.state)
+            }
+            is TdApi.UpdateNewMessage -> {
+                val msg = obj.message
+                val vaultChatId = PreferencesManager.getChatId(context)
+                val dbChatId = PreferencesManager.getDbChatId(context)
+                
+                if (vaultChatId != 0L && msg.chatId == vaultChatId) {
+                    managerScope.launch(Dispatchers.IO) {
+                        try {
+                            HistorySyncManager.parseAndIndexUploadedMessage(context, msg)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                } else if (dbChatId != 0L && msg.chatId == dbChatId) {
+                    val content = msg.content
+                    if (content is TdApi.MessageText) {
+                        val text = content.text.text
+                        if (text.startsWith("{") && text.contains("\"type\"")) {
+                            managerScope.launch(Dispatchers.IO) {
+                                try {
+                                    BackupManager.applyMetadataEvent(context, text, msg.id)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    } else if (content is TdApi.MessageDocument) {
+                        val captionText = content.caption.text
+                        if (captionText.contains("#tgpix_album")) {
+                            managerScope.launch(Dispatchers.IO) {
+                                try {
+                                    BackupManager.reconstructAlbum(context, msg)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            is TdApi.UpdateDeleteMessages -> {
+                val vaultChatId = PreferencesManager.getChatId(context)
+                if (vaultChatId != 0L && obj.chatId == vaultChatId) {
+                    val messageIds = obj.messageIds
+                    managerScope.launch(Dispatchers.IO) {
+                        try {
+                            val db = UploadDatabase.getDatabase(context)
+                            messageIds.forEach { msgId ->
+                                db.cloudDao().deleteByMessageId(msgId)
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
             }
         }
     }

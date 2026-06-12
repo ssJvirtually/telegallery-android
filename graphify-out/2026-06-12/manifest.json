@@ -1,0 +1,322 @@
+{
+  "app/build.gradle": {
+    "mtime": 1780666872.9952524,
+    "ast_hash": "128606e16c91add3aafeedcbe7b90691",
+    "semantic_hash": "128606e16c91add3aafeedcbe7b90691"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt": {
+    "mtime": 1780829628.1579244,
+    "ast_hash": "6bccc4fea0ffe708016c3f28be1350dd",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
+    "mtime": 1781192055.25393,
+    "ast_hash": "24ad8a0b78c5fbd9e4cc86939ed18b18",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
+    "mtime": 1780425463.3263447,
+    "ast_hash": "34a0a9e969de8be85f69442edcfe4672",
+    "semantic_hash": "34a0a9e969de8be85f69442edcfe4672"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt": {
+    "mtime": 1781020460.7643046,
+    "ast_hash": "e7612ad7ff93f40c5aead96649ffddfd",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/PreferencesManager.kt": {
+    "mtime": 1781191663.6671894,
+    "ast_hash": "208dc95fdb3975d9fc7d604046ec1af4",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt": {
+    "mtime": 1781191939.5415246,
+    "ast_hash": "c263bce65f1f7daa13ce8f8ac88168f6",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt": {
+    "mtime": 1780425463.327345,
+    "ast_hash": "e6ecf48324df06c1ee7068880bcdf56a",
+    "semantic_hash": "e6ecf48324df06c1ee7068880bcdf56a"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt": {
+    "mtime": 1781192140.3729,
+    "ast_hash": "f1b3ac86f16f52f29b790164721df893",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt": {
+    "mtime": 1781023565.5176303,
+    "ast_hash": "c3e7e5473f7642033fb7164746f9b370",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt": {
+    "mtime": 1781192146.6666214,
+    "ast_hash": "48d4ff0e074fbd5642fe83b13f4ada82",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt": {
+    "mtime": 1781026527.6034691,
+    "ast_hash": "57324fc0e474927b4a2d2604a29ed47f",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AutoVaultSetupScreen.kt": {
+    "mtime": 1780826609.0341806,
+    "ast_hash": "afb3163bc87aa47ae31009a5c198e92a",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt": {
+    "mtime": 1780426230.3133397,
+    "ast_hash": "24025d8d1dfe01be55e61201d8647223",
+    "semantic_hash": "24025d8d1dfe01be55e61201d8647223"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt": {
+    "mtime": 1780426227.276089,
+    "ast_hash": "71cbf15577558eb9178b1276471a1c15",
+    "semantic_hash": "71cbf15577558eb9178b1276471a1c15"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt": {
+    "mtime": 1781192149.2487972,
+    "ast_hash": "de9c746c2b86511d2aef37129e51c9f0",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotosGridScreen.kt": {
+    "mtime": 1781192153.0366397,
+    "ast_hash": "fe96a9430410a2e9c3d7beeae1849532",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt": {
+    "mtime": 1781026531.6293602,
+    "ast_hash": "a7e09f22209ad5aa17e0c87348864054",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt": {
+    "mtime": 1781191969.6509836,
+    "ast_hash": "06f55bc7e46c038e80e425a821db9536",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/theme/TelePhotosTheme.kt": {
+    "mtime": 1780425463.3345866,
+    "ast_hash": "cc81e6c4a7089085c2528f8118d8567c",
+    "semantic_hash": "cc81e6c4a7089085c2528f8118d8567c"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt": {
+    "mtime": 1780814319.1925237,
+    "ast_hash": "520b9ac483ae932a19b24b1d5f4b86a3",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt": {
+    "mtime": 1780425463.349027,
+    "ast_hash": "c184642d7393fa1de337c746eed11244",
+    "semantic_hash": "c184642d7393fa1de337c746eed11244"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt": {
+    "mtime": 1780472889.7009194,
+    "ast_hash": "479341ab95dada2dc8d28a978e9d8b89",
+    "semantic_hash": "479341ab95dada2dc8d28a978e9d8b89"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateManager.kt": {
+    "mtime": 1781020494.1108727,
+    "ast_hash": "41411cf3653894df98cce2f6b67e403e",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/worker/DatabaseBackupWorker.kt": {
+    "mtime": 1780823724.6682055,
+    "ast_hash": "3e312fcab3624801f17b657938b9a08e",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt": {
+    "mtime": 1781022224.957545,
+    "ast_hash": "5b48990a6d01b804ba2f12f9379f696d",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt": {
+    "mtime": 1781022212.379403,
+    "ast_hash": "e7c104ce02fc10116c17639a4bf953ed",
+    "semantic_hash": ""
+  },
+  "build.gradle": {
+    "mtime": 1779982337.7872715,
+    "ast_hash": "9f2e57d81f18ddd13e30d6a9f87c5003",
+    "semantic_hash": "9f2e57d81f18ddd13e30d6a9f87c5003"
+  },
+  "gradlew": {
+    "mtime": 1780222980.15235,
+    "ast_hash": "780b1d3e23a3b82154795f73df943a14",
+    "semantic_hash": "780b1d3e23a3b82154795f73df943a14"
+  },
+  "settings.gradle": {
+    "mtime": 1779982063.690937,
+    "ast_hash": "d38f04accf303025c0901dd5fe2764c2",
+    "semantic_hash": "d38f04accf303025c0901dd5fe2764c2"
+  },
+  "version.json": {
+    "mtime": 1780592357.377276,
+    "ast_hash": "c8d55e0e9146e2077fc6cfdb7e70bf4e",
+    "semantic_hash": "c8d55e0e9146e2077fc6cfdb7e70bf4e"
+  },
+  ".agents/rules/graphify.md": {
+    "mtime": 1780767491.9600346,
+    "ast_hash": "a0e4d192b9e2e17256124dbfc8e24e6a",
+    "semantic_hash": "a0e4d192b9e2e17256124dbfc8e24e6a"
+  },
+  ".agents/workflows/graphify.md": {
+    "mtime": 1780767491.9610405,
+    "ast_hash": "637776aa6f7496d069afe7520c845c8a",
+    "semantic_hash": "637776aa6f7496d069afe7520c845c8a"
+  },
+  "README.md": {
+    "mtime": 1780425462.9985008,
+    "ast_hash": "f44c45262e2d97529e2cea12c3ba61eb",
+    "semantic_hash": "f44c45262e2d97529e2cea12c3ba61eb"
+  },
+  "RELEASE_CHANGELOG.md": {
+    "mtime": 1780592360.6082914,
+    "ast_hash": "91accfca42512753233f248a50c35b41",
+    "semantic_hash": "91accfca42512753233f248a50c35b41"
+  },
+  "application_flows.md": {
+    "mtime": 1780768376.936532,
+    "ast_hash": "08ee0d462910f8516bea31dbec311b66",
+    "semantic_hash": ""
+  },
+  "tgpix_implementation_plan.md": {
+    "mtime": 1780425463.0017073,
+    "ast_hash": "42b67bce70419ff46c7faf272d85a145",
+    "semantic_hash": "42b67bce70419ff46c7faf272d85a145"
+  },
+  "app/src/main/res/drawable/ic_launcher.png": {
+    "mtime": 1780656852.7867815,
+    "ast_hash": "2af24146fb53e9c7b1f462d4f157b49a",
+    "semantic_hash": "2af24146fb53e9c7b1f462d4f157b49a"
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1780656852.689,
+    "ast_hash": "18276859ad1fe15ab7f0da5f5d7df95d",
+    "semantic_hash": "18276859ad1fe15ab7f0da5f5d7df95d"
+  },
+  "app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1780656852.6791613,
+    "ast_hash": "c530513d2e278e6475673d436d84c911",
+    "semantic_hash": "c530513d2e278e6475673d436d84c911"
+  },
+  "app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1780656852.6989248,
+    "ast_hash": "b9e8edb9c50e2656ea94d32262153317",
+    "semantic_hash": "b9e8edb9c50e2656ea94d32262153317"
+  },
+  "app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1780656852.7110016,
+    "ast_hash": "a119adc969c641d2f3696eea5b50ee60",
+    "semantic_hash": "a119adc969c641d2f3696eea5b50ee60"
+  },
+  "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1780656852.7258759,
+    "ast_hash": "2fa8074cddadf9c346da0a724806a3eb",
+    "semantic_hash": "2fa8074cddadf9c346da0a724806a3eb"
+  },
+  "error-sc/Screenshot_20260603_192103.png": {
+    "mtime": 1780494706.120543,
+    "ast_hash": "b894024f37f338cb964f0382cb9746cd",
+    "semantic_hash": "b894024f37f338cb964f0382cb9746cd"
+  },
+  "screenshots/gallery_timeline.png": {
+    "mtime": 1780215960.3645527,
+    "ast_hash": "28f2ec9b376c9507ce250f0301c87c7f",
+    "semantic_hash": "28f2ec9b376c9507ce250f0301c87c7f"
+  },
+  "screenshots/login_screen.png": {
+    "mtime": 1780215987.598279,
+    "ast_hash": "f7278d8a980dd4ba201a0d2c7a8f7d55",
+    "semantic_hash": "f7278d8a980dd4ba201a0d2c7a8f7d55"
+  },
+  "screenshots/logo.png": {
+    "mtime": 1780656296.3014684,
+    "ast_hash": "16cbac64d89270ff1b47d60b5618c55b",
+    "semantic_hash": "16cbac64d89270ff1b47d60b5618c55b"
+  },
+  "screenshots/photo_viewer.png": {
+    "mtime": 1780216032.306392,
+    "ast_hash": "d432dbc47cd2e9c31106cd0477fdae47",
+    "semantic_hash": "d432dbc47cd2e9c31106cd0477fdae47"
+  },
+  "screenshots/settings_screen.png": {
+    "mtime": 1780216009.574502,
+    "ast_hash": "6106d1b2d255cf3960c85acfc5e5544d",
+    "semantic_hash": "6106d1b2d255cf3960c85acfc5e5544d"
+  },
+  "Screen_recording_20260603_152549.mp4": {
+    "mtime": 1780480567.839068,
+    "ast_hash": "7126b33ff00c5e04ec44767a2e3522eb",
+    "semantic_hash": "7126b33ff00c5e04ec44767a2e3522eb"
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/storage/PhotosRepository.kt": {
+    "mtime": 1781022514.9242952,
+    "ast_hash": "0ff1e4ab957aea7eecf435625f1b8f65",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt": {
+    "mtime": 1781191931.768791,
+    "ast_hash": "54d8dfade07132e7f9937e504693c811",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt": {
+    "mtime": 1780815004.539319,
+    "ast_hash": "050c6b5c2de9840e6fbe30da1b18e9c1",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
+    "mtime": 1781191889.7036538,
+    "ast_hash": "b1e3b0c7670132dc067dec24e04fe731",
+    "semantic_hash": ""
+  },
+  "watch_and_install.ps1": {
+    "mtime": 1780824024.8402376,
+    "ast_hash": "2913239800efeff4be77cecd47ebd9b1",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/worker/BackupScheduler.kt": {
+    "mtime": 1780826557.1550121,
+    "ast_hash": "bf745981e2f97175819dfb9bd60808d9",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt": {
+    "mtime": 1781192134.3583226,
+    "ast_hash": "14dfcc1369a053f4cc698149c6c574af",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt": {
+    "mtime": 1781191693.8766954,
+    "ast_hash": "ca82c11684e6ce03c3fa382f13079699",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/PlayerViewModel.kt": {
+    "mtime": 1781026254.2630012,
+    "ast_hash": "46e94a6c326f8b160f922d1c062c35f1",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/SearchViewModel.kt": {
+    "mtime": 1781026250.5469043,
+    "ast_hash": "1334a2ccb8864908e90ade1480bf92f7",
+    "semantic_hash": ""
+  },
+  "agents.md": {
+    "mtime": 1781109887.1854627,
+    "ast_hash": "f4224860eea345cf623b7cf3a4e97cec",
+    "semantic_hash": ""
+  },
+  "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt": {
+    "mtime": 1781191954.4553037,
+    "ast_hash": "0365addf71b5918316de5a3048fff09b",
+    "semantic_hash": ""
+  },
+  "tgpix-architecture-discussion.md": {
+    "mtime": 1781183748.9777334,
+    "ast_hash": "559e496315c9349dd39f72708868b38e",
+    "semantic_hash": ""
+  },
+  "tgpix-architecture.md": {
+    "mtime": 1781183834.5002358,
+    "ast_hash": "d9bdce4ae65201729fc85825306e6408",
+    "semantic_hash": ""
+  }
+}

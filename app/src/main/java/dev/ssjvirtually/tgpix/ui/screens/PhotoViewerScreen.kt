@@ -51,6 +51,7 @@ import coil.request.ImageRequest
 import dev.ssjvirtually.tgpix.MainActivity
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.BackupManager
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
@@ -519,15 +520,28 @@ fun PhotoViewerScreen(
                     }
                 }
 
-                // Action 3: MediaStore File Deletion
+                // Action 3: Soft-delete/Trash or MediaStore File Deletion
                 TextButton(onClick = {
                     activePhoto?.let { photo ->
                         if (isCloud) {
-                            Toast.makeText(context, "Cannot delete Telegram cloud vault assets directly.", Toast.LENGTH_SHORT).show()
-                            return@TextButton
+                            activeCloudPhoto?.let { cloudPhoto ->
+                                coroutineScope.launch {
+                                    BackupManager.deleteCloudPhoto(context, cloudPhoto.messageId)
+                                    Toast.makeText(context, "Moved to Trash ✓", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            onClose()
+                        } else {
+                            if (isSynced) {
+                                activeCloudPhoto?.let { cloudPhoto ->
+                                    coroutineScope.launch {
+                                        BackupManager.deleteCloudPhoto(context, cloudPhoto.messageId)
+                                    }
+                                }
+                            }
+                            context.triggerDelete(photo)
+                            onClose()
                         }
-                        context.triggerDelete(photo)
-                        onClose()
                     }
                 }) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {

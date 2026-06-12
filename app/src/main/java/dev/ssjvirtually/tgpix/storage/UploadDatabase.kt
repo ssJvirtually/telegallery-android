@@ -87,7 +87,9 @@ data class CloudPhotoEntity(
     val dateTaken: Long = 0L,
     val mimeType: String = "image/jpeg",
     val width: Int = 0,
-    val height: Int = 0
+    val height: Int = 0,
+    val isTrashed: Boolean = false,
+    val trashedAt: Long = 0L
 )
 
 @androidx.room.Fts4(contentEntity = CloudPhotoEntity::class)
@@ -99,7 +101,7 @@ data class CloudPhotoFtsEntity(
 
 @Dao
 interface CloudPhotoDao {
-    @Query("SELECT * FROM cloud_photos ORDER BY uploadedAt DESC")
+    @Query("SELECT * FROM cloud_photos WHERE isTrashed = 0 ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<CloudPhotoEntity>>
 
     @Query("SELECT * FROM cloud_photos")
@@ -123,6 +125,9 @@ interface CloudPhotoDao {
     @Query("DELETE FROM cloud_photos")
     suspend fun clearAll()
 
+    @Query("DELETE FROM cloud_photos WHERE messageId = :messageId")
+    suspend fun deleteByMessageId(messageId: Long)
+
     @Query("SELECT COUNT(*) FROM cloud_photos")
     suspend fun getRecordCountDirect(): Int
 
@@ -138,9 +143,12 @@ interface CloudPhotoDao {
     @Query("""
         SELECT cp.* FROM cloud_photos cp
         JOIN cloud_photos_fts fts ON cp.messageId = fts.rowid
-        WHERE cloud_photos_fts MATCH :query
+        WHERE cp.isTrashed = 0 AND cloud_photos_fts MATCH :query
     """)
     suspend fun searchCloudPhotos(query: String): List<CloudPhotoEntity>
+
+    @Query("SELECT * FROM cloud_photos WHERE isTrashed = 1 ORDER BY trashedAt DESC")
+    fun getTrashedFlow(): Flow<List<CloudPhotoEntity>>
 
     @Query("""
         SELECT messageId FROM cloud_photos 
@@ -208,6 +216,9 @@ interface AlbumDao {
     @Query("DELETE FROM album_photos WHERE albumId = :albumId AND photoUri = :photoUri")
     suspend fun removePhotoFromAlbum(albumId: Long, photoUri: String)
 
+    @Query("DELETE FROM album_photos WHERE photoUri = :photoUri OR photoUri LIKE 'cloud://' || :messageId || '/%'")
+    suspend fun removePhotoFromAllAlbums(photoUri: String, messageId: Long)
+
     @Query("SELECT photoUri FROM album_photos WHERE albumId = :albumId")
     fun getPhotoUrisForAlbumFlow(albumId: Long): Flow<List<String>>
 
@@ -262,8 +273,34 @@ interface BackupEventDao {
     suspend fun clearAll()
 }
 
+@Entity(tableName = "registered_devices")
+data class RegisteredDeviceEntity(
+    @PrimaryKey val deviceId: String,
+    val deviceName: String,
+    val version: String,
+    val registeredAt: Long
+)
+
+@Dao
+interface RegisteredDeviceDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(device: RegisteredDeviceEntity)
+
+    @Query("SELECT * FROM registered_devices ORDER BY deviceId ASC")
+    suspend fun getAllDevices(): List<RegisteredDeviceEntity>
+
+    @Query("SELECT * FROM registered_devices ORDER BY deviceId ASC")
+    fun getAllDevicesFlow(): Flow<List<RegisteredDeviceEntity>>
+
+    @Query("DELETE FROM registered_devices WHERE deviceId = :deviceId")
+    suspend fun delete(deviceId: String)
+
+    @Query("DELETE FROM registered_devices")
+    suspend fun clearAll()
+}
+
 @Database(
-    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class, BackupEventEntity::class, CloudPhotoFtsEntity::class],
+    entities = [UploadEntity::class, CloudPhotoEntity::class, AlbumEntity::class, AlbumPhotoEntity::class, BackupEventEntity::class, CloudPhotoFtsEntity::class, RegisteredDeviceEntity::class],
     version = UploadDatabase.DATABASE_VERSION,
     exportSchema = false
 )
@@ -272,9 +309,10 @@ abstract class UploadDatabase : RoomDatabase() {
     abstract fun cloudDao(): CloudPhotoDao
     abstract fun albumDao(): AlbumDao
     abstract fun eventDao(): BackupEventDao
+    abstract fun deviceDao(): RegisteredDeviceDao
 
     companion object {
-        const val DATABASE_VERSION = 18
+        const val DATABASE_VERSION = 19
 
         @Volatile
         private var INSTANCE: UploadDatabase? = null
@@ -502,6 +540,23 @@ abstract class UploadDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE cloud_photos ADD COLUMN isTrashed INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE cloud_photos ADD COLUMN trashedAt INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `registered_devices` (
+                        `deviceId` TEXT PRIMARY KEY NOT NULL,
+                        `deviceName` TEXT NOT NULL,
+                        `version` TEXT NOT NULL,
+                        `registeredAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): UploadDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -526,7 +581,8 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_14_15,
                     MIGRATION_15_16,
                     MIGRATION_16_17,
-                    MIGRATION_17_18
+                    MIGRATION_17_18,
+                    MIGRATION_18_19
                 )
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
@@ -579,6 +635,8 @@ abstract class UploadDatabase : RoomDatabase() {
                             fun lng(col: String) = try { c.getLong(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0L }
                             fun int(col: String) = try { c.getInt(c.getColumnIndexOrThrow(col)) } catch (_: Exception) { 0 }
                             fun bool(col: String) = int(col) != 0
+                            val isTrashedVal = try { c.getInt(c.getColumnIndexOrThrow("isTrashed")) != 0 } catch (_: Exception) { false }
+                            val trashedAtVal = try { c.getLong(c.getColumnIndexOrThrow("trashedAt")) } catch (_: Exception) { 0L }
                             cloudPhotos.add(
                                 CloudPhotoEntity(
                                     messageId = lng("messageId"),
@@ -599,7 +657,9 @@ abstract class UploadDatabase : RoomDatabase() {
                                     dateTaken = lng("dateTaken"),
                                     mimeType = str("mimeType") ?: "image/jpeg",
                                     width = int("width"),
-                                    height = int("height")
+                                    height = int("height"),
+                                    isTrashed = isTrashedVal,
+                                    trashedAt = trashedAtVal
                                 )
                             )
                         }
@@ -705,13 +765,14 @@ abstract class UploadDatabase : RoomDatabase() {
                                    (messageId,telegramFileId,uniqueRemoteId,fileName,uploadedAt,fileSize,
                                     isDocument,localCachedThumbnailPath,localCachedLargePath,contentFingerprint,
                                     telegramThumbnailFileId,tags,fileIdCachedAt,isHd,originalSizeBytes,
-                                    dateTaken,mimeType,width,height)
-                                   VALUES(?,?,?,?,?,?,?,NULL,NULL,?,?,?,0,?,?,?,?,?,?)""",
+                                    dateTaken,mimeType,width,height,isTrashed,trashedAt)
+                                   VALUES(?,?,?,?,?,?,?,NULL,NULL,?,?,?,0,?,?,?,?,?,?,?,?)""",
                                 arrayOf(p.messageId, p.telegramFileId, p.uniqueRemoteId, p.fileName,
                                     p.uploadedAt, p.fileSize, if (p.isDocument) 1 else 0,
                                     p.contentFingerprint, p.telegramThumbnailFileId, p.tags,
                                     if (p.isHd) 1 else 0, p.originalSizeBytes,
-                                    p.dateTaken, p.mimeType, p.width, p.height)
+                                    p.dateTaken, p.mimeType, p.width, p.height,
+                                    if (p.isTrashed) 1 else 0, p.trashedAt)
                             )
                         }
                         uploads.forEach { u ->

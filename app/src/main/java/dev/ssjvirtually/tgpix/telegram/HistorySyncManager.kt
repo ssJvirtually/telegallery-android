@@ -3,6 +3,7 @@ package dev.ssjvirtually.tgpix.telegram
 import android.content.Context
 import android.webkit.MimeTypeMap
 import dev.ssjvirtually.tgpix.storage.BackupManager
+import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.storage.CloudPhotoEntity
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
@@ -205,7 +206,7 @@ open class HistorySyncManager {
                         val extension = fileName.substringAfterLast('.', "").lowercase()
                         val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
 
-                        entities.add(
+                         entities.add(
                             CloudPhotoEntity(
                                 messageId = msg.id,
                                 telegramFileId = fileId,
@@ -225,7 +226,9 @@ open class HistorySyncManager {
                                 dateTaken = dateTaken,
                                 mimeType = mime,
                                 width = width,
-                                height = height
+                                height = height,
+                                isTrashed = false,
+                                trashedAt = 0L
                             )
                         )
                     }
@@ -376,11 +379,71 @@ open class HistorySyncManager {
                 dateTaken = dateTaken,
                 mimeType = mime,
                 width = width,
-                height = height
+                height = height,
+                isTrashed = false,
+                trashedAt = 0L
             )
             
             cloudDao.insertBatch(listOf(entity))
             TdlibManager.addLog("Indexed uploaded photo '${fileName}' into database in real-time.")
         }
+    }
+
+    open suspend fun syncMetadataHistory(context: Context, dbChatId: Long) {
+        val lastReplayedId = PreferencesManager.getLastReplayedMetadataMsgId(context)
+        var lastMessageId = 0L
+        var crawling = true
+        val eventList = mutableListOf<Pair<Long, String>>()
+        
+        TdlibManager.addLog("Syncing metadata history from Metadata Channel (lastReplayedId=$lastReplayedId)...")
+        
+        while (crawling) {
+            val getHistory = TdApi.GetChatHistory().apply {
+                this.chatId = dbChatId
+                this.fromMessageId = lastMessageId
+                this.offset = 0
+                this.limit = 50
+                this.onlyLocal = false
+            }
+            
+            val result = TdlibManager.sendRequest(getHistory)
+            if (result is TdApi.Messages && result.messages.isNotEmpty()) {
+                for (msg in result.messages) {
+                    if (msg.id <= lastReplayedId) {
+                        crawling = false
+                        break
+                    }
+                    val content = msg.content
+                    if (content is TdApi.MessageText) {
+                        val text = content.text.text
+                        if (text.startsWith("{") && text.contains("\"type\"")) {
+                            eventList.add(Pair(msg.id, text))
+                        }
+                    }
+                }
+                lastMessageId = result.messages.last().id
+            } else {
+                crawling = false
+            }
+        }
+        
+        if (eventList.isNotEmpty()) {
+            eventList.reverse()
+            TdlibManager.addLog("Replaying ${eventList.size} historical metadata events chronologically...")
+            
+            var maxMsgId = lastReplayedId
+            for ((msgId, json) in eventList) {
+                try {
+                    BackupManager.applyMetadataEvent(context, json, msgId)
+                    if (msgId > maxMsgId) {
+                        maxMsgId = msgId
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            PreferencesManager.setLastReplayedMetadataMsgId(context, maxMsgId)
+        }
+        TdlibManager.addLog("Metadata history sync completed.")
     }
 }

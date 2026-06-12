@@ -166,14 +166,38 @@ open class BackupManager {
                 isBackupRunning = false
                 return false
             }
+            
             success = withContext(Dispatchers.IO) {
                 val db = UploadDatabase.getDatabase(context)
+                val myDeviceId = PreferencesManager.getDeviceId(context)
+                
+                // 1. Leader Election check
+                val explicitLeaderId = PreferencesManager.getCurrentLeaderDeviceId(context)
+                val isLeader = if (!explicitLeaderId.isNullOrEmpty()) {
+                    explicitLeaderId == myDeviceId
+                } else {
+                    // Default behavior: Oldest registered device (by registration timestamp)
+                    val allDevices = db.deviceDao().getAllDevices()
+                    val oldestDevice = allDevices.minByOrNull { it.registeredAt }
+                    oldestDevice == null || oldestDevice.deviceId == myDeviceId
+                }
+                
+                if (!isLeader) {
+                    val leaderDeviceName = if (!explicitLeaderId.isNullOrEmpty()) {
+                        db.deviceDao().getAllDevices().firstOrNull { it.deviceId == explicitLeaderId }?.deviceName ?: "another device"
+                    } else {
+                        db.deviceDao().getAllDevices().minByOrNull { it.registeredAt }?.deviceName ?: "unknown"
+                    }
+                    TdlibManager.addLog("This device is not the Snapshot Leader (Leader is $leaderDeviceName). Skipping database backup.")
+                    return@withContext false
+                }
+                
                 val dbFile = context.getDatabasePath("upload_database")
                 if (!dbFile.exists()) {
                     return@withContext false
                 }
 
-                // 1. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
+                // 2. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
                 val checkpointSuccess = try {
                     val cursor = db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(TRUNCATE)")
                     cursor.use { c ->
@@ -201,7 +225,7 @@ open class BackupManager {
                     return@withContext false
                 }
 
-                // 2. Safely lock the database and perform a copy while in a Room transaction
+                // 3. Safely lock the database and perform a copy while in a Room transaction
                 val transactionResult = try {
                     db.withTransaction {
                         val currentCount = db.cloudDao().getRecordCountDirect()
@@ -212,10 +236,7 @@ open class BackupManager {
                             TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
                             null
                         } else {
-                            // Use filesDir (real /data/data/ path) instead of cacheDir (/data/user/0/ symlink).
-                            // TDLib calls realpath() on InputFileLocal paths and rejects symlinked paths.
                             val tempFile = File(context.filesDir, "tgpix_backup.db")
-                            // Perform binary copy while exclusive write lock is held by Room transaction
                             dbFile.copyTo(tempFile, overwrite = true)
                             Pair(tempFile, currentCount)
                         }
@@ -235,76 +256,65 @@ open class BackupManager {
                     return@withContext false
                 }
                 
-                // 5. Compute integrity checksum and upload document message to Telegram (performed outside database transaction)
-                val sha256 = computeSha256(tempBackupFile)
-                
-                // Determine if we need to do daily master backup
-                val now = System.currentTimeMillis()
-                val lastDailyBackupTime = PreferencesManager.getLastDailyBackupTime(context)
-                val needMasterBackup = now - lastDailyBackupTime >= 24 * 60 * 60 * 1000L || lastDailyBackupTime == 0L
-                
-                val tempMasterFile = if (needMasterBackup) {
-                    // Use filesDir (real path) to avoid TDLib's realpath() rejecting symlinked cacheDir paths
-                    val masterFile = File(context.filesDir, "tgpix_master_backup.db")
-                    try {
-                        tempBackupFile.copyTo(masterFile, overwrite = true)
-                        masterFile
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        null
+                // 4. Compress DB backup file using GZIP
+                val compressedFile = File(context.filesDir, "snapshot_${System.currentTimeMillis()}.db.gz")
+                try {
+                    java.util.zip.GZIPOutputStream(FileOutputStream(compressedFile)).use { gzip ->
+                        FileInputStream(tempBackupFile).use { fis ->
+                            val buffer = ByteArray(8192)
+                            var len: Int
+                            while (fis.read(buffer).also { len = it } != -1) {
+                                gzip.write(buffer, 0, len)
+                            }
+                        }
                     }
-                } else null
-                val dbVersion = UploadDatabase.DATABASE_VERSION
-                val uploadResult = uploadFile(
-                    tempBackupFile,
-                    targetChatId,
-                    "TGPix SQLite Database Backup #tgpix_backup v$dbVersion sha256:$sha256 records:$currentCount"
-                )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    if (tempBackupFile.exists()) tempBackupFile.delete()
+                    if (compressedFile.exists()) compressedFile.delete()
+                    return@withContext false
+                } finally {
+                    if (tempBackupFile.exists()) {
+                        tempBackupFile.delete()
+                    }
+                }
+                
+                // 5. Compute integrity checksum
+                val sha256 = computeSha256(compressedFile)
+                val nextVersion = getLatestSnapshotVersion(targetChatId) + 1
+                
+                val jsonMeta = org.json.JSONObject().apply {
+                    put("snapshotVersion", nextVersion)
+                    put("deviceId", myDeviceId)
+                    put("recordCount", currentCount)
+                    put("schemaVersion", UploadDatabase.DATABASE_VERSION)
+                    put("sha256", sha256)
+                    put("timestamp", System.currentTimeMillis())
+                }
+                val captionText = "#tgpix_snapshot $jsonMeta"
+                
+                // 6. Upload compressed snapshot to Metadata Channel
+                val uploadResult = uploadFile(compressedFile, targetChatId, captionText)
                 var uploadSuccess = false
                 if (uploadResult is TdApi.Message) {
                     val newMsgId = uploadResult.id
                     
-                    // Maintain a rolling list of the last 3 backup message IDs
-                    val backupIds = PreferencesManager.getBackupMessageIds(context).toMutableList()
-                    backupIds.add(newMsgId)
-                    
-                    if (backupIds.size > 3) {
-                        // Prune oldest backups, keeping only the 3 newest
-                        while (backupIds.size > 3) {
-                            val oldestMsgId = backupIds.removeAt(0)
-                            if (oldestMsgId != 0L) {
-                                TdlibManager.getClient().send(TdApi.DeleteMessages(targetChatId, longArrayOf(oldestMsgId), true)) { deleteResult ->
-                                    if (deleteResult is TdApi.Ok) {
-                                        TdlibManager.addLog("Old SQLite backup message ($oldestMsgId) pruned successfully from Telegram.")
-                                    } else if (deleteResult is TdApi.Error) {
-                                        TdlibManager.addLog("Failed to prune old SQLite backup message ($oldestMsgId): ${deleteResult.message}")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    PreferencesManager.saveBackupMessageIds(context, backupIds)
                     PreferencesManager.setLastBackupMessageId(context, newMsgId)
                     PreferencesManager.setLastBackupRecordCount(context, currentCount)
                     
-                    TdlibManager.addLog("SQLite backup updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
+                    TdlibManager.addLog("SQLite snapshot v$nextVersion updated successfully to Message ID $newMsgId in chat $targetChatId (Records: $currentCount).")
  
-                    // 6. Daily master backup strategy
-                    if (tempMasterFile != null && tempMasterFile.exists()) {
-                        performDailyMasterBackup(context, tempMasterFile, sha256, currentCount)
-                    }
+                    // 7. Prune older snapshots (keep last 10)
+                    pruneOldSnapshots(targetChatId)
+                    
                     UploadDatabase.recordEvent(
                         context,
                         "db_backup_success",
-                        "Successfully backed up database to Telegram Message ID $newMsgId (Records: $currentCount)"
+                        "Successfully backed up database snapshot v$nextVersion to Telegram Message ID $newMsgId (Records: $currentCount)"
                     )
                     uploadSuccess = true
                 } else if (uploadResult is TdApi.Error) {
                     TdlibManager.addLog("Database backup upload failed: ${uploadResult.message}")
-                    if (tempMasterFile != null && tempMasterFile.exists()) {
-                        tempMasterFile.delete()
-                    }
                     TdlibManager.checkAndHandleChatError(context, uploadResult)
                     UploadDatabase.recordEvent(
                         context,
@@ -313,9 +323,8 @@ open class BackupManager {
                     )
                 }
                 
-                // Clean up local temp file
-                if (tempBackupFile.exists()) {
-                    tempBackupFile.delete()
+                if (compressedFile.exists()) {
+                    compressedFile.delete()
                 }
                 uploadSuccess
             }
@@ -332,62 +341,70 @@ open class BackupManager {
         return success
     }
 
-    private suspend fun performDailyMasterBackup(context: Context, tempMasterFile: File, sha256: String, recordsCount: Int) {
-        val myUserId = resolveMyUserId()
-        if (myUserId == 0L) {
-            TdlibManager.addLog("Daily master backup aborted: Unable to resolve myUserId")
-            if (tempMasterFile.exists()) {
-                tempMasterFile.delete()
-            }
-            return
-        }
-
-        if (!tempMasterFile.exists()) {
-            TdlibManager.addLog("Daily master backup aborted: Master backup file does not exist")
-            return
-        }
-
-        // Ensure Saved Messages chat is initialized
+    open suspend fun getLatestSnapshotVersion(chatId: Long): Int {
+        var highestVersion = 0
         try {
-            suspendCancellableCoroutine<TdApi.Object> { cont ->
-                TdlibManager.getClient().send(TdApi.CreatePrivateChat(myUserId, false)) { res ->
+            val searchQuery = TdApi.SearchChatMessages().apply {
+                this.chatId = chatId
+                query = "#tgpix_snapshot"
+                filter = TdApi.SearchMessagesFilterDocument()
+                limit = 20
+            }
+            val searchResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                TdlibManager.getClient().send(searchQuery) { res ->
                     cont.resume(res)
+                }
+            }
+            if (searchResult is TdApi.FoundChatMessages) {
+                for (msg in searchResult.messages) {
+                    val docContent = msg.content as? TdApi.MessageDocument
+                    val captionText = docContent?.caption?.text ?: ""
+                    if (captionText.contains("#tgpix_snapshot")) {
+                        val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
+                        val jsonObj = org.json.JSONObject(jsonStr)
+                        val version = jsonObj.optInt("snapshotVersion", 0)
+                        if (version > highestVersion) {
+                            highestVersion = version
+                        }
+                    }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        return highestVersion
+    }
 
+    open suspend fun pruneOldSnapshots(chatId: Long) {
         try {
-            TdlibManager.addLog("Uploading daily master backup (#tgpix_master_backup) to Saved Messages (Chat ID: $myUserId)...")
-            val dbVersion = UploadDatabase.DATABASE_VERSION
-            val caption = "TGPix SQLite Master Database Backup #tgpix_master_backup v$dbVersion sha256:$sha256 records:$recordsCount"
-            val uploadResult = uploadFile(tempMasterFile, myUserId, caption)
-            if (uploadResult is TdApi.Message) {
-                val newMasterMsgId = uploadResult.id
-                val oldMasterMsgId = PreferencesManager.getLastMasterBackupMessageId(context)
-
-                // Delete old master message from Saved Messages
-                if (oldMasterMsgId != 0L) {
-                    TdlibManager.getClient().send(TdApi.DeleteMessages(myUserId, longArrayOf(oldMasterMsgId), true)) { deleteResult ->
+            val searchQuery = TdApi.SearchChatMessages().apply {
+                this.chatId = chatId
+                query = "#tgpix_snapshot"
+                filter = TdApi.SearchMessagesFilterDocument()
+                limit = 50
+            }
+            val searchResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                TdlibManager.getClient().send(searchQuery) { res ->
+                    cont.resume(res)
+                }
+            }
+            if (searchResult is TdApi.FoundChatMessages && searchResult.messages.size > 10) {
+                val sortedMsgs = searchResult.messages.sortedByDescending { it.id }
+                val toDelete = sortedMsgs.subList(10, sortedMsgs.size)
+                val msgIds = toDelete.map { it.id }.toLongArray()
+                
+                if (msgIds.isNotEmpty()) {
+                    TdlibManager.getClient().send(TdApi.DeleteMessages(chatId, msgIds, true)) { deleteResult ->
                         if (deleteResult is TdApi.Ok) {
-                            TdlibManager.addLog("Old daily master backup message ($oldMasterMsgId) deleted from Saved Messages.")
+                            TdlibManager.addLog("Old SQLite snapshots pruned successfully from Telegram.")
                         } else if (deleteResult is TdApi.Error) {
-                            TdlibManager.addLog("Failed to delete old daily master backup message ($oldMasterMsgId): ${deleteResult.message}")
+                            TdlibManager.addLog("Failed to prune old SQLite snapshots: ${deleteResult.message}")
                         }
                     }
                 }
-
-                PreferencesManager.setLastMasterBackupMessageId(context, newMasterMsgId)
-                PreferencesManager.setLastDailyBackupTime(context, System.currentTimeMillis())
-                TdlibManager.addLog("Daily master database backup completed successfully (Msg ID: $newMasterMsgId).")
-            } else if (uploadResult is TdApi.Error) {
-                TdlibManager.addLog("Daily master database backup upload failed: ${uploadResult.message}")
             }
-        } finally {
-            if (tempMasterFile.exists()) {
-                tempMasterFile.delete()
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -401,7 +418,7 @@ open class BackupManager {
         android.os.Process.killProcess(android.os.Process.myPid())
     }
 
-    private suspend fun tryRestoreFromChatAndTag(context: Context, chatId: Long, tag: String): Boolean {
+    private suspend fun tryRestoreSnapshot(context: Context, chatId: Long): Boolean {
         if (chatId == 0L) return false
         
         try {
@@ -419,12 +436,12 @@ open class BackupManager {
             e.printStackTrace()
         }
 
-        TdlibManager.addLog("Searching for remote SQLite backups in chat $chatId with tag $tag...")
+        TdlibManager.addLog("Searching for remote database snapshots (#tgpix_snapshot) in chat $chatId...")
         val searchQuery = TdApi.SearchChatMessages().apply {
             this.chatId = chatId
-            query = tag
+            query = "#tgpix_snapshot"
             filter = TdApi.SearchMessagesFilterDocument()
-            limit = 5
+            limit = 20
         }
         
         val searchResult = suspendCancellableCoroutine<TdApi.Object> { continuation ->
@@ -434,82 +451,105 @@ open class BackupManager {
         }
         
         if (searchResult is TdApi.FoundChatMessages && searchResult.messages.isNotEmpty()) {
-            TdlibManager.addLog("Found ${searchResult.messages.size} remote SQLite backup messages for tag $tag. Trying to restore...")
-            for (message in searchResult.messages) {
+            val sortedMsgs = searchResult.messages.sortedByDescending { it.id }
+            TdlibManager.addLog("Found ${sortedMsgs.size} snapshot messages. Selecting latest compatible snapshot...")
+            
+            for (message in sortedMsgs) {
                 val docContent = message.content as? TdApi.MessageDocument
                 val document = docContent?.document
                 if (document != null) {
                     val captionText = docContent.caption?.text ?: ""
-                    val backupVersion = captionText.substringAfter(" v", "").trim().substringBefore(" ").toIntOrNull()
-                    if (backupVersion != null && backupVersion > UploadDatabase.DATABASE_VERSION) {
-                        TdlibManager.addLog("Skipping backup (Msg ID: ${message.id}): backup version ($backupVersion) is newer than app database version (${UploadDatabase.DATABASE_VERSION}). Please update the app.")
+                    if (!captionText.contains("#tgpix_snapshot")) continue
+                    
+                    val jsonStr = captionText.substringAfter("#tgpix_snapshot").trim()
+                    val jsonObj = try { org.json.JSONObject(jsonStr) } catch (e: Exception) { null } ?: continue
+                    
+                    val schemaVersion = jsonObj.optInt("schemaVersion", 0)
+                    if (schemaVersion != UploadDatabase.DATABASE_VERSION) {
+                        TdlibManager.addLog("Skipping snapshot (Msg ID: ${message.id}): schema version ($schemaVersion) does not match app version (${UploadDatabase.DATABASE_VERSION}).")
                         continue
                     }
 
-                    TdlibManager.addLog("Attempting to download backup (Msg ID: ${message.id}, File ID: ${document.document.id})...")
+                    TdlibManager.addLog("Attempting to download snapshot (Msg ID: ${message.id}, File ID: ${document.document.id})...")
                     
                     val downloadedFile = downloadFile(document.document.id)
                     if (downloadedFile != null && downloadedFile.exists()) {
-                        // Verify integrity via SHA-256 checksum
-                        val expectedHash = captionText.substringAfter("sha256:", "").trim().substringBefore(" ")
+                        val expectedHash = jsonObj.optString("sha256", "")
                         if (expectedHash.isNotEmpty()) {
                             val actualHash = computeSha256(downloadedFile)
                             if (actualHash != expectedHash) {
-                                TdlibManager.addLog("Backup (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash. Trying next available backup...")
+                                TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) integrity check FAILED. Expected: $expectedHash, Got: $actualHash.")
                                 continue
                             }
-                            TdlibManager.addLog("Backup integrity verified (SHA-256 match).")
+                            TdlibManager.addLog("Snapshot integrity verified (SHA-256 match).")
                         }
 
-                        // Verify magic header is SQLite format 3
+                        val decompressedFile = File(context.cacheDir, "temp_restored_db.db")
+                        val decompressedSuccess = try {
+                            java.util.zip.GZIPInputStream(FileInputStream(downloadedFile)).use { gzip ->
+                                FileOutputStream(decompressedFile).use { fos ->
+                                    val buffer = ByteArray(8192)
+                                    var len: Int
+                                    while (gzip.read(buffer).also { len = it } != -1) {
+                                        fos.write(buffer, 0, len)
+                                    }
+                                }
+                            }
+                            true
+                        } catch (e: Exception) {
+                            TdlibManager.addLog("Failed to decompress snapshot: ${e.message}")
+                            false
+                        } finally {
+                            if (downloadedFile.exists()) downloadedFile.delete()
+                        }
+
+                        if (!decompressedSuccess || !decompressedFile.exists()) {
+                            continue
+                        }
+
                         val header = ByteArray(15)
                         try {
-                            FileInputStream(downloadedFile).use { it.read(header) }
+                            FileInputStream(decompressedFile).use { it.read(header) }
                         } catch (e: Exception) {
-                            TdlibManager.addLog("Failed to read header of backup: ${e.message}")
+                            TdlibManager.addLog("Failed to read header of snapshot: ${e.message}")
+                            decompressedFile.delete()
                             continue
                         }
                         if (!String(header).startsWith("SQLite format 3")) {
-                            TdlibManager.addLog("Backup (Msg ID: ${message.id}) magic header check FAILED. Not a valid SQLite database.")
+                            TdlibManager.addLog("Snapshot (Msg ID: ${message.id}) magic header check FAILED. Not a valid SQLite database.")
+                            decompressedFile.delete()
                             continue
                         }
 
-                        // Validate schema version of restored file before opening with Room
-                        val restoredVersion = try {
-                            getSchemaVersionFromFile(downloadedFile)
-                        } catch (e: Exception) {
-                            TdlibManager.addLog("Failed to read schema version of backup: ${e.message}")
-                            continue
-                        }
-                        val currentVersion = UploadDatabase.DATABASE_VERSION
-                        if (restoredVersion > currentVersion) {
-                            TdlibManager.addLog("Skipping backup (Msg ID: ${message.id}): backup schema version ($restoredVersion) is newer than app database version ($currentVersion). Please update the app first.")
-                            continue
-                        }
+                        TdlibManager.addLog("Snapshot decompressed and validated. Restoring data in-process from Msg ID: ${message.id}...")
 
-                        TdlibManager.addLog("Backup downloaded and validated. Restoring data in-process from Msg ID: ${message.id}...")
-
-                        val recordsCount = captionText.substringAfter("records:", "").trim().substringBefore(" ").toIntOrNull() ?: 0
-                        val restored = UploadDatabase.restoreDataFromFile(context, downloadedFile)
+                        val recordsCount = jsonObj.optInt("recordCount", 0)
+                        val snapshotVersion = jsonObj.optInt("snapshotVersion", 0)
+                        
+                        val restored = UploadDatabase.restoreDataFromFile(context, decompressedFile)
+                        decompressedFile.delete()
+                        
                         if (restored >= 0) {
-                            TdlibManager.addLog("In-process restore complete: $restored cloud_photos rows loaded into live database.")
+                            TdlibManager.addLog("In-process snapshot restore complete: $restored cloud_photos rows loaded into live database.")
+                            
                             PreferencesManager.setLastBackupMessageId(context, message.id)
                             PreferencesManager.setLastBackupRecordCount(context, recordsCount)
+                            PreferencesManager.setLastReplayedMetadataMsgId(context, message.id)
+                            
                             android.os.Handler(android.os.Looper.getMainLooper()).post {
-                                Toast.makeText(context, "Gallery restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Snapshot restored: $restored photos loaded ✓", Toast.LENGTH_SHORT).show()
                             }
                             UploadDatabase.recordEvent(
                                 context,
                                 "restore_success",
-                                "Successfully restored $restored cloud photo records from Msg ID: ${message.id}"
+                                "Successfully restored snapshot v$snapshotVersion ($restored records) from Msg ID: ${message.id}"
                             )
                             return true
                         } else {
-                            TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}. Trying next backup...")
+                            TdlibManager.addLog("In-process restore failed for Msg ID: ${message.id}.")
                         }
-
                     } else {
-                        TdlibManager.addLog("Failed to download backup file (Msg ID: ${message.id}). Trying next available backup...")
+                        TdlibManager.addLog("Failed to download snapshot file (Msg ID: ${message.id}).")
                     }
                 }
             }
@@ -520,27 +560,16 @@ open class BackupManager {
     open suspend fun restoreDatabase(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
             val db = UploadDatabase.getDatabase(context)
-            
-            // If the local database is not empty, no need to restore from backup
             val currentCount = db.cloudDao().getRecordCountDirect()
             if (currentCount > 0) {
                 return@withContext false
             }
             
             val targetChatId = resolveBackupChatId(context)
-            val myUserId = resolveMyUserId()
-            
-            // Priority 1: Search Backup Channel first for the newest #tgpix_backup database file
             var restored = false
             if (targetChatId != 0L) {
-                restored = tryRestoreFromChatAndTag(context, targetChatId, "#tgpix_backup")
+                restored = tryRestoreSnapshot(context, targetChatId)
             }
-            
-            // Priority 2: Scan Saved Messages for the #tgpix_master_backup file
-            if (!restored && myUserId != 0L) {
-                restored = tryRestoreFromChatAndTag(context, myUserId, "#tgpix_master_backup")
-            }
-            
             return@withContext restored
         }
     }
@@ -548,24 +577,16 @@ open class BackupManager {
     open suspend fun restoreDatabaseForce(context: Context): Boolean {
         return withContext(Dispatchers.IO) {
             val targetChatId = resolveBackupChatId(context)
-            val myUserId = resolveMyUserId()
-            
-            // Priority 1: Search Backup Channel first for the newest #tgpix_backup database file
             var restored = false
             if (targetChatId != 0L) {
-                restored = tryRestoreFromChatAndTag(context, targetChatId, "#tgpix_backup")
-            }
-            
-            // Priority 2: Scan Saved Messages for the #tgpix_master_backup file
-            if (!restored && myUserId != 0L) {
-                restored = tryRestoreFromChatAndTag(context, myUserId, "#tgpix_master_backup")
+                restored = tryRestoreSnapshot(context, targetChatId)
             }
             
             if (!restored) {
                 UploadDatabase.recordEvent(
                     context,
                     "restore_failed",
-                    "Failed to restore database from backup channel ($targetChatId) or master backup ($myUserId)"
+                    "Failed to restore database from backup channel ($targetChatId)"
                 )
             }
             return@withContext restored
@@ -837,6 +858,351 @@ open class BackupManager {
                     downloadedFile.delete()
                 }
             }
+        }
+    }
+
+    open suspend fun registerDevice(context: Context) {
+        if (PreferencesManager.isDeviceRegistered(context)) return
+        val dbChatId = resolveBackupChatId(context)
+        if (dbChatId == 0L) return
+        
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}"
+        val version = try {
+            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            pInfo.versionName ?: "1.0"
+        } catch (e: Exception) {
+            "1.0"
+        }
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "DEVICE_REGISTER")
+            put("deviceId", deviceId)
+            put("deviceName", deviceName)
+            put("version", version)
+            put("timestamp", timestamp)
+        }
+        
+        val success = sendMetadataEvent(context, eventObj.toString())
+        if (success) {
+            PreferencesManager.setDeviceRegistered(context, true)
+            try {
+                val db = UploadDatabase.getDatabase(context)
+                db.deviceDao().insert(RegisteredDeviceEntity(deviceId, deviceName, version, timestamp))
+                TdlibManager.addLog("Device successfully registered on Telegram and locally: $deviceId ($deviceName)")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            TdlibManager.addLog("Failed to send device registration metadata event.")
+        }
+    }
+
+    open suspend fun sendMetadataEvent(context: Context, eventJson: String): Boolean {
+        val dbChatId = resolveBackupChatId(context)
+        if (dbChatId == 0L) return false
+        
+        return suspendCancellableCoroutine { cont ->
+            val request = TdApi.SendMessage().apply {
+                this.chatId = dbChatId
+                this.inputMessageContent = TdApi.InputMessageText().apply {
+                    text = TdApi.FormattedText(eventJson, emptyArray())
+                }
+            }
+            TdlibManager.getClient().send(request) { result ->
+                if (result is TdApi.Message) {
+                    TdlibManager.registerPendingUpload(result.id) { res ->
+                        cont.resume(res is TdApi.Message)
+                    }
+                } else {
+                    cont.resume(false)
+                }
+            }
+        }
+    }
+
+    open suspend fun deleteCloudPhoto(context: Context, messageId: Long) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "DELETE")
+            put("messageId", messageId)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        
+        val db = UploadDatabase.getDatabase(context)
+        val cloudPhoto = db.cloudDao().findByMessageId(messageId)
+        if (cloudPhoto != null) {
+            db.cloudDao().insert(cloudPhoto.copy(isTrashed = true, trashedAt = timestamp))
+        }
+        
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun restoreCloudPhoto(context: Context, messageId: Long) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "RESTORE")
+            put("messageId", messageId)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        
+        val db = UploadDatabase.getDatabase(context)
+        val cloudPhoto = db.cloudDao().findByMessageId(messageId)
+        if (cloudPhoto != null) {
+            db.cloudDao().insert(cloudPhoto.copy(isTrashed = false, trashedAt = 0L))
+        }
+        
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun deleteCloudPhotoPermanently(context: Context, messageId: Long): Boolean {
+        val vaultChatId = PreferencesManager.getChatId(context)
+        if (vaultChatId == 0L) return false
+        
+        return withContext(Dispatchers.IO) {
+            val db = UploadDatabase.getDatabase(context)
+            val cloudPhoto = db.cloudDao().findByMessageId(messageId)
+            val photoUri = cloudPhoto?.fileName ?: "photo_${messageId}.jpg"
+            
+            val success = suspendCancellableCoroutine<Boolean> { cont ->
+                TdlibManager.getClient().send(TdApi.DeleteMessages(vaultChatId, longArrayOf(messageId), true)) { res ->
+                    cont.resume(res is TdApi.Ok)
+                }
+            }
+            
+            if (success) {
+                db.cloudDao().deleteByMessageId(messageId)
+                db.albumDao().removePhotoFromAllAlbums(photoUri, messageId)
+                db.albumDao().removePhotoFromAllAlbums("cloud://$messageId/0/$photoUri", messageId)
+                TdlibManager.addLog("Permanently deleted photo message $messageId from Telegram and local cache.")
+                true
+            } else {
+                TdlibManager.addLog("Failed to delete photo message $messageId from Telegram.")
+                false
+            }
+        }
+    }
+
+    open suspend fun pruneExpiredTrash(context: Context) {
+        val vaultChatId = PreferencesManager.getChatId(context)
+        if (vaultChatId == 0L) return
+        
+        withContext(Dispatchers.IO) {
+            val db = UploadDatabase.getDatabase(context)
+            val thirtyDaysAgo = System.currentTimeMillis() - (30L * 24L * 60L * 60L * 1000L)
+            
+            val expiredPhotos = db.cloudDao().getAll().filter { it.isTrashed && it.trashedAt < thirtyDaysAgo }
+            if (expiredPhotos.isEmpty()) return@withContext
+            
+            TdlibManager.addLog("Pruning ${expiredPhotos.size} expired trashed photos (older than 30 days)...")
+            
+            val messageIds = expiredPhotos.map { it.messageId }.toLongArray()
+            
+            val success = suspendCancellableCoroutine<Boolean> { cont ->
+                TdlibManager.getClient().send(TdApi.DeleteMessages(vaultChatId, messageIds, true)) { res ->
+                    cont.resume(res is TdApi.Ok)
+                }
+            }
+            
+            if (success) {
+                for (photo in expiredPhotos) {
+                    db.cloudDao().deleteByMessageId(photo.messageId)
+                    db.albumDao().removePhotoFromAllAlbums(photo.fileName, photo.messageId)
+                    db.albumDao().removePhotoFromAllAlbums("cloud://${photo.messageId}/0/${photo.fileName}", photo.messageId)
+                }
+                TdlibManager.addLog("Pruned ${expiredPhotos.size} expired trashed photos from Telegram and local cache.")
+            } else {
+                TdlibManager.addLog("Failed to prune expired trashed photos from Telegram.")
+            }
+        }
+    }
+
+    open suspend fun requestLeaderRole(context: Context) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "LEADER_CHANGED")
+            put("leaderDeviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        
+        val success = sendMetadataEvent(context, eventObj.toString())
+        if (success) {
+            PreferencesManager.setCurrentLeaderDeviceId(context, deviceId)
+            TdlibManager.addLog("Successfully requested Snapshot Leader role for device: $deviceId")
+        }
+    }
+
+    open suspend fun logAlbumCreate(context: Context, albumUuid: String, name: String) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "ALBUM_CREATE")
+            put("albumId", albumUuid)
+            put("name", name)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun logAlbumDelete(context: Context, albumUuid: String) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "ALBUM_DELETE")
+            put("albumId", albumUuid)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun logAlbumAdd(context: Context, albumUuid: String, messageId: Long) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "ALBUM_ADD")
+            put("albumId", albumUuid)
+            put("messageId", messageId)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun logAlbumRemove(context: Context, albumUuid: String, messageId: Long) {
+        val deviceId = PreferencesManager.getDeviceId(context)
+        val timestamp = System.currentTimeMillis()
+        
+        val eventObj = org.json.JSONObject().apply {
+            put("type", "ALBUM_REMOVE")
+            put("albumId", albumUuid)
+            put("messageId", messageId)
+            put("deviceId", deviceId)
+            put("timestamp", timestamp)
+        }
+        sendMetadataEvent(context, eventObj.toString())
+    }
+
+    open suspend fun applyMetadataEvent(context: Context, eventJson: String, messageId: Long = 0L) {
+        val db = UploadDatabase.getDatabase(context)
+        try {
+            val obj = org.json.JSONObject(eventJson)
+            val type = obj.optString("type")
+            val timestamp = obj.optLong("timestamp", System.currentTimeMillis())
+            
+            when (type) {
+                "DEVICE_REGISTER" -> {
+                    val deviceId = obj.getString("deviceId")
+                    val deviceName = obj.getString("deviceName")
+                    val version = obj.getString("version")
+                    db.deviceDao().insert(RegisteredDeviceEntity(deviceId, deviceName, version, timestamp))
+                    TdlibManager.addLog("Replayed event DEVICE_REGISTER: $deviceId ($deviceName)")
+                }
+                "LEADER_CHANGED" -> {
+                    val leaderId = obj.getString("leaderDeviceId")
+                    PreferencesManager.setCurrentLeaderDeviceId(context, leaderId)
+                    TdlibManager.addLog("Replayed event LEADER_CHANGED: leader is now $leaderId")
+                }
+                "DELETE" -> {
+                    val msgId = obj.getLong("messageId")
+                    val cloudPhoto = db.cloudDao().findByMessageId(msgId)
+                    if (cloudPhoto != null) {
+                        db.cloudDao().insert(cloudPhoto.copy(isTrashed = true, trashedAt = timestamp))
+                        TdlibManager.addLog("Replayed event DELETE: messageId $msgId marked as trashed.")
+                    } else {
+                        db.cloudDao().insert(
+                            CloudPhotoEntity(
+                                messageId = msgId,
+                                telegramFileId = 0,
+                                uniqueRemoteId = "",
+                                fileName = "deleted_$msgId",
+                                uploadedAt = timestamp,
+                                fileSize = 0L,
+                                isDocument = false,
+                                isTrashed = true,
+                                trashedAt = timestamp
+                            )
+                        )
+                        TdlibManager.addLog("Replayed event DELETE: messageId $msgId not indexed yet; created trashed placeholder.")
+                    }
+                }
+                "RESTORE" -> {
+                    val msgId = obj.getLong("messageId")
+                    val cloudPhoto = db.cloudDao().findByMessageId(msgId)
+                    if (cloudPhoto != null) {
+                        db.cloudDao().insert(cloudPhoto.copy(isTrashed = false, trashedAt = 0L))
+                        TdlibManager.addLog("Replayed event RESTORE: messageId $msgId marked as restored.")
+                    }
+                }
+                "ALBUM_CREATE" -> {
+                    val albumId = obj.getString("albumId")
+                    val name = obj.getString("name")
+                    val existing = db.albumDao().findByUuid(albumId)
+                    if (existing == null) {
+                        db.albumDao().insertAlbum(
+                            AlbumEntity(
+                                uuid = albumId,
+                                name = name,
+                                createdAt = timestamp
+                            )
+                        )
+                        TdlibManager.addLog("Replayed event ALBUM_CREATE: '$name' (UUID: $albumId)")
+                    }
+                }
+                "ALBUM_DELETE" -> {
+                    val albumId = obj.getString("albumId")
+                    val existing = db.albumDao().findByUuid(albumId)
+                    if (existing != null) {
+                        db.albumDao().deleteAlbum(existing.id)
+                        db.albumDao().deleteAlbumPhotos(existing.id)
+                        TdlibManager.addLog("Replayed event ALBUM_DELETE: UUID $albumId")
+                    }
+                }
+                "ALBUM_ADD" -> {
+                    val albumId = obj.getString("albumId")
+                    val msgId = obj.optLong("messageId", 0L)
+                    val album = db.albumDao().findByUuid(albumId)
+                    if (album != null && msgId != 0L) {
+                        val cloudPhoto = db.cloudDao().findByMessageId(msgId)
+                        val photoUri = cloudPhoto?.fileName ?: "photo_${msgId}.jpg"
+                        db.albumDao().insertAlbumPhotos(
+                            listOf(AlbumPhotoEntity(albumId = album.id, photoUri = photoUri))
+                        )
+                        TdlibManager.addLog("Replayed event ALBUM_ADD: photo $photoUri added to album '${album.name}'")
+                    }
+                }
+                "ALBUM_REMOVE" -> {
+                    val albumId = obj.getString("albumId")
+                    val msgId = obj.optLong("messageId", 0L)
+                    val album = db.albumDao().findByUuid(albumId)
+                    if (album != null && msgId != 0L) {
+                        val cloudPhoto = db.cloudDao().findByMessageId(msgId)
+                        val photoUri = cloudPhoto?.fileName ?: "photo_${msgId}.jpg"
+                        db.albumDao().removePhotoFromAlbum(album.id, photoUri)
+                        db.albumDao().removePhotoFromAlbum(album.id, "cloud://$msgId/0/$photoUri")
+                        TdlibManager.addLog("Replayed event ALBUM_REMOVE: photo $photoUri removed from album '${album.name}'")
+                    }
+                }
+            }
+            if (messageId != 0L) {
+                PreferencesManager.setLastReplayedMetadataMsgId(context, messageId)
+            }
+        } catch (e: Exception) {
+            TdlibManager.addLog("Failed to replay metadata event: ${e.message}")
+            e.printStackTrace()
         }
     }
 

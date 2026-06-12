@@ -24,11 +24,26 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
         UploadDatabase.getDatabase(application).albumDao().getAllAlbumsFlow()
     }
 
+    private suspend fun resolveMessageIdForPhoto(context: Context, photo: LocalPhoto): Long? {
+        if (photo.uri.startsWith("cloud://")) {
+            return photo.uri.substringAfter("cloud://").substringBefore("/").toLongOrNull()
+        }
+        val db = UploadDatabase.getDatabase(context)
+        val cloudPhoto = db.cloudDao().findByFileName(photo.name)
+        if (cloudPhoto != null) {
+            return cloudPhoto.messageId
+        }
+        val fingerprint = "${photo.name}_${photo.size}_${photo.dateTaken}"
+        val cloudPhotoByFingerprint = db.cloudDao().findByFingerprint(fingerprint)
+        return cloudPhotoByFingerprint?.messageId
+    }
+
     fun createAlbum(name: String, onResult: (Long) -> Unit = {}) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             val db = UploadDatabase.getDatabase(context)
-            val newId = db.albumDao().insertAlbum(AlbumEntity(name = name))
+            val uuid = java.util.UUID.randomUUID().toString()
+            val newId = db.albumDao().insertAlbum(AlbumEntity(uuid = uuid, name = name))
             BackupManager.onAlbumUpdated(context, newId)
             withContext(Dispatchers.Main) {
                 onResult(newId)
@@ -40,11 +55,14 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             val db = UploadDatabase.getDatabase(context)
-            val albumPhotos = photos.map { photo ->
-                AlbumPhotoEntity(albumId = albumId, photoUri = photo.name)
+            val album = db.albumDao().getAlbumById(albumId)
+            if (album != null) {
+                val albumPhotos = photos.map { photo ->
+                    AlbumPhotoEntity(albumId = albumId, photoUri = photo.name)
+                }
+                db.albumDao().insertAlbumPhotos(albumPhotos)
+                BackupManager.onAlbumUpdated(context, albumId)
             }
-            db.albumDao().insertAlbumPhotos(albumPhotos)
-            BackupManager.onAlbumUpdated(context, albumId)
             withContext(Dispatchers.Main) {
                 onResult()
             }
@@ -56,8 +74,10 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
             val context = getApplication<Application>()
             val db = UploadDatabase.getDatabase(context)
             val album = db.albumDao().getAlbumById(albumId)
-            db.albumDao().deleteAlbum(albumId)
             if (album != null) {
+                db.albumDao().deleteAlbum(albumId)
+                db.albumDao().deleteAlbumPhotos(albumId)
+                BackupManager.logAlbumDelete(context, album.uuid)
                 BackupManager.onAlbumDeleted(context, album.telegramMessageId)
             }
             withContext(Dispatchers.Main) {
@@ -70,11 +90,14 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             val db = UploadDatabase.getDatabase(context)
-            photos.forEach { photo ->
-                db.albumDao().removePhotoFromAlbum(albumId, photo.name)
-                db.albumDao().removePhotoFromAlbum(albumId, photo.uri)
+            val album = db.albumDao().getAlbumById(albumId)
+            if (album != null) {
+                photos.forEach { photo ->
+                    db.albumDao().removePhotoFromAlbum(albumId, photo.name)
+                    db.albumDao().removePhotoFromAlbum(albumId, photo.uri)
+                }
+                BackupManager.onAlbumUpdated(context, albumId)
             }
-            BackupManager.onAlbumUpdated(context, albumId)
             withContext(Dispatchers.Main) {
                 onResult()
             }

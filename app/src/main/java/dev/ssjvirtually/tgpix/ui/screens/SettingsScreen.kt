@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,7 +49,8 @@ import kotlinx.coroutines.withContext
 fun SettingsScreen(
     selectedChatTitle: String,
     onResetChat: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onTrashClick: () -> Unit
 ) {
     val context = LocalContext.current as MainActivity
     val chats by TdlibManager.chats.collectAsState()
@@ -311,6 +314,54 @@ fun SettingsScreen(
                                 )
                             )
                         }
+                    }
+                }
+            }
+
+            // Trash Management Card
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = TelePhotosTheme.Surface),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onTrashClick() }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Trash",
+                                tint = TelePhotosTheme.GoogleRed,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "Trash",
+                                    color = TelePhotosTheme.TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Restore or permanently delete photos",
+                                    color = TelePhotosTheme.TextSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = TelePhotosTheme.TextSecondary,
+                            modifier = Modifier.rotate(180f)
+                        )
                     }
                 }
             }
