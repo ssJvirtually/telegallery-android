@@ -85,7 +85,11 @@ class ShareWorker(
             setForeground(getForegroundInfo())
             TdlibManager.addLog("ShareWorker: Promoted manual sharing to Foreground Service.")
         } catch (e: Exception) {
-            TdlibManager.addLog("ShareWorker: Failed to set foreground: ${e.message}")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
+                TdlibManager.addLog("ShareWorker: Foreground service start not allowed (Android 14+ constraints). Running as a standard background worker: ${e.message}")
+            } else {
+                TdlibManager.addLog("ShareWorker: Failed to set foreground: ${e.message}")
+            }
         }
 
         // 2. Preempt background backup sync if sharing > 10 items

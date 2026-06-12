@@ -1649,7 +1649,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L56",
       "id": "storage_uploaddatabase_uploaddao_delete",
-      "community": 69,
+      "community": 65,
       "norm_label": ".delete()"
     },
     {
@@ -2171,7 +2171,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L319",
       "id": "storage_uploaddatabase_registereddeviceentity",
-      "community": 7,
+      "community": 79,
       "norm_label": "registereddeviceentity"
     },
     {
@@ -2180,7 +2180,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L327",
       "id": "storage_uploaddatabase_registereddevicedao",
-      "community": 68,
+      "community": 79,
       "norm_label": "registereddevicedao"
     },
     {
@@ -2189,7 +2189,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L329",
       "id": "storage_uploaddatabase_registereddevicedao_insert",
-      "community": 68,
+      "community": 79,
       "norm_label": ".insert()"
     },
     {
@@ -2198,7 +2198,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L332",
       "id": "storage_uploaddatabase_registereddevicedao_getalldevices",
-      "community": 68,
+      "community": 79,
       "norm_label": ".getalldevices()"
     },
     {
@@ -2216,7 +2216,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L339",
       "id": "storage_uploaddatabase_registereddevicedao_delete",
-      "community": 68,
+      "community": 79,
       "norm_label": ".delete()"
     },
     {
@@ -2225,7 +2225,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L342",
       "id": "storage_uploaddatabase_registereddevicedao_clearall",
-      "community": 68,
+      "community": 79,
       "norm_label": ".clearall()"
     },
     {
@@ -2252,7 +2252,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L352",
       "id": "storage_uploaddatabase_uploaddatabase_dao",
-      "community": 69,
+      "community": 68,
       "norm_label": ".dao()"
     },
     {
@@ -2288,7 +2288,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L356",
       "id": "storage_uploaddatabase_uploaddatabase_devicedao",
-      "community": 68,
+      "community": 79,
       "norm_label": ".devicedao()"
     },
     {
@@ -7143,6 +7143,177 @@
       "norm_label": "appendix c \u2014 recommended tdlib aar source"
     },
     {
+      "label": "thumbnail_loading_strategy.md",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L1",
+      "id": "thumbnail_loading_strategy",
+      "community": 78,
+      "norm_label": "thumbnail_loading_strategy.md"
+    },
+    {
+      "label": "TGPix \u2014 Cloud Thumbnail Caching & Loading Strategy (v1.1)",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L1",
+      "id": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "community": 78,
+      "norm_label": "tgpix \u2014 cloud thumbnail caching & loading strategy (v1.1)"
+    },
+    {
+      "label": "1. Architectural Overview & Data Flow",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L7",
+      "id": "thumbnail_loading_strategy_1_architectural_overview_data_flow",
+      "community": 78,
+      "norm_label": "1. architectural overview & data flow"
+    },
+    {
+      "label": "Key Error States & Fallbacks",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L62",
+      "id": "thumbnail_loading_strategy_key_error_states_fallbacks",
+      "community": 78,
+      "norm_label": "key error states & fallbacks"
+    },
+    {
+      "label": "2. The Multi-Tiered Cache Architecture",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L70",
+      "id": "thumbnail_loading_strategy_2_the_multi_tiered_cache_architecture",
+      "community": 78,
+      "norm_label": "2. the multi-tiered cache architecture"
+    },
+    {
+      "label": "3. Tier 0: Coil Configuration",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L84",
+      "id": "thumbnail_loading_strategy_3_tier_0_coil_configuration",
+      "community": 78,
+      "norm_label": "3. tier 0: coil configuration"
+    },
+    {
+      "label": "4. Session-Scoped File IDs",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L109",
+      "id": "thumbnail_loading_strategy_4_session_scoped_file_ids",
+      "community": 78,
+      "norm_label": "4. session-scoped file ids"
+    },
+    {
+      "label": "Cache Validation Protocol",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L115",
+      "id": "thumbnail_loading_strategy_cache_validation_protocol",
+      "community": 78,
+      "norm_label": "cache validation protocol"
+    },
+    {
+      "label": "5. Performance Guardrails (Scrolling Safety)",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L125",
+      "id": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "community": 78,
+      "norm_label": "5. performance guardrails (scrolling safety)"
+    },
+    {
+      "label": "A. The Write Bottleneck & Grid Recomposition",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L129",
+      "id": "thumbnail_loading_strategy_a_the_write_bottleneck_grid_recomposition",
+      "community": 78,
+      "norm_label": "a. the write bottleneck & grid recomposition"
+    },
+    {
+      "label": "B. The Solution: `ThumbnailWriteBuffer`",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L136",
+      "id": "thumbnail_loading_strategy_b_the_solution_thumbnailwritebuffer",
+      "community": 78,
+      "norm_label": "b. the solution: `thumbnailwritebuffer`"
+    },
+    {
+      "label": "C. Critical Assessment: App Kill Behavior",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L150",
+      "id": "thumbnail_loading_strategy_c_critical_assessment_app_kill_behavior",
+      "community": 78,
+      "norm_label": "c. critical assessment: app kill behavior"
+    },
+    {
+      "label": "D. In-Flight Download Deduplication",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L154",
+      "id": "thumbnail_loading_strategy_d_in_flight_download_deduplication",
+      "community": 78,
+      "norm_label": "d. in-flight download deduplication"
+    },
+    {
+      "label": "6. Concurrency Control & Database Integrity",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L161",
+      "id": "thumbnail_loading_strategy_6_concurrency_control_database_integrity",
+      "community": 78,
+      "norm_label": "6. concurrency control & database integrity"
+    },
+    {
+      "label": "A. Read Snapshot Isolation (`@Transaction`)",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L165",
+      "id": "thumbnail_loading_strategy_a_read_snapshot_isolation_transaction",
+      "community": 78,
+      "norm_label": "a. read snapshot isolation (`@transaction`)"
+    },
+    {
+      "label": "7. Video Support Compatibility",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L174",
+      "id": "thumbnail_loading_strategy_7_video_support_compatibility",
+      "community": 78,
+      "norm_label": "7. video support compatibility"
+    },
+    {
+      "label": "8. Cache Eviction & Constraints",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L191",
+      "id": "thumbnail_loading_strategy_8_cache_eviction_constraints",
+      "community": 78,
+      "norm_label": "8. cache eviction & constraints"
+    },
+    {
+      "label": "A. Cache Eviction Policy",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L195",
+      "id": "thumbnail_loading_strategy_a_cache_eviction_policy",
+      "community": 78,
+      "norm_label": "a. cache eviction policy"
+    },
+    {
+      "label": "B. Size Constraints",
+      "file_type": "document",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L200",
+      "id": "thumbnail_loading_strategy_b_size_constraints",
+      "community": 78,
+      "norm_label": "b. size constraints"
+    },
+    {
       "label": "ThumbnailWriteBuffer",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
@@ -10565,9 +10736,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication",
-      "target": "imageloaderfactory",
-      "confidence_score": 1.0
+      "target": "imageloaderfactory"
     },
     {
       "relation": "method",
@@ -10585,9 +10756,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/TGPixApplication.kt",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication",
-      "target": "tgpix_tgpixapplication_tgpixapplication_newimageloader",
-      "confidence_score": 1.0
+      "target": "tgpix_tgpixapplication_tgpixapplication_newimageloader"
     },
     {
       "relation": "method",
@@ -10606,9 +10777,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "tgpix_tgpixapplication_tgpixapplication_newimageloader",
-      "target": "imageloader",
-      "confidence_score": 1.0
+      "target": "imageloader"
     },
     {
       "relation": "calls",
@@ -15592,9 +15763,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase",
-      "target": "storage_uploaddatabase_thumbnailpathupdate",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_thumbnailpathupdate"
     },
     {
       "relation": "contains",
@@ -15955,9 +16126,9 @@
       "source_location": "L134",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_string"
     },
     {
       "relation": "references",
@@ -15966,9 +16137,9 @@
       "source_location": "L131",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_string"
     },
     {
       "relation": "references",
@@ -16131,9 +16302,9 @@
       "source_location": "L144",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_list",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_list"
     },
     {
       "relation": "references",
@@ -16142,9 +16313,9 @@
       "source_location": "L137",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_list",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_list"
     },
     {
       "relation": "references",
@@ -16494,9 +16665,9 @@
       "source_location": "L144",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths",
-      "target": "storage_uploaddatabase_thumbnailpathupdate",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_thumbnailpathupdate"
     },
     {
       "relation": "references",
@@ -16505,9 +16676,9 @@
       "source_location": "L137",
       "weight": 1.0,
       "context": "generic_arg",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
-      "target": "storage_uploaddatabase_thumbnailpathupdate",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_thumbnailpathupdate"
     },
     {
       "relation": "method",
@@ -16515,9 +16686,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L144",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao",
-      "target": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths"
     },
     {
       "relation": "method",
@@ -16525,9 +16696,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao",
-      "target": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths"
     },
     {
       "relation": "method",
@@ -16705,9 +16876,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao",
-      "target": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_updatelargepath"
     },
     {
       "relation": "method",
@@ -16715,9 +16886,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L131",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao",
-      "target": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath"
     },
     {
       "relation": "references",
@@ -16913,9 +17084,9 @@
       "source_location": "L134",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_long",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_long"
     },
     {
       "relation": "references",
@@ -16924,9 +17095,9 @@
       "source_location": "L131",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_long",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_long"
     },
     {
       "relation": "calls",
@@ -16935,9 +17106,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L140",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
-      "target": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath"
     },
     {
       "relation": "references",
@@ -16946,9 +17117,9 @@
       "source_location": "L131",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
     },
     {
       "relation": "references",
@@ -16979,9 +17150,9 @@
       "source_location": "L134",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
     },
     {
       "relation": "references",
@@ -17001,9 +17172,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L147",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths",
-      "target": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "confidence_score": 1.0
+      "target": "storage_uploaddatabase_cloudphotodao_updatelargepath"
     },
     {
       "relation": "calls",
@@ -22881,9 +23052,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L368",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils",
-      "target": "utils_galleryutils_enqueue",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_enqueue"
     },
     {
       "relation": "contains",
@@ -22901,9 +23072,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L364",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils",
-      "target": "utils_galleryutils_get",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_get"
     },
     {
       "relation": "contains",
@@ -23044,9 +23215,9 @@
       "source_location": "L368",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_enqueue",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_string"
     },
     {
       "relation": "references",
@@ -23055,9 +23226,9 @@
       "source_location": "L364",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_get",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_string"
     },
     {
       "relation": "references",
@@ -23121,9 +23292,9 @@
       "source_location": "L368",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_enqueue",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_boolean",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_boolean"
     },
     {
       "relation": "references",
@@ -23132,9 +23303,9 @@
       "source_location": "L364",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_get",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_boolean",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_boolean"
     },
     {
       "relation": "references",
@@ -23220,9 +23391,9 @@
       "source_location": "L368",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_enqueue",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_long",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_long"
     },
     {
       "relation": "references",
@@ -23231,9 +23402,9 @@
       "source_location": "L364",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_get",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_long",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_long"
     },
     {
       "relation": "references",
@@ -23297,9 +23468,9 @@
       "source_location": "L368",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_enqueue",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_int",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_int"
     },
     {
       "relation": "references",
@@ -23329,9 +23500,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_remembercloudthumbnailpath",
-      "target": "utils_galleryutils_enqueue",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_enqueue"
     },
     {
       "relation": "calls",
@@ -23340,9 +23511,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L110",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_remembercloudthumbnailpath",
-      "target": "utils_galleryutils_get",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_get"
     },
     {
       "relation": "calls",
@@ -23384,9 +23555,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L327",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_remembercloudphotodownloadstate",
-      "target": "utils_galleryutils_enqueue",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_enqueue"
     },
     {
       "relation": "calls",
@@ -23395,9 +23566,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L230",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_remembercloudphotodownloadstate",
-      "target": "utils_galleryutils_get",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_get"
     },
     {
       "relation": "calls",
@@ -23428,9 +23599,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L369",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_galleryutils_enqueue",
-      "target": "utils_galleryutils_pendingpath",
-      "confidence_score": 1.0
+      "target": "utils_galleryutils_pendingpath"
     },
     {
       "relation": "calls",
@@ -24836,9 +25007,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review",
-      "target": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review"
     },
     {
       "relation": "contains",
@@ -24846,9 +25017,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L403",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_missing_sections_to_add",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_missing_sections_to_add"
     },
     {
       "relation": "contains",
@@ -24856,9 +25027,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_section_1_architecture_overview",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_section_1_architecture_overview"
     },
     {
       "relation": "contains",
@@ -24866,9 +25037,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L65",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_section_2_multi_tiered_cache_architecture",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_section_2_multi_tiered_cache_architecture"
     },
     {
       "relation": "contains",
@@ -24876,9 +25047,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L140",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_section_3_session_scoped_file_ids",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_section_3_session_scoped_file_ids"
     },
     {
       "relation": "contains",
@@ -24886,9 +25057,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L197",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_section_4_performance_guardrails",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_section_4_performance_guardrails"
     },
     {
       "relation": "contains",
@@ -24896,9 +25067,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L319",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_section_5_concurrency_control",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_section_5_concurrency_control"
     },
     {
       "relation": "contains",
@@ -24906,9 +25077,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L438",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_summary_table",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_summary_table"
     },
     {
       "relation": "contains",
@@ -24916,9 +25087,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L2",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_technical_audit_improvement_suggestions",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_technical_audit_improvement_suggestions"
     },
     {
       "relation": "contains",
@@ -24926,9 +25097,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L382",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_tgpix_thumbnail_loading_strategy_review",
-      "target": "thumbnail_strategy_review_video_support_compatibility",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_video_support_compatibility"
     },
     {
       "relation": "contains",
@@ -24936,9 +25107,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_1_architecture_overview",
-      "target": "thumbnail_strategy_review_diagram_shows_getmessage_called_even_when_tier_2_has_cached_path",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_diagram_shows_getmessage_called_even_when_tier_2_has_cached_path"
     },
     {
       "relation": "contains",
@@ -24946,9 +25117,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_1_architecture_overview",
-      "target": "thumbnail_strategy_review_sequence_diagram_missing_all_error_paths",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_sequence_diagram_missing_all_error_paths"
     },
     {
       "relation": "contains",
@@ -24956,9 +25127,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_2_multi_tiered_cache_architecture",
-      "target": "thumbnail_strategy_review_coil_s_own_cache_layer_is_completely_missing",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_coil_s_own_cache_layer_is_completely_missing"
     },
     {
       "relation": "contains",
@@ -24966,9 +25137,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L117",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_2_multi_tiered_cache_architecture",
-      "target": "thumbnail_strategy_review_tier_3_cost_claim_is_misleading_two_very_different_scenarios",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_tier_3_cost_claim_is_misleading_two_very_different_scenarios"
     },
     {
       "relation": "contains",
@@ -24976,9 +25147,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L142",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_3_session_scoped_file_ids",
-      "target": "thumbnail_strategy_review_always_calls_getmessage_first_contradicts_tier_2_logic",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_always_calls_getmessage_first_contradicts_tier_2_logic"
     },
     {
       "relation": "contains",
@@ -24986,9 +25157,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_3_session_scoped_file_ids",
-      "target": "thumbnail_strategy_review_fileidcachedat_column_interaction_not_documented",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_fileidcachedat_column_interaction_not_documented"
     },
     {
       "relation": "contains",
@@ -24996,9 +25167,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L233",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_4_performance_guardrails",
-      "target": "thumbnail_strategy_review_95_reduction_claim_has_no_evidence",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_95_reduction_claim_has_no_evidence"
     },
     {
       "relation": "contains",
@@ -25006,9 +25177,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L282",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_4_performance_guardrails",
-      "target": "thumbnail_strategy_review_concurrent_download_race_same_thumbnail_requested_twice",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_concurrent_download_race_same_thumbnail_requested_twice"
     },
     {
       "relation": "contains",
@@ -25016,9 +25187,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L246",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_4_performance_guardrails",
-      "target": "thumbnail_strategy_review_raw_sqlite_in_runintransaction_mixes_abstractions",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_raw_sqlite_in_runintransaction_mixes_abstractions"
     },
     {
       "relation": "contains",
@@ -25026,9 +25197,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L199",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_4_performance_guardrails",
-      "target": "thumbnail_strategy_review_thumbnailwritebuffer_loses_all_pending_paths_on_app_kill",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_thumbnailwritebuffer_loses_all_pending_paths_on_app_kill"
     },
     {
       "relation": "contains",
@@ -25036,9 +25207,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L361",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_5_concurrency_control",
-      "target": "thumbnail_strategy_review_transaction_annotation_behavior_on_flow_is_mischaracterized",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_transaction_annotation_behavior_on_flow_is_mischaracterized"
     },
     {
       "relation": "contains",
@@ -25046,9 +25217,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L321",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_section_5_concurrency_control",
-      "target": "thumbnail_strategy_review_transaction_on_large_flow_queries_blocks_writers_during_mapping",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_transaction_on_large_flow_queries_blocks_writers_during_mapping"
     },
     {
       "relation": "contains",
@@ -25056,9 +25227,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L405",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_missing_sections_to_add",
-      "target": "thumbnail_strategy_review_cache_eviction_policy_not_documented",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_cache_eviction_policy_not_documented"
     },
     {
       "relation": "contains",
@@ -25066,9 +25237,9 @@
       "source_file": "THUMBNAIL_STRATEGY_REVIEW.md",
       "source_location": "L421",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_strategy_review_missing_sections_to_add",
-      "target": "thumbnail_strategy_review_thumbnail_size_constraints_not_documented",
-      "confidence_score": 1.0
+      "target": "thumbnail_strategy_review_thumbnail_size_constraints_not_documented"
     },
     {
       "relation": "contains",
@@ -26649,6 +26820,186 @@
       "confidence_score": 1.0,
       "source": "tgpix_implementation_plan_18_permissions",
       "target": "tgpix_implementation_plan_runtime_permission_flow"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy",
+      "target": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_1_architectural_overview_data_flow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_2_the_multi_tiered_cache_architecture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_3_tier_0_coil_configuration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_4_session_scoped_file_ids",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L161",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_6_concurrency_control_database_integrity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_7_video_support_compatibility",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
+      "target": "thumbnail_loading_strategy_8_cache_eviction_constraints",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_1_architectural_overview_data_flow",
+      "target": "thumbnail_loading_strategy_key_error_states_fallbacks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L115",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_4_session_scoped_file_ids",
+      "target": "thumbnail_loading_strategy_cache_validation_protocol",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "target": "thumbnail_loading_strategy_a_the_write_bottleneck_grid_recomposition",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L136",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "target": "thumbnail_loading_strategy_b_the_solution_thumbnailwritebuffer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L150",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "target": "thumbnail_loading_strategy_c_critical_assessment_app_kill_behavior",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L154",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
+      "target": "thumbnail_loading_strategy_d_in_flight_download_deduplication",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L165",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_6_concurrency_control_database_integrity",
+      "target": "thumbnail_loading_strategy_a_read_snapshot_isolation_transaction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L195",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_8_cache_eviction_constraints",
+      "target": "thumbnail_loading_strategy_a_cache_eviction_policy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "thumbnail_loading_strategy.md",
+      "source_location": "L200",
+      "weight": 1.0,
+      "source": "thumbnail_loading_strategy_8_cache_eviction_constraints",
+      "target": "thumbnail_loading_strategy_b_size_constraints",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -29230,5 +29581,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "a77a10933ed5d7228eb20df210bd03e3af860b49"
+  "built_at_commit": "321a5d2ab90c56484ead4cd54fc423803e9a063b"
 }

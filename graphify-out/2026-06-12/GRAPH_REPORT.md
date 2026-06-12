@@ -1,16 +1,16 @@
 # Graph Report - telegallery-calude  (2026-06-12)
 
 ## Corpus Check
-- 53 files · ~212,605 words
+- 54 files · ~215,577 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1059 nodes · 1735 edges · 78 communities (60 shown, 18 thin omitted)
+- 1094 nodes · 1793 edges · 78 communities (61 shown, 17 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8b56b52c`
+- Built from commit: `a77a1093`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -97,8 +97,8 @@
 6. `Long` - 35 edges
 7. `TGPix — Implementation Plan` - 28 edges
 8. `PhotosGridScreen()` - 24 edges
-9. `List` - 21 edges
-10. `AlbumDao` - 21 edges
+9. `List` - 23 edges
+10. `CloudPhotoDao` - 23 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `BackupManager` --references--> `Backup Target - Private Vault`  [INFERRED]
@@ -125,11 +125,11 @@
 - **User Authentication Flow** — screens_phoneloginscreen_phoneloginscreen, screens_otpverifyscreen_otpverifyscreen, screenshots_login_screen_otp_login_form [INFERRED 0.85]
 - **Media Backup and Sync Ecosystem** — screenshots_settings_screen_private_vault, screenshots_gallery_timeline_sync_badges, screenshots_photo_viewer_action_sheet, storage_backupmanager_backupmanager [INFERRED 0.85]
 
-## Communities (78 total, 18 thin omitted)
+## Communities (78 total, 17 thin omitted)
 
 ### Community 0 - "Database and DAO Schema"
-Cohesion: 0.20
-Nodes (3): Boolean, CloudPhotoDao, CloudPhotoEntity
+Cohesion: 0.13
+Nodes (5): Boolean, Int, CloudPhotoDao, CloudPhotoEntity, ThumbnailPathUpdate
 
 ### Community 1 - "Application Preferences"
 Cohesion: 0.09
@@ -149,7 +149,7 @@ Nodes (25): app/build.gradle, Boolean, Context, Int, List, Long, StateFlow, Stri
 
 ### Community 5 - "Albums Screen UI and Utils"
 Cohesion: 0.06
-Nodes (58): androidx, Context, dev, Int, List, LocalPhoto, Long, String (+50 more)
+Nodes (60): androidx, Context, dev, Int, List, LocalPhoto, Long, String (+52 more)
 
 ### Community 6 - "Photos Grid and Search UI"
 Cohesion: 0.06
@@ -276,12 +276,12 @@ Cohesion: 0.67
 Nodes (3): 8. Phase 4 — Telegram Storage Integration, Goal, Steps
 
 ### Community 55 - "Community 55"
-Cohesion: 0.05
-Nodes (31): AndroidViewModel, File, Application, Boolean, CloudPhotoEntity, Flow, List, LocalPhoto (+23 more)
+Cohesion: 0.07
+Nodes (21): File, Application, Boolean, CloudPhotoEntity, Flow, List, LocalPhoto, SearchItem (+13 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.25
-Nodes (9): AlbumEntity, AlbumPhotoEntity, Context, Flow, List, LocalPhoto, Long, String (+1 more)
+Cohesion: 0.09
+Nodes (21): AlbumEntity, AlbumPhotoEntity, AndroidViewModel, Context, Flow, List, LocalPhoto, Long (+13 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.27
@@ -300,7 +300,7 @@ Cohesion: 0.07
 Nodes (28): Album Event Model, Core Philosophy, Delete Events, Device Registry, Executive Summary, Final Design Principles, Flood Wait Strategy, High Level Architecture (+20 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.17
+Cohesion: 0.18
 Nodes (4): Long, String, AlbumDao, AlbumEntity
 
 ### Community 66 - "Community 66"
@@ -308,7 +308,7 @@ Cohesion: 0.21
 Nodes (10): Context, java, BackupEventDao, BackupEventEntity, CloudPhotoFtsEntity, getDatabase(), migrate(), recordEvent() (+2 more)
 
 ### Community 67 - "Community 67"
-Cohesion: 0.26
+Cohesion: 0.27
 Nodes (4): Flow, List, Flow, AlbumPhotoEntity
 
 ### Community 68 - "Community 68"
@@ -318,6 +318,10 @@ Nodes (7): Album Photo Schema Refactoring, Destructive Migration Policy Review, 
 ### Community 70 - "Community 70"
 Cohesion: 0.40
 Nodes (3): String, ErrorMonitor, Throwable
+
+### Community 71 - "Community 71"
+Cohesion: 0.08
+Nodes (24): 🟡 "95% Reduction" Claim Has No Evidence, 🟡 "Always Calls GetMessage First" Contradicts Tier 2 Logic, 🟢 Cache Eviction Policy Not Documented, 🔴 Coil's Own Cache Layer Is Completely Missing, 🟢 Concurrent Download Race — Same Thumbnail Requested Twice, 🟡 Diagram Shows GetMessage Called Even When Tier 2 Has Cached Path, 🟢 `fileIdCachedAt` Column Interaction Not Documented, Missing Sections to Add (+16 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.22
@@ -344,24 +348,24 @@ Cohesion: 0.50
 Nodes (4): LocalPhoto, GalleryViewModel, toLocalPhoto(), TrashScreen()
 
 ## Knowledge Gaps
-- **416 isolated node(s):** `String`, `Throwable`, `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` (+411 more)
+- **434 isolated node(s):** `String`, `Throwable`, `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` (+429 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `TdlibManager` connect `Telegram Client Integration` to `Background Backup Workers`, `Database Backup Manager`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+  _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **Why does `PhotosGridScreen()` connect `Photos Grid and Search UI` to `Community 65`, `Community 67`, `Community 69`, `Albums Screen UI and Utils`, `Image Upload Manager`, `Community 72`, `Community 76`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
-- **Why does `backupDatabase()` connect `Database Backup Manager` to `Background Backup Workers`, `Community 68`, `Telegram Client Integration`?**
-  _High betweenness centrality (0.059) - this node is a cross-community bridge._
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
+- **Why does `AutoVaultSetupScreen()` connect `Telegram Client Integration` to `Application Preferences`, `Community 76`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **What connects `String`, `Throwable`, `ManagedActivityResultLauncher` to the rest of the system?**
-  _430 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _448 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Database and DAO Schema` be split into smaller, more focused modules?**
+  _Cohesion score 0.12681159420289856 - nodes in this community are weakly interconnected._
 - **Should `Application Preferences` be split into smaller, more focused modules?**
   _Cohesion score 0.08514013749338974 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.05555555555555555 - nodes in this community are weakly interconnected._
-- **Should `Background Backup Workers` be split into smaller, more focused modules?**
-  _Cohesion score 0.06620209059233449 - nodes in this community are weakly interconnected._

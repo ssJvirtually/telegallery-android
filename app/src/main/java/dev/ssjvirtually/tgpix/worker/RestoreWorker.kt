@@ -79,7 +79,11 @@ class RestoreWorker(
             setForeground(getForegroundInfo())
             TdlibManager.addLog("RestoreWorker: Promoted restore worker to Foreground Service.")
         } catch (e: Exception) {
-            TdlibManager.addLog("RestoreWorker: Failed to start as foreground service: ${e.message}")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
+                TdlibManager.addLog("RestoreWorker: Foreground service start not allowed (Android 14+ constraints). Running as a standard background worker: ${e.message}")
+            } else {
+                TdlibManager.addLog("RestoreWorker: Failed to start as foreground service: ${e.message}")
+            }
         }
 
         try {
