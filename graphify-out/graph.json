@@ -830,7 +830,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L1",
       "id": "storage_mediastorescanner",
-      "community": 59,
+      "community": 5,
       "norm_label": "mediastorescanner.kt"
     },
     {
@@ -839,7 +839,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L11",
       "id": "storage_mediastorescanner_localphoto",
-      "community": 59,
+      "community": 5,
       "norm_label": "localphoto"
     },
     {
@@ -848,7 +848,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L33",
       "id": "storage_mediastorescanner_mediastorescanner",
-      "community": 59,
+      "community": 5,
       "norm_label": "mediastorescanner"
     },
     {
@@ -857,7 +857,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L40",
       "id": "storage_mediastorescanner_mediastorescanner_parsedatefromfilename",
-      "community": 59,
+      "community": 5,
       "norm_label": ".parsedatefromfilename()"
     },
     {
@@ -866,7 +866,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L40",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_mediastorescanner_kt_string",
-      "community": 59,
+      "community": 5,
       "norm_label": "string"
     },
     {
@@ -875,7 +875,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L40",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_mediastorescanner_kt_long",
-      "community": 59,
+      "community": 5,
       "norm_label": "long"
     },
     {
@@ -884,7 +884,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L80",
       "id": "storage_mediastorescanner_mediastorescanner_scan",
-      "community": 59,
+      "community": 5,
       "norm_label": ".scan()"
     },
     {
@@ -893,7 +893,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L80",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_mediastorescanner_kt_context",
-      "community": 59,
+      "community": 5,
       "norm_label": "context"
     },
     {
@@ -902,7 +902,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L80",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_mediastorescanner_kt_list",
-      "community": 59,
+      "community": 5,
       "norm_label": "list"
     },
     {
@@ -911,7 +911,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L165",
       "id": "storage_mediastorescanner_getpartialhash",
-      "community": 59,
+      "community": 5,
       "norm_label": "getpartialhash()"
     },
     {
@@ -920,7 +920,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/MediaStoreScanner.kt",
       "source_location": "L184",
       "id": "storage_mediastorescanner_getfingerprint",
-      "community": 59,
+      "community": 5,
       "norm_label": "getfingerprint()"
     },
     {
@@ -1649,7 +1649,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L56",
       "id": "storage_uploaddatabase_uploaddao_delete",
-      "community": 65,
+      "community": 69,
       "norm_label": ".delete()"
     },
     {
@@ -2171,7 +2171,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L319",
       "id": "storage_uploaddatabase_registereddeviceentity",
-      "community": 79,
+      "community": 7,
       "norm_label": "registereddeviceentity"
     },
     {
@@ -2180,7 +2180,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L327",
       "id": "storage_uploaddatabase_registereddevicedao",
-      "community": 79,
+      "community": 68,
       "norm_label": "registereddevicedao"
     },
     {
@@ -2189,7 +2189,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L329",
       "id": "storage_uploaddatabase_registereddevicedao_insert",
-      "community": 79,
+      "community": 68,
       "norm_label": ".insert()"
     },
     {
@@ -2198,7 +2198,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L332",
       "id": "storage_uploaddatabase_registereddevicedao_getalldevices",
-      "community": 79,
+      "community": 68,
       "norm_label": ".getalldevices()"
     },
     {
@@ -2216,7 +2216,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L339",
       "id": "storage_uploaddatabase_registereddevicedao_delete",
-      "community": 79,
+      "community": 68,
       "norm_label": ".delete()"
     },
     {
@@ -2225,7 +2225,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L342",
       "id": "storage_uploaddatabase_registereddevicedao_clearall",
-      "community": 79,
+      "community": 68,
       "norm_label": ".clearall()"
     },
     {
@@ -2252,7 +2252,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L352",
       "id": "storage_uploaddatabase_uploaddatabase_dao",
-      "community": 68,
+      "community": 69,
       "norm_label": ".dao()"
     },
     {
@@ -2288,7 +2288,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L356",
       "id": "storage_uploaddatabase_uploaddatabase_devicedao",
-      "community": 79,
+      "community": 68,
       "norm_label": ".devicedao()"
     },
     {
@@ -3647,7 +3647,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L1",
       "id": "screens_albumsscreen",
-      "community": 5,
+      "community": 59,
       "norm_label": "albumsscreen.kt"
     },
     {
@@ -3656,7 +3656,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L57",
       "id": "screens_albumsscreen_albumuimodel",
-      "community": 5,
+      "community": 59,
       "norm_label": "albumuimodel"
     },
     {
@@ -3665,7 +3665,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L64",
       "id": "screens_albumsscreen_albumsscreen",
-      "community": 5,
+      "community": 59,
       "norm_label": "albumsscreen()"
     },
     {
@@ -3674,7 +3674,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L64",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_dev",
-      "community": 5,
+      "community": 59,
       "norm_label": "dev"
     },
     {
@@ -3683,7 +3683,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L390",
       "id": "screens_albumsscreen_albumcard",
-      "community": 5,
+      "community": 59,
       "norm_label": "albumcard()"
     },
     {
@@ -3692,7 +3692,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L512",
       "id": "screens_albumsscreen_albumdetailsview",
-      "community": 5,
+      "community": 59,
       "norm_label": "albumdetailsview()"
     },
     {
@@ -3701,7 +3701,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L512",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_long",
-      "community": 5,
+      "community": 59,
       "norm_label": "long"
     },
     {
@@ -3710,7 +3710,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L512",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_string",
-      "community": 5,
+      "community": 59,
       "norm_label": "string"
     },
     {
@@ -3719,7 +3719,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L512",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_list",
-      "community": 5,
+      "community": 59,
       "norm_label": "list"
     },
     {
@@ -3728,7 +3728,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L512",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_localphoto",
-      "community": 5,
+      "community": 59,
       "norm_label": "localphoto"
     },
     {
@@ -3737,7 +3737,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L933",
       "id": "screens_albumsscreen_showcreatealbumdialog",
-      "community": 5,
+      "community": 59,
       "norm_label": "showcreatealbumdialog()"
     },
     {
@@ -3746,7 +3746,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L933",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_context",
-      "community": 5,
+      "community": 59,
       "norm_label": "context"
     },
     {
@@ -3755,7 +3755,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L954",
       "id": "screens_albumsscreen_getitemindexat",
-      "community": 5,
+      "community": 59,
       "norm_label": "getitemindexat()"
     },
     {
@@ -3764,7 +3764,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L954",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_androidx",
-      "community": 5,
+      "community": 59,
       "norm_label": "androidx"
     },
     {
@@ -3773,7 +3773,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
       "source_location": "L954",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_int",
-      "community": 5,
+      "community": 59,
       "norm_label": "int"
     },
     {
@@ -3800,7 +3800,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L1",
       "id": "screens_otpverifyscreen",
-      "community": 73,
+      "community": 75,
       "norm_label": "otpverifyscreen.kt"
     },
     {
@@ -3809,7 +3809,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L24",
       "id": "screens_otpverifyscreen_otpverifyscreen",
-      "community": 73,
+      "community": 75,
       "norm_label": "otpverifyscreen()"
     },
     {
@@ -3818,7 +3818,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L1",
       "id": "screens_phoneloginscreen",
-      "community": 75,
+      "community": 73,
       "norm_label": "phoneloginscreen.kt"
     },
     {
@@ -3827,7 +3827,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L26",
       "id": "screens_phoneloginscreen_phoneloginscreen",
-      "community": 75,
+      "community": 73,
       "norm_label": "phoneloginscreen()"
     },
     {
@@ -4106,7 +4106,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L1",
       "id": "screens_searchscreen",
-      "community": 6,
+      "community": 80,
       "norm_label": "searchscreen.kt"
     },
     {
@@ -4115,7 +4115,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L78",
       "id": "screens_searchscreen_searchitem",
-      "community": 6,
+      "community": 80,
       "norm_label": "searchitem"
     },
     {
@@ -4124,7 +4124,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L80",
       "id": "screens_searchscreen_searchscreen",
-      "community": 6,
+      "community": 80,
       "norm_label": "searchscreen()"
     },
     {
@@ -4133,7 +4133,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L80",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_dev",
-      "community": 6,
+      "community": 80,
       "norm_label": "dev"
     },
     {
@@ -4142,7 +4142,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L948",
       "id": "screens_searchscreen_getitemindexat",
-      "community": 6,
+      "community": 80,
       "norm_label": "getitemindexat()"
     },
     {
@@ -4151,7 +4151,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L948",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_androidx",
-      "community": 6,
+      "community": 80,
       "norm_label": "androidx"
     },
     {
@@ -4160,7 +4160,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L948",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_int",
-      "community": 6,
+      "community": 80,
       "norm_label": "int"
     },
     {
@@ -4176,7 +4176,7 @@
       "label": "FolderInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L51",
+      "source_location": "L55",
       "id": "screens_settingsscreen_folderinfo",
       "community": 72,
       "norm_label": "folderinfo"
@@ -4185,7 +4185,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L55",
+      "source_location": "L59",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_boolean",
       "community": 72,
       "norm_label": "boolean"
@@ -4194,7 +4194,7 @@
       "label": "SettingsScreen()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L59",
+      "source_location": "L63",
       "id": "screens_settingsscreen_settingsscreen",
       "community": 72,
       "norm_label": "settingsscreen()"
@@ -4203,10 +4203,46 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L59",
+      "source_location": "L63",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_string",
       "community": 72,
       "norm_label": "string"
+    },
+    {
+      "label": "compileAndShareLogs()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "id": "screens_settingsscreen_compileandsharelogs",
+      "community": 72,
+      "norm_label": "compileandsharelogs()"
+    },
+    {
+      "label": "android",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_android",
+      "community": 72,
+      "norm_label": "android"
+    },
+    {
+      "label": "UploadDatabase",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "id": "uploaddatabase",
+      "community": 59,
+      "norm_label": "uploaddatabase"
+    },
+    {
+      "label": "List",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_list",
+      "community": 72,
+      "norm_label": "list"
     },
     {
       "label": "TrashScreen.kt",
@@ -4277,7 +4313,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L1",
       "id": "utils_galleryutils",
-      "community": 5,
+      "community": 79,
       "norm_label": "galleryutils.kt"
     },
     {
@@ -4286,7 +4322,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L20",
       "id": "utils_galleryutils_galleryitem",
-      "community": 5,
+      "community": 79,
       "norm_label": "galleryitem"
     },
     {
@@ -4295,7 +4331,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L21",
       "id": "utils_galleryutils_header",
-      "community": 5,
+      "community": 79,
       "norm_label": "header"
     },
     {
@@ -4304,7 +4340,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L22",
       "id": "utils_galleryutils_photoitem",
-      "community": 5,
+      "community": 79,
       "norm_label": "photoitem"
     },
     {
@@ -4313,7 +4349,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L25",
       "id": "utils_galleryutils_iscloudphoto",
-      "community": 5,
+      "community": 59,
       "norm_label": "iscloudphoto()"
     },
     {
@@ -4322,7 +4358,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L25",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_string",
-      "community": 5,
+      "community": 79,
       "norm_label": "string"
     },
     {
@@ -4331,7 +4367,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L25",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_boolean",
-      "community": 5,
+      "community": 79,
       "norm_label": "boolean"
     },
     {
@@ -4340,7 +4376,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L27",
       "id": "utils_galleryutils_parsecloudphotouri",
-      "community": 5,
+      "community": 79,
       "norm_label": "parsecloudphotouri()"
     },
     {
@@ -4358,7 +4394,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_long",
-      "community": 5,
+      "community": 79,
       "norm_label": "long"
     },
     {
@@ -4367,7 +4403,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_int",
-      "community": 5,
+      "community": 79,
       "norm_label": "int"
     },
     {
@@ -4376,7 +4412,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L44",
       "id": "utils_galleryutils_parsedatefromfilename",
-      "community": 5,
+      "community": 79,
       "norm_label": "parsedatefromfilename()"
     },
     {
@@ -4385,7 +4421,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L99",
       "id": "utils_galleryutils_remembercloudthumbnailpath",
-      "community": 5,
+      "community": 79,
       "norm_label": "remembercloudthumbnailpath()"
     },
     {
@@ -4394,7 +4430,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L213",
       "id": "utils_galleryutils_cloudphotodownloadstate",
-      "community": 5,
+      "community": 79,
       "norm_label": "cloudphotodownloadstate"
     },
     {
@@ -4403,7 +4439,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L218",
       "id": "utils_galleryutils_remembercloudphotodownloadstate",
-      "community": 5,
+      "community": 79,
       "norm_label": "remembercloudphotodownloadstate()"
     },
     {
@@ -4412,7 +4448,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L351",
       "id": "utils_galleryutils_pendingpath",
-      "community": 5,
+      "community": 79,
       "norm_label": "pendingpath"
     },
     {
@@ -4421,7 +4457,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L364",
       "id": "utils_galleryutils_get",
-      "community": 5,
+      "community": 79,
       "norm_label": "get()"
     },
     {
@@ -4430,7 +4466,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L368",
       "id": "utils_galleryutils_enqueue",
-      "community": 5,
+      "community": 79,
       "norm_label": "enqueue()"
     },
     {
@@ -4439,7 +4475,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L1",
       "id": "utils_telegramsharedialog",
-      "community": 6,
+      "community": 81,
       "norm_label": "telegramsharedialog.kt"
     },
     {
@@ -4448,7 +4484,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L36",
       "id": "utils_telegramsharedialog_telegramsharedialog",
-      "community": 6,
+      "community": 81,
       "norm_label": "telegramsharedialog()"
     },
     {
@@ -4457,7 +4493,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L36",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_telegramsharedialog_kt_list",
-      "community": 6,
+      "community": 81,
       "norm_label": "list"
     },
     {
@@ -4466,7 +4502,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L36",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_telegramsharedialog_kt_localphoto",
-      "community": 6,
+      "community": 81,
       "norm_label": "localphoto"
     },
     {
@@ -4475,7 +4511,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L238",
       "id": "utils_telegramsharedialog_chatrow",
-      "community": 6,
+      "community": 81,
       "norm_label": "chatrow()"
     },
     {
@@ -4484,7 +4520,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/TelegramShareDialog.kt",
       "source_location": "L238",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_telegramsharedialog_kt_tdapi",
-      "community": 6,
+      "community": 81,
       "norm_label": "tdapi"
     },
     {
@@ -5170,6 +5206,60 @@
       "id": "workflows_graphify_workflow_graphify",
       "community": 54,
       "norm_label": "workflow: graphify"
+    },
+    {
+      "label": "PLAY_STORE_DECLARATION.md",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L1",
+      "id": "play_store_declaration",
+      "community": 82,
+      "norm_label": "play_store_declaration.md"
+    },
+    {
+      "label": "TGPix \u2014 Google Play Store Foreground Service Declaration",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L1",
+      "id": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "community": 82,
+      "norm_label": "tgpix \u2014 google play store foreground service declaration"
+    },
+    {
+      "label": "1. Foreground Service Type",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L7",
+      "id": "play_store_declaration_1_foreground_service_type",
+      "community": 82,
+      "norm_label": "1. foreground service type"
+    },
+    {
+      "label": "2. Core Feature Justification",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L13",
+      "id": "play_store_declaration_2_core_feature_justification",
+      "community": 82,
+      "norm_label": "2. core feature justification"
+    },
+    {
+      "label": "3. Why Foreground Service is Required",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L20",
+      "id": "play_store_declaration_3_why_foreground_service_is_required",
+      "community": 82,
+      "norm_label": "3. why foreground service is required"
+    },
+    {
+      "label": "4. User-Initiated Trigger Description",
+      "file_type": "document",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L27",
+      "id": "play_store_declaration_4_user_initiated_trigger_description",
+      "community": 82,
+      "norm_label": "4. user-initiated trigger description"
     },
     {
       "label": "README.md",
@@ -7318,7 +7408,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L306",
-      "community": 5,
+      "community": 83,
       "norm_label": "thumbnailwritebuffer",
       "id": "utils_galleryutils_thumbnailwritebuffer"
     },
@@ -7327,7 +7417,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L319",
-      "community": 5,
+      "community": 79,
       "norm_label": ".get()",
       "id": "utils_galleryutils_thumbnailwritebuffer_get"
     },
@@ -7336,7 +7426,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L323",
-      "community": 5,
+      "community": 79,
       "norm_label": ".enqueue()",
       "id": "utils_galleryutils_thumbnailwritebuffer_enqueue"
     },
@@ -7345,7 +7435,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L332",
-      "community": 5,
+      "community": 83,
       "norm_label": ".starttimeoutloop()",
       "id": "utils_galleryutils_thumbnailwritebuffer_starttimeoutloop"
     },
@@ -7354,7 +7444,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L332",
-      "community": 5,
+      "community": 83,
       "norm_label": "android",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_utils_galleryutils_kt_android"
     },
@@ -7363,7 +7453,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L349",
-      "community": 5,
+      "community": 83,
       "norm_label": ".flush()",
       "id": "utils_galleryutils_thumbnailwritebuffer_flush"
     },
@@ -9195,15 +9285,6 @@
       "id": "searchitem"
     },
     {
-      "label": "UploadDatabase",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L491",
-      "community": 5,
-      "norm_label": "uploaddatabase",
-      "id": "uploaddatabase"
-    },
-    {
       "label": ".syncCloudHistory()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
@@ -9361,7 +9442,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
       "source_location": "L72",
-      "community": 59,
+      "community": 5,
       "norm_label": "java",
       "id": "java"
     },
@@ -9433,7 +9514,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L72",
-      "community": 6,
+      "community": 80,
       "norm_label": "list",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_list"
     },
@@ -9442,7 +9523,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L72",
-      "community": 6,
+      "community": 80,
       "norm_label": "localphoto",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_localphoto"
     },
@@ -9451,7 +9532,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L72",
-      "community": 6,
+      "community": 80,
       "norm_label": "set",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_set"
     },
@@ -9460,7 +9541,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L72",
-      "community": 6,
+      "community": 80,
       "norm_label": "string",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_string"
     },
@@ -9469,7 +9550,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
       "source_location": "L72",
-      "community": 6,
+      "community": 80,
       "norm_label": "boolean",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_boolean"
     },
@@ -9609,7 +9690,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Screenshots, WhatsApp, Snapchat, and downloads lack EXIF DATE_TAKEN metadata. To ensure chronological gallery sorting, a multi-level fallback chain is resolved: EXIF date -> filename parsing -> filesystem creation/modification time -> MediaStore DATE_ADDED -> MediaStore DATE_MODIFIED.",
-      "community": 59,
+      "community": 5,
       "norm_label": "multi-level photo date fallback resolution",
       "id": "storage_mediastorescanner_date_fallback"
     },
@@ -9772,7 +9853,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Cached TDLib file IDs are volatile. Treat cached file ID as stale after 30 min and refresh from server if needed.",
-      "community": 5,
+      "community": 79,
       "norm_label": "volatile file id refresh",
       "id": "backup_strategy_review_volatile_file_id"
     },
@@ -10195,7 +10276,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 59,
       "norm_label": "albums screen sharing error screenshot",
       "id": "error_sc_screenshot_20260603_192103"
     },
@@ -10208,7 +10289,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 59,
       "norm_label": "empty album toast notice",
       "id": "error_sc_screenshot_20260603_192103_empty_album_toast"
     },
@@ -10221,7 +10302,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 5,
+      "community": 59,
       "norm_label": "albums grid layout",
       "id": "error_sc_screenshot_20260603_192103_albums_grid"
     },
@@ -22883,6 +22964,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "weight": 1.0,
+      "source": "screens_settingsscreen",
+      "target": "screens_settingsscreen_compileandsharelogs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
       "source_location": "L49",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -22933,6 +23024,17 @@
       "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_string"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L706",
+      "weight": 1.0,
+      "source": "screens_settingsscreen_settingsscreen",
+      "target": "screens_settingsscreen_compileandsharelogs",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "implements",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
@@ -22961,6 +23063,50 @@
       "weight": 1.0,
       "source": "screens_settingsscreen_settingsscreen",
       "target": "theme_telephotostheme_telephotostheme"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "source": "screens_settingsscreen_compileandsharelogs",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "screens_settingsscreen_compileandsharelogs",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_android",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "screens_settingsscreen_compileandsharelogs",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
+      "source_location": "L915",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "screens_settingsscreen_compileandsharelogs",
+      "target": "uploaddatabase",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24710,6 +24856,56 @@
       "confidence_score": 1.0,
       "source": "workflows_graphify",
       "target": "workflows_graphify_workflow_graphify"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "play_store_declaration",
+      "target": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "target": "play_store_declaration_1_foreground_service_type",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "target": "play_store_declaration_2_core_feature_justification",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "target": "play_store_declaration_3_why_foreground_service_is_required",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PLAY_STORE_DECLARATION.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "play_store_declaration_tgpix_google_play_store_foreground_service_declaration",
+      "target": "play_store_declaration_4_user_initiated_trigger_description",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -26827,9 +27023,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy",
-      "target": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1"
     },
     {
       "relation": "contains",
@@ -26837,9 +27033,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_1_architectural_overview_data_flow",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_1_architectural_overview_data_flow"
     },
     {
       "relation": "contains",
@@ -26847,9 +27043,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_2_the_multi_tiered_cache_architecture",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_2_the_multi_tiered_cache_architecture"
     },
     {
       "relation": "contains",
@@ -26857,9 +27053,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_3_tier_0_coil_configuration",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_3_tier_0_coil_configuration"
     },
     {
       "relation": "contains",
@@ -26867,9 +27063,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L109",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_4_session_scoped_file_ids",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_4_session_scoped_file_ids"
     },
     {
       "relation": "contains",
@@ -26877,9 +27073,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L125",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety"
     },
     {
       "relation": "contains",
@@ -26887,9 +27083,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L161",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_6_concurrency_control_database_integrity",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_6_concurrency_control_database_integrity"
     },
     {
       "relation": "contains",
@@ -26897,9 +27093,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L174",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_7_video_support_compatibility",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_7_video_support_compatibility"
     },
     {
       "relation": "contains",
@@ -26907,9 +27103,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L191",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_tgpix_cloud_thumbnail_caching_loading_strategy_v1_1",
-      "target": "thumbnail_loading_strategy_8_cache_eviction_constraints",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_8_cache_eviction_constraints"
     },
     {
       "relation": "contains",
@@ -26917,9 +27113,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_1_architectural_overview_data_flow",
-      "target": "thumbnail_loading_strategy_key_error_states_fallbacks",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_key_error_states_fallbacks"
     },
     {
       "relation": "contains",
@@ -26927,9 +27123,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L115",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_4_session_scoped_file_ids",
-      "target": "thumbnail_loading_strategy_cache_validation_protocol",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_cache_validation_protocol"
     },
     {
       "relation": "contains",
@@ -26937,9 +27133,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L129",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
-      "target": "thumbnail_loading_strategy_a_the_write_bottleneck_grid_recomposition",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_a_the_write_bottleneck_grid_recomposition"
     },
     {
       "relation": "contains",
@@ -26947,9 +27143,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
-      "target": "thumbnail_loading_strategy_b_the_solution_thumbnailwritebuffer",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_b_the_solution_thumbnailwritebuffer"
     },
     {
       "relation": "contains",
@@ -26957,9 +27153,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L150",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
-      "target": "thumbnail_loading_strategy_c_critical_assessment_app_kill_behavior",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_c_critical_assessment_app_kill_behavior"
     },
     {
       "relation": "contains",
@@ -26967,9 +27163,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L154",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_5_performance_guardrails_scrolling_safety",
-      "target": "thumbnail_loading_strategy_d_in_flight_download_deduplication",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_d_in_flight_download_deduplication"
     },
     {
       "relation": "contains",
@@ -26977,9 +27173,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L165",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_6_concurrency_control_database_integrity",
-      "target": "thumbnail_loading_strategy_a_read_snapshot_isolation_transaction",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_a_read_snapshot_isolation_transaction"
     },
     {
       "relation": "contains",
@@ -26987,9 +27183,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L195",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_8_cache_eviction_constraints",
-      "target": "thumbnail_loading_strategy_a_cache_eviction_policy",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_a_cache_eviction_policy"
     },
     {
       "relation": "contains",
@@ -26997,9 +27193,9 @@
       "source_file": "thumbnail_loading_strategy.md",
       "source_location": "L200",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_8_cache_eviction_constraints",
-      "target": "thumbnail_loading_strategy_b_size_constraints",
-      "confidence_score": 1.0
+      "target": "thumbnail_loading_strategy_b_size_constraints"
     },
     {
       "relation": "method",
@@ -29581,5 +29777,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "321a5d2ab90c56484ead4cd54fc423803e9a063b"
+  "built_at_commit": "ad8dc67ccd3caa24946387a8038bcbc564e906d2"
 }

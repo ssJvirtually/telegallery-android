@@ -125,13 +125,13 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt": {
-    "mtime": 1781261540.9598255,
-    "ast_hash": "e14da9cd56d5514ba8436a3da096363a",
+    "mtime": 1781271185.2633076,
+    "ast_hash": "2edc08dd8e459ea266128e4a9a2b0104",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt": {
-    "mtime": 1781261540.964429,
-    "ast_hash": "0e7f8e86d926e49248c5f372f4b47456",
+    "mtime": 1781271173.0894115,
+    "ast_hash": "9c4936b6d4bd8173636cf6f21615c497",
     "semantic_hash": ""
   },
   "build.gradle": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
-    "mtime": 1781261540.9578252,
-    "ast_hash": "b003933c34e70217deb9276cde75abb6",
+    "mtime": 1781271179.592545,
+    "ast_hash": "1806656dcafa87ad1158c571f58495bf",
     "semantic_hash": ""
   },
   "watch_and_install.ps1": {
@@ -332,6 +332,11 @@
   "THUMBNAIL_STRATEGY_REVIEW.md": {
     "mtime": 1781268005.2310765,
     "ast_hash": "bb30a8e5b4d0ba4b453d03a28ae6ac9e",
+    "semantic_hash": ""
+  },
+  "thumbnail_loading_strategy.md": {
+    "mtime": 1781270570.18293,
+    "ast_hash": "e9f53b4eacfffb8301a82a77060b3d6a",
     "semantic_hash": ""
   }
 }

@@ -47,6 +47,10 @@ import org.drinkless.tdlib.TdApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.os.Build
+import android.content.Intent
+import androidx.core.content.FileProvider
+import java.io.File
 
 private data class FolderInfo(
     val id: String,
@@ -694,6 +698,30 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            item {
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            compileAndShareLogs(context, db, systemLogs)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TelePhotosTheme.AccentBlue,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = "Export Debug Logs",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
     }
 
@@ -881,5 +909,59 @@ fun SettingsScreen(
             },
             containerColor = TelePhotosTheme.Surface
         )
+    }
+}
+
+private suspend fun compileAndShareLogs(
+    context: android.content.Context,
+    database: UploadDatabase,
+    systemLogs: List<String>
+) {
+    withContext(Dispatchers.IO) {
+        try {
+            val sb = StringBuilder()
+            sb.append("=== TGPIX SYSTEM INFO ===\n")
+            sb.append("App Version: ${dev.ssjvirtually.tgpix.BuildConfig.VERSION_NAME} (${dev.ssjvirtually.tgpix.BuildConfig.VERSION_CODE})\n")
+            sb.append("OS Version: Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n")
+            sb.append("Device: ${Build.MANUFACTURER} ${Build.MODEL}\n")
+            sb.append("\n")
+
+            sb.append("=== ACTIVE JNI CORE LOGS ===\n")
+            systemLogs.forEach { log ->
+                sb.append(log).append("\n")
+            }
+            sb.append("\n")
+
+            sb.append("=== DATABASE EVENT LOGS ===\n")
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+            val dbEvents = database.eventDao().getAll()
+            dbEvents.forEach { event ->
+                val timeStr = sdf.format(java.util.Date(event.timestamp))
+                sb.append("[$timeStr] ${event.eventType} - ${event.details ?: ""}\n")
+            }
+
+            // Write to a temporary file in cacheDir
+            val logsFile = File(context.cacheDir, "tgpix_debug_logs.txt")
+            logsFile.writeText(sb.toString())
+
+            // Share using FileProvider
+            val authority = "${context.packageName}.fileprovider"
+            val uri = FileProvider.getUriForFile(context, authority, logsFile)
+
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "TGPix Debug Logs")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val chooser = Intent.createChooser(shareIntent, "Export Debug Logs")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Failed to export logs: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }
