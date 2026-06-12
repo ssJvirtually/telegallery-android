@@ -1,7 +1,7 @@
 # Graph Report - telegallery-calude  (2026-06-12)
 
 ## Corpus Check
-- 51 files · ~211,041 words
+- 51 files · ~211,094 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `898a1060`
+- Built from commit: `0fb13b22`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

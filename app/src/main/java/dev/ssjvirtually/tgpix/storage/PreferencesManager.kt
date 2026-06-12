@@ -28,6 +28,8 @@ private const val KEY_PENDING_RESTORE_PATH = "pending_restore_path"
 private const val KEY_LAST_SCANNED_MSG_ID = "last_scanned_msg_id"
 private const val KEY_CONSECUTIVE_BACKUP_FAILURES = "consecutive_backup_failures"
 
+private const val KEY_BACKUP_FOLDER_IDS = "backup_folder_ids"
+
 open class PreferencesManager {
     companion object : PreferencesManager()
 
@@ -42,6 +44,24 @@ open class PreferencesManager {
         val uriStr = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString(KEY_FOLDER_URI, null)
         return uriStr?.let { android.net.Uri.parse(it) }
+    }
+
+    open fun getBackupFolderIds(context: Context): Set<String> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getStringSet(KEY_BACKUP_FOLDER_IDS, emptySet()) ?: emptySet()
+    }
+
+    open fun setBackupFolderIds(context: Context, ids: Set<String>) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putStringSet(KEY_BACKUP_FOLDER_IDS, ids).apply()
+    }
+
+    open fun shouldBackupPhoto(context: Context, bucketId: String, bucketName: String): Boolean {
+        if (bucketName.equals("Camera", ignoreCase = true) || bucketName.equals("DCIM", ignoreCase = true)) {
+            return true
+        }
+        val enabledIds = getBackupFolderIds(context)
+        return enabledIds.contains(bucketId)
     }
 
     open fun saveChatId(context: Context, chatId: Long) {

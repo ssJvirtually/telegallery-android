@@ -30,6 +30,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import dev.ssjvirtually.tgpix.MainActivity
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
+import dev.ssjvirtually.tgpix.storage.MediaStoreScanner
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.BackupEventEntity
 import dev.ssjvirtually.tgpix.telegram.AuthManager
@@ -44,6 +45,14 @@ import org.drinkless.tdlib.TdApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private data class FolderInfo(
+    val id: String,
+    val name: String
+) {
+    val isCamera: Boolean
+        get() = name.equals("Camera", ignoreCase = true) || name.equals("DCIM", ignoreCase = true)
+}
 
 @Composable
 fun SettingsScreen(
@@ -69,6 +78,23 @@ fun SettingsScreen(
     }
 
     val coroutineScope = rememberCoroutineScope()
+
+    var showFolderSelectionDialog by remember { mutableStateOf(false) }
+    var selectedFolderIds by remember { mutableStateOf(PreferencesManager.getBackupFolderIds(context)) }
+    var localFolders by remember { mutableStateOf<List<FolderInfo>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val allPhotos = MediaStoreScanner.scan(context)
+            val folders = allPhotos.map { photo ->
+                FolderInfo(
+                    id = photo.bucketId,
+                    name = photo.bucketName
+                )
+            }.filter { it.id.isNotEmpty() && it.name.isNotEmpty() }.distinctBy { it.id }.sortedBy { it.name }
+            localFolders = folders
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -312,6 +338,35 @@ fun SettingsScreen(
                                     uncheckedThumbColor = Color.White,
                                     uncheckedTrackColor = Color(0xFFD1D1D6)
                                 )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = TelePhotosTheme.SurfaceVariant)
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Row 4: Select Backup Folders
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showFolderSelectionDialog = true }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Back Up Device Folders", color = TelePhotosTheme.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                val selectedCount = selectedFolderIds.size
+                                val foldersText = if (selectedCount == 0) "Camera Roll only" else "Camera Roll + $selectedCount other folders"
+                                Text(foldersText, color = TelePhotosTheme.TextSecondary, fontSize = 11.sp)
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Choose Folders",
+                                tint = TelePhotosTheme.TextSecondary,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .rotate(180f)
                             )
                         }
                     }
@@ -736,5 +791,93 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showFolderSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showFolderSelectionDialog = false },
+            title = {
+                Text(
+                    text = "Back up device folders",
+                    color = TelePhotosTheme.TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                if (localFolders.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No other media folders found.", color = TelePhotosTheme.TextSecondary, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
+                        items(localFolders) { folder ->
+                            val isCamera = folder.isCamera
+                            val isChecked = isCamera || selectedFolderIds.contains(folder.id)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !isCamera) {
+                                        val newSet = selectedFolderIds.toMutableSet()
+                                        if (newSet.contains(folder.id)) {
+                                            newSet.remove(folder.id)
+                                        } else {
+                                            newSet.add(folder.id)
+                                        }
+                                        selectedFolderIds = newSet
+                                        PreferencesManager.setBackupFolderIds(context, newSet)
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isChecked,
+                                    onCheckedChange = if (isCamera) null else { checked ->
+                                        val newSet = selectedFolderIds.toMutableSet()
+                                        if (checked) {
+                                            newSet.add(folder.id)
+                                        } else {
+                                            newSet.remove(folder.id)
+                                        }
+                                        selectedFolderIds = newSet
+                                        PreferencesManager.setBackupFolderIds(context, newSet)
+                                    },
+                                    enabled = !isCamera,
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = TelePhotosTheme.AccentBlue,
+                                        checkmarkColor = Color.White
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = folder.name,
+                                        color = TelePhotosTheme.TextPrimary,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    if (isCamera) {
+                                        Text(
+                                            text = "Camera Roll (Always enabled)",
+                                            color = TelePhotosTheme.AccentBlue,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFolderSelectionDialog = false }) {
+                    Text("Done", color = TelePhotosTheme.AccentBlue, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = TelePhotosTheme.Surface
+        )
     }
 }

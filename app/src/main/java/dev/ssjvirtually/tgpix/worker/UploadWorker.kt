@@ -153,10 +153,13 @@ class UploadWorker(
                 return Result.retry()
             }
 
-            // 7. Scan all photos on the device and sort to backup from oldest to newest (by date taken)
-            val photos = MediaStoreScanner.scan(applicationContext).sortedBy { it.dateTaken }
+            // 7. Scan all photos on the device and filter by backup-enabled directories
+            val allPhotos = MediaStoreScanner.scan(applicationContext)
+            val photos = allPhotos.filter { photo ->
+                PreferencesManager.shouldBackupPhoto(applicationContext, photo.bucketId, photo.bucketName)
+            }.sortedBy { it.dateTaken }
             if (photos.isEmpty()) {
-                TdlibManager.addLog("Worker: No photos found on device to sync.")
+                TdlibManager.addLog("Worker: No photos found in enabled backup folders to sync.")
                 return Result.success()
             }
 

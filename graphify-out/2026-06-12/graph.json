@@ -2160,7 +2160,7 @@
       "label": "closeDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L601",
+      "source_location": "L609",
       "id": "storage_uploaddatabase_closedatabase",
       "community": 66,
       "norm_label": "closedatabase()"
@@ -2169,7 +2169,7 @@
       "label": "restoreDataFromFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L621",
+      "source_location": "L629",
       "id": "storage_uploaddatabase_restoredatafromfile",
       "community": 66,
       "norm_label": "restoredatafromfile()"
@@ -2178,7 +2178,7 @@
       "label": "java",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L621",
+      "source_location": "L629",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_java",
       "community": 66,
       "norm_label": "java"
@@ -2187,7 +2187,7 @@
       "label": "recordEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L817",
+      "source_location": "L825",
       "id": "storage_uploaddatabase_recordevent",
       "community": 66,
       "norm_label": "recordevent()"
@@ -3555,7 +3555,7 @@
       "label": "showCreateAlbumDialog()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L922",
+      "source_location": "L925",
       "id": "screens_albumsscreen_showcreatealbumdialog",
       "community": 59,
       "norm_label": "showcreatealbumdialog()"
@@ -3564,7 +3564,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L922",
+      "source_location": "L925",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_context",
       "community": 59,
       "norm_label": "context"
@@ -3573,7 +3573,7 @@
       "label": "getItemIndexAt()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L943",
+      "source_location": "L946",
       "id": "screens_albumsscreen_getitemindexat",
       "community": 59,
       "norm_label": "getitemindexat()"
@@ -3582,7 +3582,7 @@
       "label": "androidx",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L943",
+      "source_location": "L946",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_androidx",
       "community": 59,
       "norm_label": "androidx"
@@ -3591,7 +3591,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/AlbumsScreen.kt",
-      "source_location": "L943",
+      "source_location": "L946",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_albumsscreen_kt_int",
       "community": 59,
       "norm_label": "int"
@@ -3744,7 +3744,7 @@
       "label": "PhotoDetailsSheet()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L606",
+      "source_location": "L607",
       "id": "screens_photoviewerscreen_photodetailssheet",
       "community": 5,
       "norm_label": "photodetailssheet()"
@@ -3753,7 +3753,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L606",
+      "source_location": "L607",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_photoviewerscreen_kt_boolean",
       "community": 5,
       "norm_label": "boolean"
@@ -3762,7 +3762,7 @@
       "label": "CloudPhotoEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L606",
+      "source_location": "L607",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_photoviewerscreen_kt_cloudphotoentity",
       "community": 5,
       "norm_label": "cloudphotoentity"
@@ -3771,7 +3771,7 @@
       "label": "getAbsolutePathFromUri()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L911",
+      "source_location": "L912",
       "id": "screens_photoviewerscreen_getabsolutepathfromuri",
       "community": 5,
       "norm_label": "getabsolutepathfromuri()"
@@ -3780,7 +3780,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L911",
+      "source_location": "L912",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_photoviewerscreen_kt_context",
       "community": 5,
       "norm_label": "context"
@@ -3789,7 +3789,7 @@
       "label": "rememberLocationName()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L933",
+      "source_location": "L934",
       "id": "screens_photoviewerscreen_rememberlocationname",
       "community": 5,
       "norm_label": "rememberlocationname()"
@@ -3798,7 +3798,7 @@
       "label": "Double",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L933",
+      "source_location": "L934",
       "id": "double",
       "community": 5,
       "norm_label": "double"
@@ -3807,7 +3807,7 @@
       "label": "formatCoordinates()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L962",
+      "source_location": "L963",
       "id": "screens_photoviewerscreen_formatcoordinates",
       "community": 5,
       "norm_label": "formatcoordinates()"
@@ -3816,7 +3816,7 @@
       "label": "detectTransformGesturesCustom()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
-      "source_location": "L970",
+      "source_location": "L971",
       "id": "screens_photoviewerscreen_detecttransformgesturescustom",
       "community": 5,
       "norm_label": "detecttransformgesturescustom()"
@@ -3960,7 +3960,7 @@
       "label": "getItemIndexAt()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
-      "source_location": "L935",
+      "source_location": "L938",
       "id": "screens_searchscreen_getitemindexat",
       "community": 72,
       "norm_label": "getitemindexat()"
@@ -3969,7 +3969,7 @@
       "label": "androidx",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
-      "source_location": "L935",
+      "source_location": "L938",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_androidx",
       "community": 72,
       "norm_label": "androidx"
@@ -3978,7 +3978,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SearchScreen.kt",
-      "source_location": "L935",
+      "source_location": "L938",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_searchscreen_kt_int",
       "community": 72,
       "norm_label": "int"
@@ -18645,9 +18645,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
       "source_location": "L856",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_uploadmanager_uploadmanager",
-      "target": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress",
-      "confidence_score": 1.0
+      "target": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress"
     },
     {
       "relation": "method",
@@ -18848,9 +18848,9 @@
       "source_location": "L856",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_context",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_context"
     },
     {
       "relation": "references",
@@ -19024,9 +19024,9 @@
       "source_location": "L856",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_string"
     },
     {
       "relation": "references",
@@ -19145,9 +19145,9 @@
       "source_location": "L856",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_file",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_uploadmanager_kt_file"
     },
     {
       "relation": "references",
@@ -19189,9 +19189,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/UploadManager.kt",
       "source_location": "L812",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "telegram_uploadmanager_uploadmanager_downloadphotostodevice",
-      "target": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress",
-      "confidence_score": 1.0
+      "target": "telegram_uploadmanager_uploadmanager_downloadcloudphotowithprogress"
     },
     {
       "relation": "calls",
@@ -27462,5 +27462,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "898a10600936fedb64cdd59bcafc4af80e550681"
+  "built_at_commit": "0fb13b22af31249296f56baf590abbbdc589d53e"
 }

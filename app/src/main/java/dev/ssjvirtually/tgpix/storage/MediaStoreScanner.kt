@@ -18,7 +18,9 @@ data class LocalPhoto(
     //                  (closest to "file created" for screenshots, WhatsApp, Snapchat, downloads)
     // 3. DATE_MODIFIED — filesystem last-modified time (always present, last resort)
     val dateTaken: Long,
-    val tags: String = ""
+    val tags: String = "",
+    val bucketId: String = "",
+    val bucketName: String = ""
 )
 
 private val waFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd", java.util.Locale.US)
@@ -82,7 +84,9 @@ object MediaStoreScanner {
             MediaStore.Images.Media.SIZE,
             MediaStore.Images.Media.DATE_TAKEN,
             MediaStore.Images.Media.DATE_ADDED,     // set when file first added to media library ("file created")
-            MediaStore.Images.Media.DATE_MODIFIED    // filesystem last-modified (always present)
+            MediaStore.Images.Media.DATE_MODIFIED,   // filesystem last-modified (always present)
+            MediaStore.Images.Media.BUCKET_ID,
+            MediaStore.Images.Media.BUCKET_DISPLAY_NAME
         )
 
         // Sort by date taken descending (newest first)
@@ -106,6 +110,8 @@ object MediaStoreScanner {
                 val dateTakenColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN)
                 val dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED)
                 val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_MODIFIED)
+                val bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID)
+                val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME)
 
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idColumn)
@@ -126,12 +132,23 @@ object MediaStoreScanner {
                         ?: (cursor.getLong(dateAddedColumn) * 1000L).takeIf { it > 0L }
                         ?: (cursor.getLong(dateModifiedColumn) * 1000L)
 
+                    val bucketId = cursor.getString(bucketIdColumn) ?: ""
+                    val bucketName = cursor.getString(bucketNameColumn) ?: ""
+
                     val contentUri = ContentUris.withAppendedId(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         id
                     ).toString()
 
-                    photos.add(LocalPhoto(id, contentUri, name, size, dateTaken))
+                    photos.add(LocalPhoto(
+                        id = id,
+                        uri = contentUri,
+                        name = name,
+                        size = size,
+                        dateTaken = dateTaken,
+                        bucketId = bucketId,
+                        bucketName = bucketName
+                    ))
                 }
             }
         } catch (e: Exception) {
