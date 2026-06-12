@@ -47,6 +47,17 @@ class TGPixApplication : Application() {
             }
             PreferencesManager.setPendingRestorePath(this, null)
         }
+
+        // Pre-warm database on a background thread to prevent concurrent lazy initialization conflicts
+        Thread {
+            try {
+                val db = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(this)
+                db.openHelper.writableDatabase
+                Log.d("TGPixApplication", "Database pre-warmed successfully.")
+            } catch (e: Exception) {
+                Log.e("TGPixApplication", "Failed to pre-warm database", e)
+            }
+        }.start()
     }
 
     private fun clearCachedPathsRaw(dbFile: File) {

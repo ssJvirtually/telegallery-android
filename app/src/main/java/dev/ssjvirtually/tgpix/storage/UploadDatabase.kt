@@ -11,6 +11,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Index
+import androidx.room.Transaction
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
@@ -44,9 +45,11 @@ interface UploadDao {
     @Query("SELECT * FROM uploads ORDER BY uploadedAt DESC")
     suspend fun getAll(): List<UploadEntity>
 
+    @Transaction
     @Query("SELECT * FROM uploads ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<UploadEntity>>
 
+    @Transaction
     @Query("SELECT path FROM uploads WHERE telegramMessageId != 0")
     fun getUploadedPathsFlow(): Flow<List<String>>
     
@@ -101,6 +104,7 @@ data class CloudPhotoFtsEntity(
 
 @Dao
 interface CloudPhotoDao {
+    @Transaction
     @Query("SELECT * FROM cloud_photos WHERE isTrashed = 0 ORDER BY uploadedAt DESC")
     fun getAllFlow(): Flow<List<CloudPhotoEntity>>
 
@@ -147,6 +151,7 @@ interface CloudPhotoDao {
     """)
     suspend fun searchCloudPhotos(query: String): List<CloudPhotoEntity>
 
+    @Transaction
     @Query("SELECT * FROM cloud_photos WHERE isTrashed = 1 ORDER BY trashedAt DESC")
     fun getTrashedFlow(): Flow<List<CloudPhotoEntity>>
 
@@ -198,6 +203,7 @@ data class AlbumPhotoEntity(
 
 @Dao
 interface AlbumDao {
+    @Transaction
     @Query("SELECT * FROM albums ORDER BY createdAt DESC")
     fun getAllAlbumsFlow(): Flow<List<AlbumEntity>>
 
@@ -219,15 +225,17 @@ interface AlbumDao {
     @Query("DELETE FROM album_photos WHERE photoUri = :photoUri OR photoUri LIKE 'cloud://' || :messageId || '/%'")
     suspend fun removePhotoFromAllAlbums(photoUri: String, messageId: Long)
 
+    @Transaction
     @Query("SELECT photoUri FROM album_photos WHERE albumId = :albumId")
     fun getPhotoUrisForAlbumFlow(albumId: Long): Flow<List<String>>
 
-    @Query("SELECT * FROM album_photos WHERE albumId = :albumId")
+    @Query("SELECT albumId, photoUri FROM album_photos WHERE albumId = :albumId")
     suspend fun getAlbumPhotosDirect(albumId: Long): List<AlbumPhotoEntity>
 
     @Query("SELECT DISTINCT photoUri FROM album_photos")
     suspend fun getAllAlbumPhotoUris(): List<String>
 
+    @Transaction
     @Query("SELECT * FROM album_photos")
     fun getAllAlbumPhotosFlow(): Flow<List<AlbumPhotoEntity>>
 
@@ -269,6 +277,7 @@ interface BackupEventDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(event: BackupEventEntity)
 
+    @Transaction
     @Query("SELECT * FROM backup_events ORDER BY timestamp DESC")
     fun getAllFlow(): Flow<List<BackupEventEntity>>
 
@@ -295,6 +304,7 @@ interface RegisteredDeviceDao {
     @Query("SELECT * FROM registered_devices ORDER BY deviceId ASC")
     suspend fun getAllDevices(): List<RegisteredDeviceEntity>
 
+    @Transaction
     @Query("SELECT * FROM registered_devices ORDER BY deviceId ASC")
     fun getAllDevicesFlow(): Flow<List<RegisteredDeviceEntity>>
 
