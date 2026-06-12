@@ -96,7 +96,8 @@ fun PhotoViewerScreen(
 
     val dbVersion by TdlibManager.dbVersion.collectAsState()
     val db = remember(dbVersion) { UploadDatabase.getDatabase(context) }
-    val cloudLogs by db.cloudDao().getAllFlow().collectAsState(initial = emptyList())
+    val cloudLogsFlow = remember(db) { db.cloudDao().getAllFlow() }
+    val cloudLogs by cloudLogsFlow.collectAsState(initial = emptyList())
 
     val activePhoto = photosList.getOrNull(pagerState.currentPage)
     val isSynced = activePhoto?.let { uploadedUris.contains(it.uri) } ?: false

@@ -519,7 +519,10 @@ fun AlbumDetailsView(
     val coroutineScope = rememberCoroutineScope()
     
     // Get all photo Uris currently mapped to this album via ViewModel flow
-    val albumPhotoUris by albumViewModel.getPhotoUrisForAlbumFlow(albumId).collectAsState(initial = emptyList())
+    val albumPhotoUrisFlow = remember(albumViewModel, albumId) {
+        albumViewModel.getPhotoUrisForAlbumFlow(albumId)
+    }
+    val albumPhotoUris by albumPhotoUrisFlow.collectAsState(initial = emptyList())
     
     // Filter overall timeline photos down to exactly the ones inside this album
     val albumPhotos = remember(albumPhotoUris, mergedPhotosList) {

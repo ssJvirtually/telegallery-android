@@ -131,7 +131,10 @@ fun SearchScreen(
     val syncedCloudFilenames = remember(cloudLogs) { cloudLogs.map { it.fileName }.toSet() }
  
     // Filter photos based on search query using SearchViewModel (combining in-memory local and SQLite FTS cloud searches)
-    val filteredPhotos by searchViewModel.searchPhotos(viewModel.searchIndex).collectAsState(initial = emptyList())
+    val searchPhotosFlow = remember(searchViewModel, viewModel.searchIndex) {
+        searchViewModel.searchPhotos(viewModel.searchIndex)
+    }
+    val filteredPhotos by searchPhotosFlow.collectAsState(initial = emptyList())
  
     // Group filtered photos by clean human-readable date header
     val groupedPhotosList = remember(filteredPhotos) {
