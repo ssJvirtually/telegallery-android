@@ -1,11 +1,11 @@
 # Graph Report - telegallery-calude  (2026-06-12)
 
 ## Corpus Check
-- 51 files · ~210,173 words
+- 51 files · ~210,644 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1028 nodes · 1663 edges · 71 communities (54 shown, 17 thin omitted)
+- 1030 nodes · 1674 edges · 77 communities (60 shown, 17 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 86 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
@@ -78,8 +78,14 @@
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 67|Community 67]]
 - [[_COMMUNITY_Community 68|Community 68]]
+- [[_COMMUNITY_Community 69|Community 69]]
 - [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
+- [[_COMMUNITY_Community 72|Community 72]]
 - [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 74|Community 74]]
+- [[_COMMUNITY_Community 75|Community 75]]
+- [[_COMMUNITY_Community 76|Community 76]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `PreferencesManager` - 51 edges
@@ -118,7 +124,7 @@
 - **User Authentication Flow** — screens_phoneloginscreen_phoneloginscreen, screens_otpverifyscreen_otpverifyscreen, screenshots_login_screen_otp_login_form [INFERRED 0.85]
 - **Media Backup and Sync Ecosystem** — screenshots_settings_screen_private_vault, screenshots_gallery_timeline_sync_badges, screenshots_photo_viewer_action_sheet, storage_backupmanager_backupmanager [INFERRED 0.85]
 
-## Communities (71 total, 17 thin omitted)
+## Communities (77 total, 17 thin omitted)
 
 ### Community 0 - "Database and DAO Schema"
 Cohesion: 0.16
@@ -153,7 +159,7 @@ Cohesion: 0.09
 Nodes (44): Boolean, Context, File, Int, List, Long, String, TdApi (+36 more)
 
 ### Community 8 - "Image Upload Manager"
-Cohesion: 0.18
+Cohesion: 0.19
 Nodes (14): Boolean, Context, File, Float, Int, List, LocalPhoto, Long (+6 more)
 
 ### Community 9 - "Photo Viewer Screen UI"
@@ -161,8 +167,8 @@ Cohesion: 0.04
 Nodes (46): 10. Revised Architecture Diagram, 1. Critical Issues, 2. Important Issues, 3. Schema Improvements, 4. Backup Pipeline Hardening, 5. Restore Pipeline Hardening, 6. Upload Worker Hardening, 7. Security Hardening (+38 more)
 
 ### Community 10 - "Main Activity UI Lifecycle"
-Cohesion: 0.14
-Nodes (10): androidx, android, androidx, List, LocalPhoto, ComponentActivity, IntentSenderRequest, LocalPhoto (+2 more)
+Cohesion: 0.18
+Nodes (7): androidx, android, androidx, ComponentActivity, IntentSenderRequest, ManagedActivityResultLauncher, MainActivity
 
 ### Community 11 - "App Update Manager"
 Cohesion: 0.23
@@ -205,8 +211,8 @@ Cohesion: 0.17
 Nodes (11): Boolean, Context, Int, Long, String, TdApi, lastMessageId, recoveredCount (+3 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.05
-Nodes (32): String, String, String, LocalPhoto, File, Float, String, Bundle (+24 more)
+Cohesion: 0.25
+Nodes (7): String, SettingsScreen(), Backup Settings Screen Screenshot, Backup Configurations Interface, Active JNI Developer Logs Console, Backup Target - Private Vault, TelePhotosTheme
 
 ### Community 34 - "Community 34"
 Cohesion: 0.06
@@ -312,6 +318,30 @@ Nodes (3): Flow, List, Flow
 Cohesion: 0.14
 Nodes (7): Album Photo Schema Refactoring, Destructive Migration Policy Review, Stable Primary Key for Uploads, Database Migration Policy, RoomDatabase, RegisteredDeviceDao, UploadDatabase
 
+### Community 69 - "Community 69"
+Cohesion: 0.29
+Nodes (3): String, OtpVerifyScreen(), AuthManager
+
+### Community 71 - "Community 71"
+Cohesion: 0.25
+Nodes (7): File, Float, String, UpdateDialog(), UpdateState, UpdateInfo, UpdateState
+
+### Community 72 - "Community 72"
+Cohesion: 0.25
+Nodes (7): TGPix README, PhoneLoginScreen(), TeleGallery Phone Number Login Screen Screenshot, TeleGallery Shutter Logo with Paper Plane, OTP SMS Verification Form, Alternative TeleGallery Logo Design Asset, Alternative Three-Petal Purple Logo Design
+
+### Community 74 - "Community 74"
+Cohesion: 0.40
+Nodes (4): String, Bundle, AppNavigation(), MainAppLayout()
+
+### Community 75 - "Community 75"
+Cohesion: 0.50
+Nodes (3): List, LocalPhoto, LocalPhoto
+
+### Community 76 - "Community 76"
+Cohesion: 0.50
+Nodes (4): LocalPhoto, GalleryViewModel, toLocalPhoto(), TrashScreen()
+
 ## Knowledge Gaps
 - **413 isolated node(s):** `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx`, `android`, `Bundle` (+408 more)
   These have ≤1 connection - possible missing edges or undocumented components.
@@ -320,12 +350,12 @@ Nodes (7): Album Photo Schema Refactoring, Destructive Migration Policy Review, 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AutoVaultSetupScreen()` connect `Telegram Client Integration` to `Community 32`, `Application Preferences`?**
-  _High betweenness centrality (0.073) - this node is a cross-community bridge._
 - **Why does `TdlibManager` connect `Telegram Client Integration` to `Background Backup Workers`, `Database Backup Manager`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
-- **Why does `AppNavigation()` connect `Community 32` to `Telegram Client Integration`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+- **Why does `AutoVaultSetupScreen()` connect `Telegram Client Integration` to `Application Preferences`, `Community 74`?**
+  _High betweenness centrality (0.059) - this node is a cross-community bridge._
+- **Why does `PreferencesManager` connect `Application Preferences` to `Background Backup Workers`, `Telegram Client Integration`?**
+  _High betweenness centrality (0.054) - this node is a cross-community bridge._
 - **What connects `ManagedActivityResultLauncher`, `IntentSenderRequest`, `androidx` to the rest of the system?**
   _427 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Application Preferences` be split into smaller, more focused modules?**

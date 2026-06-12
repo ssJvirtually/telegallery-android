@@ -32,6 +32,10 @@ import android.content.ContentValues
 import android.provider.MediaStore
 import android.os.Build
 import java.io.FileInputStream
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import androidx.core.app.NotificationCompat
 
 import dev.ssjvirtually.tgpix.storage.UploadDatabase
 import dev.ssjvirtually.tgpix.storage.UploadEntity
@@ -760,14 +764,58 @@ open class UploadManager {
                 return@withContext
             }
 
+            // Create notification channel
+            val channelId = "tgpix_download_channel"
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    channelId,
+                    "Media Downloads",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Shows progress of downloading media to device."
+                }
+                notificationManager.createNotificationChannel(channel)
+            }
+
+            val notificationId = 9999
+            val total = cloudPhotos.size
+            val totalBytes = cloudPhotos.sumOf { it.size }.coerceAtLeast(1L)
+            var downloadedBytesBeforeCurrent = 0L
+
+            fun updateNotification(currentIdx: Int, currentFileName: String, currentProgress: Int, overallProgress: Int) {
+                val notification = NotificationCompat.Builder(context, channelId)
+                    .setContentTitle("Downloading media to device")
+                    .setContentText("File ${currentIdx + 1} of $total: $currentFileName (${currentProgress}%)")
+                    .setSubText("Overall progress: ${overallProgress}%")
+                    .setSmallIcon(android.R.drawable.stat_sys_download)
+                    .setProgress(100, overallProgress, false)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .build()
+                notificationManager.notify(notificationId, notification)
+            }
+
+            // Initial notification show
+            updateNotification(0, cloudPhotos.first().name, 0, 0)
+
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Downloading ${cloudPhotos.size} photo(s) to device...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Starting download of ${cloudPhotos.size} photo(s) to device...", Toast.LENGTH_SHORT).show()
             }
 
             var successCount = 0
-            for (photo in cloudPhotos) {
+            for ((index, photo) in cloudPhotos.withIndex()) {
                 try {
-                    val downloadedFile = downloadCloudPhoto(context, photo.uri)
+                    // Update initial state for this file
+                    updateNotification(index, photo.name, 0, ((downloadedBytesBeforeCurrent * 100) / totalBytes).toInt())
+                    
+                    val downloadedFile = downloadCloudPhotoWithProgress(context, photo.uri) { downloadedSize ->
+                        val currentProgress = ((downloadedSize * 100) / photo.size.coerceAtLeast(1L)).coerceIn(0L, 100L).toInt()
+                        val currentTotalDownloaded = downloadedBytesBeforeCurrent + downloadedSize
+                        val overallProgress = ((currentTotalDownloaded * 100) / totalBytes).coerceIn(0L, 100L).toInt()
+                        updateNotification(index, photo.name, currentProgress, overallProgress)
+                    }
+
                     if (downloadedFile != null && downloadedFile.exists()) {
                         val saved = saveFileToMediaStore(context, downloadedFile, photo.name)
                         if (saved) {
@@ -776,8 +824,22 @@ open class UploadManager {
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
+                } finally {
+                    downloadedBytesBeforeCurrent += photo.size
                 }
             }
+
+            // Cancel the ongoing progress notification
+            notificationManager.cancel(notificationId)
+
+            // Show a final simple notification
+            val finalNotification = NotificationCompat.Builder(context, channelId)
+                .setContentTitle("Download completed")
+                .setContentText("Successfully downloaded $successCount of $total files.")
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setAutoCancel(true)
+                .build()
+            notificationManager.notify(notificationId + 1, finalNotification)
 
             withContext(Dispatchers.Main) {
                 if (successCount == cloudPhotos.size) {
@@ -789,6 +851,67 @@ open class UploadManager {
                 }
             }
         }
+    }
+
+    private suspend fun downloadCloudPhotoWithProgress(
+        context: Context,
+        cloudUri: String,
+        onProgress: (Long) -> Unit
+    ): File? {
+        val parts = cloudUri.substringAfter("cloud://").split("/")
+        if (parts.size < 3) return null
+        val messageId = parts[0].toLong()
+        val vaultChatId = PreferencesManager.getChatId(context)
+        if (vaultChatId == 0L) return null
+
+        try {
+            val messageResult = suspendCancellableCoroutine<TdApi.Object> { cont ->
+                TdlibManager.getClient().send(TdApi.GetMessage(vaultChatId, messageId)) { res ->
+                    cont.resume(res)
+                }
+            }
+            if (messageResult is TdApi.Message) {
+                val content = messageResult.content
+                var targetFileId = 0
+                if (content is TdApi.MessagePhoto) {
+                    val sizes = content.photo.sizes
+                    if (sizes.isNotEmpty()) {
+                        targetFileId = sizes.last().photo.id
+                    }
+                } else if (content is TdApi.MessageDocument) {
+                    targetFileId = content.document.document.id
+                }
+
+                if (targetFileId != 0) {
+                    var fileObj = suspendCancellableCoroutine<TdApi.File?> { cont ->
+                        TdlibManager.getClient().send(TdApi.DownloadFile(targetFileId, 1, 0, 0, false)) { res ->
+                            cont.resume(res as? TdApi.File)
+                        }
+                    }
+                    var attempts = 0
+                    while (fileObj != null && !fileObj.local.isDownloadingCompleted && attempts < 600) {
+                        onProgress(fileObj.local.downloadedSize)
+                        delay(1000)
+                        attempts++
+                        fileObj = suspendCancellableCoroutine { cont ->
+                            TdlibManager.getClient().send(TdApi.GetFile(targetFileId)) { res ->
+                                cont.resume(res as? TdApi.File)
+                            }
+                        }
+                    }
+                    if (fileObj != null && fileObj.local.isDownloadingCompleted && fileObj.local.path.isNotEmpty()) {
+                        onProgress(fileObj.size)
+                        val downloadedFile = File(fileObj.local.path)
+                        if (downloadedFile.exists() && downloadedFile.length() > 0L) {
+                            return downloadedFile
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
 
     private fun saveFileToMediaStore(context: Context, file: File, fileName: String): Boolean {
