@@ -1,5 +1,8 @@
 package dev.ssjvirtually.tgpix.ui
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
+import androidx.compose.ui.res.stringResource
+import dev.ssjvirtually.tgpix.R
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -287,7 +290,7 @@ fun MainAppLayout(
                     BackupManager.registerDevice(context)
                     BackupManager.pruneExpiredTrash(context)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                 }
             }
         }
@@ -357,8 +360,8 @@ fun MainAppLayout(
                             activeTab = "Photos"
                         }
                     },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Photos") },
-                    label = { Text("Photos") },
+                    icon = { Icon(Icons.Default.Home, contentDescription = stringResource(R.string.photos)) },
+                    label = { Text(stringResource(R.string.photos)) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = TelePhotosTheme.AccentBlue,
                         selectedTextColor = TelePhotosTheme.AccentBlue,
@@ -374,8 +377,8 @@ fun MainAppLayout(
                         devicePhotosList = emptyList()
                         activeTab = "Search"
                     },
-                    icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    label = { Text("Search") },
+                    icon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search)) },
+                    label = { Text(stringResource(R.string.search)) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = TelePhotosTheme.AccentBlue,
                         selectedTextColor = TelePhotosTheme.AccentBlue,
@@ -391,8 +394,8 @@ fun MainAppLayout(
                         devicePhotosList = emptyList()
                         activeTab = "Albums"
                     },
-                    icon = { Icon(Icons.Default.Collections, contentDescription = "Albums") },
-                    label = { Text("Albums") },
+                    icon = { Icon(Icons.Default.Collections, contentDescription = stringResource(R.string.albums)) },
+                    label = { Text(stringResource(R.string.albums)) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = TelePhotosTheme.AccentBlue,
                         selectedTextColor = TelePhotosTheme.AccentBlue,

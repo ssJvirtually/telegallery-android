@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.telegram
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import android.net.Uri
 import android.content.Intent
@@ -187,7 +188,7 @@ open class UploadManager {
                                 } catch (_: Exception) {}
                             }
                         } catch (exifEx: Exception) {
-                            exifEx.printStackTrace()
+                            ErrorMonitor.log(exifEx)
                         }
 
                         // Best available date for this photo:
@@ -326,7 +327,7 @@ open class UploadManager {
                             }
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                         continuation.resume(TdApi.Error(500, e.message ?: "Unknown upload initialization error"))
                     }
                 }
@@ -340,7 +341,7 @@ open class UploadManager {
                     TdlibManager.addLog("Cleaned up temp upload file: ${tempFile.name}")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
             try {
                 val f = thumbFile
@@ -349,7 +350,7 @@ open class UploadManager {
                     TdlibManager.addLog("Cleaned up temp thumbnail file: ${f.name}")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
         }
         } finally {
@@ -405,7 +406,7 @@ open class UploadManager {
                     continuation.resume(emptyList())
                 }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             continuation.resume(emptyList())
         }
     }
@@ -460,7 +461,7 @@ open class UploadManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
         return null
     }
@@ -549,7 +550,7 @@ open class UploadManager {
                             allSuccess = false
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                         allSuccess = false
                     } finally {
                         try { if (tempFile.exists()) tempFile.delete() } catch (e: Exception) {}
@@ -606,7 +607,7 @@ open class UploadManager {
                             }
                             inputMessageContents.add(inputMessageContent)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            ErrorMonitor.log(e)
                             prepareSuccess = false
                             break
                         }
@@ -691,7 +692,7 @@ open class UploadManager {
                             }
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                         allSuccess = false
                     } finally {
                         for (f in tempFiles) {
@@ -730,7 +731,7 @@ open class UploadManager {
                             shareUris.add(uri)
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                     }
                 } else {
                     shareUris.add(android.net.Uri.parse(photo.uri))
@@ -823,7 +824,7 @@ open class UploadManager {
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                 } finally {
                     downloadedBytesBeforeCurrent += photo.size
                 }
@@ -909,7 +910,7 @@ open class UploadManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
         return null
     }
@@ -952,7 +953,7 @@ open class UploadManager {
             }
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             try {
                 contentResolver.delete(itemUri, null, null)
             } catch (ignored: Exception) {}
@@ -990,7 +991,7 @@ open class UploadManager {
                     androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotationAngle = 270f
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
 
             val maxTargetSize = 320
@@ -1015,7 +1016,7 @@ open class UploadManager {
                         compressSuccess = scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     compressSuccess = false
                 }
                 quality -= 10
@@ -1032,7 +1033,7 @@ open class UploadManager {
                 null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             return null
         }
     }
@@ -1154,7 +1155,7 @@ open class UploadManager {
                     androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotationAngle = 270f
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
 
             if (rotationAngle != 0f) {
@@ -1175,7 +1176,7 @@ open class UploadManager {
                         success = bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     success = false
                 }
                 quality -= 10
@@ -1184,7 +1185,7 @@ open class UploadManager {
             bitmap.recycle()
             return@withContext success && destFile.exists() && destFile.length() > 0
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             return@withContext false
         }
     }

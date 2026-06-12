@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.worker
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -66,7 +67,7 @@ class DatabaseBackupWorker(
             }
         } catch (e: Exception) {
             TdlibManager.addLog("DatabaseBackupWorker: Exception during backup: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             if (PreferencesManager.getChatId(applicationContext) != 0L) {
                 val currentFailures = PreferencesManager.getConsecutiveBackupFailures(applicationContext) + 1
                 PreferencesManager.setConsecutiveBackupFailures(applicationContext, currentFailures)

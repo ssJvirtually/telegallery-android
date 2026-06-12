@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.worker
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -338,7 +339,7 @@ class UploadWorker(
                         val progressMsg = "Backing up: ${photo.name} (${uploadedCount + 1}/${unsyncedPhotos.size})"
                         setForeground(createForegroundInfo(progressMsg))
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                     }
 
                     val currentIsHd = PreferencesManager.isHdMode(applicationContext)
@@ -365,7 +366,7 @@ class UploadWorker(
                             try {
                                 HistorySyncManager.parseAndIndexUploadedMessage(applicationContext, uploadResult)
                             } catch (e: Exception) {
-                                e.printStackTrace()
+                                ErrorMonitor.log(e)
                             }
                             UploadDatabase.recordEvent(
                                 applicationContext,
@@ -394,7 +395,7 @@ class UploadWorker(
                     // Isolate this photo — log and continue with the rest of the batch
                     val excMsg = e.message ?: "Unknown exception"
                     TdlibManager.addLog("Worker: exception uploading '${photo.name}' — skipping. Error: $excMsg")
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     recordFailure(photo, fingerprint, excMsg)
                     failedCount++
                 }

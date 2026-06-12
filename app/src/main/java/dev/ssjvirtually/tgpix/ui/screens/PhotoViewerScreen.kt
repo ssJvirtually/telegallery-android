@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.ui.screens
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -926,7 +927,7 @@ fun getAbsolutePathFromUri(context: Context, uriString: String): String? {
             return uri.path
         }
     } catch (e: Exception) {
-        e.printStackTrace()
+        ErrorMonitor.log(e)
     }
     return null
 }
@@ -953,7 +954,7 @@ fun rememberLocationName(context: Context, latitude: Double, longitude: Double):
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
         }
     }

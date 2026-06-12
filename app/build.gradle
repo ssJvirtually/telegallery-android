@@ -37,7 +37,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -110,4 +110,10 @@ dependencies {
     
     // Google Play services Code Scanner (Privacy-safe QR scanning without CAMERA permission)
     implementation 'com.google.android.gms:play-services-code-scanner:16.1.0'
+
+    // Sentry Crash Reporting SDK
+    implementation 'io.sentry:sentry-android:7.6.0'
+
+    // Local JVM Unit Testing
+    testImplementation 'junit:junit:4.13.2'
 }

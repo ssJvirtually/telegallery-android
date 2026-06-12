@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.ui
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -135,7 +136,7 @@ class GalleryViewModel @JvmOverloads constructor(
                          try {
                              backupManager.scheduleBackup(application)
                          } catch (e: Exception) {
-                             e.printStackTrace()
+                             ErrorMonitor.log(e)
                          }
                      }
                  }
@@ -261,7 +262,7 @@ class GalleryViewModel @JvmOverloads constructor(
                 }
             } catch (e: Exception) {
                 // Safety net — always clear the banner if something unexpected throws
-                e.printStackTrace()
+                ErrorMonitor.log(e)
                 _isSyncingCloud.value = false
             }
         }
@@ -273,7 +274,7 @@ class GalleryViewModel @JvmOverloads constructor(
             getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
                 .unregisterOnSharedPreferenceChangeListener(prefListener)
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 }

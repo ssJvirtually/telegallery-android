@@ -1,6 +1,8 @@
 package dev.ssjvirtually.tgpix.ui.screens
 
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
+import dev.ssjvirtually.tgpix.R
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -112,13 +114,13 @@ fun SettingsScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.back),
                     tint = TelePhotosTheme.TextPrimary
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Settings",
+                text = stringResource(R.string.settings),
                 color = TelePhotosTheme.TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
@@ -141,7 +143,7 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Backup Channels",
+                            text = stringResource(R.string.backup_channels),
                             color = TelePhotosTheme.TextPrimary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold

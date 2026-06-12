@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.storage
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
@@ -71,7 +72,7 @@ object MediaStoreScanner {
                 return localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
         return null
     }
@@ -153,7 +154,7 @@ object MediaStoreScanner {
             }
         } catch (e: Exception) {
             TdlibManager.addLog("Error scanning MediaStore: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
 
         TdlibManager.addLog("MediaStoreScanner: scanned ${photos.size} photos.")

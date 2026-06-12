@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.storage
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -107,7 +108,7 @@ open class BackupManager {
                     TdlibManager.addLog("ensureChatLoaded: attempt ${attempt + 1} for chat $chatId failed: ${result.message}")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
             if (attempt < 4) delay(1500) // Wait before retrying
         }
@@ -127,7 +128,7 @@ open class BackupManager {
                     myId = user.id
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
         }
         return myId
@@ -217,7 +218,7 @@ open class BackupManager {
                     }
                 } catch (e: Exception) {
                     TdlibManager.addLog("Failed to execute WAL checkpoint: ${e.message}")
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     false
                 }
 
@@ -242,7 +243,7 @@ open class BackupManager {
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     null
                 }
 
@@ -269,7 +270,7 @@ open class BackupManager {
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     if (tempBackupFile.exists()) tempBackupFile.delete()
                     if (compressedFile.exists()) compressedFile.delete()
                     return@withContext false
@@ -329,7 +330,7 @@ open class BackupManager {
                 uploadSuccess
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             UploadDatabase.recordEvent(
                 context,
                 "db_backup_failed",
@@ -370,7 +371,7 @@ open class BackupManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
         return highestVersion
     }
@@ -404,7 +405,7 @@ open class BackupManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 
@@ -433,7 +434,7 @@ open class BackupManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
 
         TdlibManager.addLog("Searching for remote database snapshots (#tgpix_snapshot) in chat $chatId...")
@@ -612,7 +613,7 @@ open class BackupManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
 
         val searchQuery = TdApi.SearchChatMessages().apply {
@@ -634,7 +635,7 @@ open class BackupManager {
                 try {
                     reconstructAlbum(context, message)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                 }
             }
         }
@@ -763,7 +764,7 @@ open class BackupManager {
             }
         } catch (e: Exception) {
             TdlibManager.addLog("Exception in onAlbumUpdated: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         } finally {
             if (tempFile.exists()) {
                 tempFile.delete()
@@ -783,7 +784,7 @@ open class BackupManager {
             }
             TdlibManager.addLog("Album manifest message ID $telegramMessageId deleted from Telegram.")
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 
@@ -852,7 +853,7 @@ open class BackupManager {
                 TdlibManager.addLog("Reconstructed album '$name' (UUID: $albumUuid, Photos: ${albumPhotos.size}) from Telegram message ID ${message.id}")
             } catch (e: Exception) {
                 TdlibManager.addLog("Failed to reconstruct album from message ID ${message.id}: ${e.message}")
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             } finally {
                 if (downloadedFile.exists()) {
                     downloadedFile.delete()
@@ -892,7 +893,7 @@ open class BackupManager {
                 db.deviceDao().insert(RegisteredDeviceEntity(deviceId, deviceName, version, timestamp))
                 TdlibManager.addLog("Device successfully registered on Telegram and locally: $deviceId ($deviceName)")
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
         } else {
             TdlibManager.addLog("Failed to send device registration metadata event.")
@@ -1202,7 +1203,7 @@ open class BackupManager {
             }
         } catch (e: Exception) {
             TdlibManager.addLog("Failed to replay metadata event: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 

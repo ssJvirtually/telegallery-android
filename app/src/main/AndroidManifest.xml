@@ -17,7 +17,7 @@
         android:name=".TGPixApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="TGPix"
+        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Material3.Light.NoActionBar"
@@ -54,6 +54,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Sentry Crash Reporting SDK Configuration (Empty DSN disables SDK by default) -->
+        <meta-data
+            android:name="io.sentry.dsn"
+            android:value="" />
         
     </application>
 

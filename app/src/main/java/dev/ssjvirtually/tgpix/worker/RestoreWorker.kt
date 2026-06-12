@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.worker
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -150,7 +151,7 @@ class RestoreWorker(
                     try {
                         setForeground(createForegroundInfo(count))
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorMonitor.log(e)
                     }
                 }
             )
@@ -169,7 +170,7 @@ class RestoreWorker(
 
         } catch (e: Exception) {
             TdlibManager.addLog("RestoreWorker: Exception during restore: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
             return Result.retry()
         }
     }

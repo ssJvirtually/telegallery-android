@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.telegram
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,7 +121,7 @@ open class TdlibManager {
             addLog("Native library tdjni loaded.")
         } catch (e: Exception) {
             addLog("Failed to load tdjni: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
 
         client = Client.create(
@@ -129,11 +130,11 @@ open class TdlibManager {
             },
             { exception ->
                 addLog("TDLib Exception: ${exception.message}")
-                exception.printStackTrace()
+                ErrorMonitor.log(exception)
             },
             { exception ->
                 addLog("TDLib Default Exception: ${exception.message}")
-                exception.printStackTrace()
+                ErrorMonitor.log(exception)
             }
         )
     }
@@ -230,7 +231,7 @@ open class TdlibManager {
                         try {
                             HistorySyncManager.parseAndIndexUploadedMessage(context, msg)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            ErrorMonitor.log(e)
                         }
                     }
                 } else if (dbChatId != 0L && msg.chatId == dbChatId) {
@@ -242,7 +243,7 @@ open class TdlibManager {
                                 try {
                                     BackupManager.applyMetadataEvent(context, text, msg.id)
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    ErrorMonitor.log(e)
                                 }
                             }
                         }
@@ -253,7 +254,7 @@ open class TdlibManager {
                                 try {
                                     BackupManager.reconstructAlbum(context, msg)
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    ErrorMonitor.log(e)
                                 }
                             }
                         }
@@ -271,7 +272,7 @@ open class TdlibManager {
                                 db.cloudDao().deleteByMessageId(msgId)
                             }
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            ErrorMonitor.log(e)
                         }
                     }
                 }
@@ -331,7 +332,7 @@ open class TdlibManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 
@@ -508,7 +509,7 @@ open class TdlibManager {
             try {
                 androidx.work.WorkManager.getInstance(context.applicationContext).cancelAllWork()
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
             
             // 3. Show high priority system notification
@@ -640,7 +641,7 @@ open class TdlibManager {
             }
         } catch (e: Exception) {
             addLog("Failed to fetch or monitor profile photo: ${e.message}")
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 }

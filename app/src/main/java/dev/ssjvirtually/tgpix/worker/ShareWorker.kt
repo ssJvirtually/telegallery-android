@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.worker
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -173,7 +174,7 @@ class ShareWorker(
                         try {
                             HistorySyncManager.parseAndIndexUploadedMessage(applicationContext, backupResult)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            ErrorMonitor.log(e)
                         }
                         UploadDatabase.recordEvent(
                             applicationContext,

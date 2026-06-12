@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
         try {
             cm.registerDefaultNetworkCallback(networkCallback!!)
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 
@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
             try {
                 cm.unregisterNetworkCallback(it)
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
             }
         }
         networkCallback = null

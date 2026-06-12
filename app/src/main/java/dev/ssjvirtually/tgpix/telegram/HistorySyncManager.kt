@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.telegram
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import android.webkit.MimeTypeMap
 import dev.ssjvirtually.tgpix.storage.BackupManager
@@ -50,7 +51,7 @@ open class HistorySyncManager {
                 originalSizeBytes = if (jsonObj.has("origSize")) jsonObj.getLong("origSize") else null
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
         return null
     }
@@ -93,7 +94,7 @@ open class HistorySyncManager {
                         try {
                             BackupManager.reconstructAlbum(context, msg)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            ErrorMonitor.log(e)
                         }
                         continue
                     }
@@ -265,7 +266,7 @@ open class HistorySyncManager {
         try {
             TdlibManager.optimizeStorage(context)
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorMonitor.log(e)
         }
     }
 
@@ -439,7 +440,7 @@ open class HistorySyncManager {
                         maxMsgId = msgId
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                 }
             }
             PreferencesManager.setLastReplayedMetadataMsgId(context, maxMsgId)

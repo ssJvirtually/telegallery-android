@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.ui.utils
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -84,7 +85,7 @@ fun TelegramShareDialog(
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                ErrorMonitor.log(e)
                 withContext(Dispatchers.Main) {
                     isLoadingChats = false
                 }

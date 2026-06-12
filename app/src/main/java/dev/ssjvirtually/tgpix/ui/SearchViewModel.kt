@@ -1,5 +1,6 @@
 package dev.ssjvirtually.tgpix.ui
 
+import dev.ssjvirtually.tgpix.ErrorMonitor
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
@@ -46,7 +47,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 val cloudResults = try {
                     db.cloudDao().searchCloudPhotos(ftsQuery)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    ErrorMonitor.log(e)
                     emptyList()
                 }
 
