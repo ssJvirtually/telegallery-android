@@ -564,14 +564,6 @@ abstract class UploadDatabase : RoomDatabase() {
         }
 
         fun getDatabase(context: Context): UploadDatabase {
-            try {
-                val field = android.database.CursorWindow::class.java.getDeclaredField("sCursorWindowSize")
-                field.isAccessible = true
-                field.set(null, 100 * 1024 * 1024) // 100MB
-            } catch (e: Exception) {
-                android.util.Log.e("UploadDatabase", "Failed to increase CursorWindow size", e)
-            }
-
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,

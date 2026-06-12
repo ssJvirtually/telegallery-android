@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt": {
-    "mtime": 1781259520.9106605,
-    "ast_hash": "54872a610cf392a94dd4fcf6d98a4240",
+    "mtime": 1781263409.9465349,
+    "ast_hash": "686774611b4f109d318b6f6b0f5dcd21",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt": {

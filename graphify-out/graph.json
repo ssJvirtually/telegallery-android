@@ -2259,7 +2259,7 @@
       "label": "closeDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L615",
+      "source_location": "L607",
       "id": "storage_uploaddatabase_closedatabase",
       "community": 66,
       "norm_label": "closedatabase()"
@@ -2268,7 +2268,7 @@
       "label": "restoreDataFromFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L635",
+      "source_location": "L627",
       "id": "storage_uploaddatabase_restoredatafromfile",
       "community": 66,
       "norm_label": "restoredatafromfile()"
@@ -2277,7 +2277,7 @@
       "label": "java",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L635",
+      "source_location": "L627",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_java",
       "community": 66,
       "norm_label": "java"
@@ -2286,7 +2286,7 @@
       "label": "recordEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L831",
+      "source_location": "L823",
       "id": "storage_uploaddatabase_recordevent",
       "community": 66,
       "norm_label": "recordevent()"
@@ -9892,9 +9892,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ErrorMonitor.kt",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_errormonitor",
-      "target": "tgpix_errormonitor_errormonitor",
-      "confidence_score": 1.0
+      "target": "tgpix_errormonitor_errormonitor"
     },
     {
       "relation": "method",
@@ -9902,9 +9902,9 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ErrorMonitor.kt",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_errormonitor_errormonitor",
-      "target": "tgpix_errormonitor_errormonitor_log",
-      "confidence_score": 1.0
+      "target": "tgpix_errormonitor_errormonitor_log"
     },
     {
       "relation": "references",
@@ -9913,9 +9913,9 @@
       "source_location": "L8",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tgpix_errormonitor_errormonitor_log",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_errormonitor_kt_string",
-      "confidence_score": 1.0
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_errormonitor_kt_string"
     },
     {
       "relation": "references",
@@ -9924,9 +9924,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "tgpix_errormonitor_errormonitor_log",
-      "target": "throwable",
-      "confidence_score": 1.0
+      "target": "throwable"
     },
     {
       "relation": "contains",
@@ -23531,9 +23531,9 @@
       "source_file": "app/src/test/java/dev/ssjvirtually/tgpix/PhotosRepositoryTest.kt",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_photosrepositorytest",
-      "target": "tgpix_photosrepositorytest_photosrepositorytest",
-      "confidence_score": 1.0
+      "target": "tgpix_photosrepositorytest_photosrepositorytest"
     },
     {
       "relation": "method",
@@ -23541,9 +23541,9 @@
       "source_file": "app/src/test/java/dev/ssjvirtually/tgpix/PhotosRepositoryTest.kt",
       "source_location": "L82",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_photosrepositorytest_photosrepositorytest",
-      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_cloudonlyfallback",
-      "confidence_score": 1.0
+      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_cloudonlyfallback"
     },
     {
       "relation": "method",
@@ -23551,9 +23551,9 @@
       "source_file": "app/src/test/java/dev/ssjvirtually/tgpix/PhotosRepositoryTest.kt",
       "source_location": "L15",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_photosrepositorytest_photosrepositorytest",
-      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_emptyinputs",
-      "confidence_score": 1.0
+      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_emptyinputs"
     },
     {
       "relation": "method",
@@ -23561,9 +23561,9 @@
       "source_file": "app/src/test/java/dev/ssjvirtually/tgpix/PhotosRepositoryTest.kt",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_photosrepositorytest_photosrepositorytest",
-      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_exactfingerprintmatch",
-      "confidence_score": 1.0
+      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_exactfingerprintmatch"
     },
     {
       "relation": "method",
@@ -23571,9 +23571,9 @@
       "source_file": "app/src/test/java/dev/ssjvirtually/tgpix/PhotosRepositoryTest.kt",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tgpix_photosrepositorytest_photosrepositorytest",
-      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_localonly",
-      "confidence_score": 1.0
+      "target": "tgpix_photosrepositorytest_photosrepositorytest_testmergeanddeduplicate_localonly"
     },
     {
       "relation": "contains",
@@ -28022,5 +28022,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "71ca9d4ffa71c3001a0e396691a0bb940cdf53db"
+  "built_at_commit": "5d057b61619205fd3eb031aa760680ff83793950"
 }
