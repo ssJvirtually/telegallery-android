@@ -558,7 +558,7 @@
       "label": ".getLatestSnapshotVersion()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L461",
+      "source_location": "L456",
       "id": "storage_backupmanager_backupmanager_getlatestsnapshotversion",
       "community": 7,
       "norm_label": ".getlatestsnapshotversion()"
@@ -567,7 +567,7 @@
       "label": ".pruneOldSnapshots()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L474",
+      "source_location": "L469",
       "id": "storage_backupmanager_backupmanager_pruneoldsnapshots",
       "community": 7,
       "norm_label": ".pruneoldsnapshots()"
@@ -576,7 +576,7 @@
       "label": ".restartApp()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L511",
+      "source_location": "L506",
       "id": "storage_backupmanager_backupmanager_restartapp",
       "community": 7,
       "norm_label": ".restartapp()"
@@ -585,7 +585,7 @@
       "label": ".tryRestoreSnapshot()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L521",
+      "source_location": "L516",
       "id": "storage_backupmanager_backupmanager_tryrestoresnapshot",
       "community": 7,
       "norm_label": ".tryrestoresnapshot()"
@@ -594,7 +594,7 @@
       "label": ".restoreDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L664",
+      "source_location": "L659",
       "id": "storage_backupmanager_backupmanager_restoredatabase",
       "community": 7,
       "norm_label": ".restoredatabase()"
@@ -603,7 +603,7 @@
       "label": ".restoreDatabaseForce()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L681",
+      "source_location": "L676",
       "id": "storage_backupmanager_backupmanager_restoredatabaseforce",
       "community": 7,
       "norm_label": ".restoredatabaseforce()"
@@ -612,7 +612,7 @@
       "label": ".reconstructAlbumsFromBackupChannel()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L700",
+      "source_location": "L695",
       "id": "storage_backupmanager_backupmanager_reconstructalbumsfrombackupchannel",
       "community": 7,
       "norm_label": ".reconstructalbumsfrombackupchannel()"
@@ -621,7 +621,7 @@
       "label": ".downloadFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L751",
+      "source_location": "L746",
       "id": "storage_backupmanager_backupmanager_downloadfile",
       "community": 7,
       "norm_label": ".downloadfile()"
@@ -630,7 +630,7 @@
       "label": ".serializeManifest()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L779",
+      "source_location": "L774",
       "id": "storage_backupmanager_backupmanager_serializemanifest",
       "community": 7,
       "norm_label": ".serializemanifest()"
@@ -639,7 +639,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L779",
+      "source_location": "L774",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_list",
       "community": 7,
       "norm_label": "list"
@@ -648,7 +648,7 @@
       "label": ".onAlbumUpdated()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L806",
+      "source_location": "L801",
       "id": "storage_backupmanager_backupmanager_onalbumupdated",
       "community": 7,
       "norm_label": ".onalbumupdated()"
@@ -657,7 +657,7 @@
       "label": ".onAlbumDeleted()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L882",
+      "source_location": "L877",
       "id": "storage_backupmanager_backupmanager_onalbumdeleted",
       "community": 7,
       "norm_label": ".onalbumdeleted()"
@@ -666,7 +666,7 @@
       "label": ".reconstructAlbum()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L898",
+      "source_location": "L893",
       "id": "storage_backupmanager_backupmanager_reconstructalbum",
       "community": 7,
       "norm_label": ".reconstructalbum()"
@@ -675,7 +675,7 @@
       "label": "TdApi",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L898",
+      "source_location": "L893",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_tdapi",
       "community": 7,
       "norm_label": "tdapi"
@@ -684,7 +684,7 @@
       "label": ".registerDevice()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L972",
+      "source_location": "L967",
       "id": "storage_backupmanager_backupmanager_registerdevice",
       "community": 7,
       "norm_label": ".registerdevice()"
@@ -693,7 +693,7 @@
       "label": ".sendMetadataEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1010",
+      "source_location": "L1005",
       "id": "storage_backupmanager_backupmanager_sendmetadataevent",
       "community": 7,
       "norm_label": ".sendmetadataevent()"
@@ -702,7 +702,7 @@
       "label": ".deleteCloudPhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1033",
+      "source_location": "L1028",
       "id": "storage_backupmanager_backupmanager_deletecloudphoto",
       "community": 7,
       "norm_label": ".deletecloudphoto()"
@@ -711,7 +711,7 @@
       "label": ".restoreCloudPhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1053",
+      "source_location": "L1048",
       "id": "storage_backupmanager_backupmanager_restorecloudphoto",
       "community": 7,
       "norm_label": ".restorecloudphoto()"
@@ -720,7 +720,7 @@
       "label": ".deleteCloudPhotoPermanently()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1073",
+      "source_location": "L1068",
       "id": "storage_backupmanager_backupmanager_deletecloudphotopermanently",
       "community": 7,
       "norm_label": ".deletecloudphotopermanently()"
@@ -729,7 +729,7 @@
       "label": ".pruneExpiredTrash()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1101",
+      "source_location": "L1096",
       "id": "storage_backupmanager_backupmanager_pruneexpiredtrash",
       "community": 7,
       "norm_label": ".pruneexpiredtrash()"
@@ -738,7 +738,7 @@
       "label": ".requestLeaderRole()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1135",
+      "source_location": "L1130",
       "id": "storage_backupmanager_backupmanager_requestleaderrole",
       "community": 7,
       "norm_label": ".requestleaderrole()"
@@ -747,7 +747,7 @@
       "label": ".logAlbumCreate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1152",
+      "source_location": "L1147",
       "id": "storage_backupmanager_backupmanager_logalbumcreate",
       "community": 7,
       "norm_label": ".logalbumcreate()"
@@ -756,7 +756,7 @@
       "label": ".logAlbumDelete()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1166",
+      "source_location": "L1161",
       "id": "storage_backupmanager_backupmanager_logalbumdelete",
       "community": 7,
       "norm_label": ".logalbumdelete()"
@@ -765,7 +765,7 @@
       "label": ".logAlbumAdd()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1179",
+      "source_location": "L1174",
       "id": "storage_backupmanager_backupmanager_logalbumadd",
       "community": 7,
       "norm_label": ".logalbumadd()"
@@ -774,7 +774,7 @@
       "label": ".logAlbumRemove()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1193",
+      "source_location": "L1188",
       "id": "storage_backupmanager_backupmanager_logalbumremove",
       "community": 7,
       "norm_label": ".logalbumremove()"
@@ -783,7 +783,7 @@
       "label": ".applyMetadataEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1207",
+      "source_location": "L1202",
       "id": "storage_backupmanager_backupmanager_applymetadataevent",
       "community": 7,
       "norm_label": ".applymetadataevent()"
@@ -792,7 +792,7 @@
       "label": ".uploadFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1317",
+      "source_location": "L1312",
       "id": "storage_backupmanager_backupmanager_uploadfile",
       "community": 7,
       "norm_label": ".uploadfile()"
@@ -30288,5 +30288,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "adadf7f413845af43b2bb80d453c93e2bb2b38aa"
+  "built_at_commit": "5fb50cc62bae464ccc5e3e0d4a0a46e24e3a8a8f"
 }

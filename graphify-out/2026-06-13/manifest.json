@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
-    "mtime": 1781289470.110967,
-    "ast_hash": "50ea4b4fd0d855f24e22960dabbed485",
+    "mtime": 1781290881.0349782,
+    "ast_hash": "f856c92ce3a9ac81b4596df022eaf190",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/UploadWorker.kt": {
-    "mtime": 1781271173.0894115,
-    "ast_hash": "9c4936b6d4bd8173636cf6f21615c497",
+    "mtime": 1781290867.2237794,
+    "ast_hash": "487473c5a9b4baa7096b972d300c9592",
     "semantic_hash": ""
   },
   "build.gradle": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
-    "mtime": 1781289439.5194042,
-    "ast_hash": "340dc1a3f8fde0efa3aaeb764cd6d431",
+    "mtime": 1781290872.8252933,
+    "ast_hash": "ec95ed43c6fa3557a46abf4f5dde29fc",
     "semantic_hash": ""
   },
   "watch_and_install.ps1": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/BackupScheduler.kt": {
-    "mtime": 1780826557.1550121,
-    "ast_hash": "bf745981e2f97175819dfb9bd60808d9",
+    "mtime": 1781290864.188823,
+    "ast_hash": "fa50eb3482945d5db2594d9962f8e7d0",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt": {
