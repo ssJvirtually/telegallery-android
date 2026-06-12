@@ -113,226 +113,256 @@ open class UploadManager {
             // 2. Perform on-device, privacy-first AI image classification before upload
             val aiTags = classifyImage(context, tempFile.absolutePath)
 
-            // 3. Perform TDLib message transmission under a 2-minute safety timeout
-            val result = withTimeoutOrNull(120_000L) {
-                suspendCancellableCoroutine { continuation ->
-                    try {
-                        val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
-                        
-                        // Extract EXIF metadata using androidx.exifinterface
-                        var width = 0
-                        var height = 0
-                        var make = "Unknown"
-                        var model = "Unknown"
-                        var lens = "Unknown"
-                        var aperture = "Unknown"
-                        var shutter = "Unknown"
-                        var iso = "Unknown"
-                        var focal = "Unknown"
-                        var flashStr = "Unknown"
-                        var flashFired = false
-                        
-                        // Track whether EXIF capture date was found (absent for screenshots/WhatsApp/Snapchat)
-                        var hasExifDate = false
-                        var exifDateTakenMs = 0L
+            val thumbResult = if (isHd) createThumbnail(context, tempFile) else null
+            if (thumbResult != null) {
+                thumbFile = thumbResult.file
+            }
 
+            var attempts = 0
+            val maxAttempts = 6
+            var finalResult: TdApi.Object? = null
+
+            while (attempts < maxAttempts) {
+                attempts++
+                // 3. Perform TDLib message transmission under a 2-minute safety timeout
+                val result = withTimeoutOrNull(120_000L) {
+                    suspendCancellableCoroutine<TdApi.Object> { continuation ->
                         try {
-                            val exif = androidx.exifinterface.media.ExifInterface(tempFile.absolutePath)
-                            width = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH, 0)
-                            height = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH, 0)
-
-                            make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE)?.trim() ?: "Unknown"
-                            model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL)?.trim() ?: "Unknown"
-                            lens = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL)?.trim() ?: "Unknown"
-
-                            val apertureVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER, 0.0)
-                            aperture = if (apertureVal > 0.0) "f/$apertureVal" else "Unknown"
-
-                            val shutterVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME, 0.0)
-                            shutter = if (shutterVal > 0.0) {
-                                if (shutterVal < 1.0) {
-                                    val inverse = Math.round(1.0 / shutterVal)
-                                    "1/$inverse sec ($shutterVal)"
-                                } else {
-                                    "$shutterVal sec"
-                                }
-                            } else {
-                                "Unknown"
-                            }
-
-                            val isoVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0)
-                            iso = if (isoVal > 0) "$isoVal" else "Unknown"
-
-                            val focalVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH, 0.0)
-                            focal = if (focalVal > 0.0) "${focalVal}mm" else "Unknown"
-
-                            val flashVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_FLASH, -1)
-                            if (flashVal >= 0) {
-                                flashFired = (flashVal and 1) == 1
-                                flashStr = if (flashFired) "Flash fired ($flashVal)" else "Flash did not fire ($flashVal)"
-                            }
-
-                            // Read the EXIF capture timestamp (TAG_DATETIME_ORIGINAL is the shutter-press time)
-                            // This is the most accurate capture date for camera photos.
-                            // Screenshots, WhatsApp, Snapchat and downloads do NOT set this tag.
-                            val exifDateStr = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL)
-                                ?: exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME)
-                            if (!exifDateStr.isNullOrBlank()) {
-                                try {
-                                    val localDateTime = java.time.LocalDateTime.parse(exifDateStr, exifFormatter)
-                                    val parsedTime = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                                    if (parsedTime > 0L) {
-                                        exifDateTakenMs = parsedTime
-                                        hasExifDate = true
-                                    }
-                                } catch (_: Exception) {}
-                            }
-                        } catch (exifEx: Exception) {
-                            ErrorMonitor.log(exifEx)
-                        }
-
-                        // Best available date for this photo:
-                        //   EXIF TAG_DATETIME_ORIGINAL  — most accurate for camera photos
-                        //   photo.dateTaken             — MediaStore DATE_TAKEN → DATE_ADDED → DATE_MODIFIED
-                        //                                 (see MediaStoreScanner for fallback chain)
-                        val resolvedDateTaken = if (hasExifDate) exifDateTakenMs else photo.dateTaken
-
-                        // Dynamically generate search hashtags
-                        val tags = mutableListOf<String>()
-
-                        // Inject our on-device AI classification tags!
-                        tags.addAll(aiTags)
-
-                        if (make != "Unknown" && make.isNotEmpty()) {
-                            val makeTag = "#" + make.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
-                            tags.add(makeTag)
-                        }
-                        if (model != "Unknown" && model.isNotEmpty()) {
-                            val modelTag = "#" + model.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
-                            tags.add(modelTag)
-                        }
-                        val ext = photo.name.substringAfterLast('.', "").lowercase()
-                        if (ext.isNotEmpty()) {
-                            tags.add("#$ext")
-                        }
-                        // Tag non-EXIF media (screenshots, WhatsApp, Snapchat, downloads) so they are searchable
-                        if (!hasExifDate) {
-                            tags.add("#no_exif")
-                        }
-                        try {
-                            val takenCal = java.util.Calendar.getInstance()
-                            takenCal.timeInMillis = resolvedDateTaken
-                            val yr = takenCal.get(java.util.Calendar.YEAR)
-                            val mth = takenCal.get(java.util.Calendar.MONTH) + 1
-                            tags.add("#year_$yr")
-                            tags.add("#month_${yr}_$mth")
-                        } catch (e: Exception) {}
-                        if (flashFired) {
-                            tags.add("#flash_used")
-                        }
-                        val tagsLine = tags.distinct().joinToString(" ")
-
-                        val formattedDate = try {
-                            logDateTimeFormatter.format(java.time.Instant.ofEpochMilli(resolvedDateTaken).atZone(java.time.ZoneId.systemDefault()))
-                        } catch (e: Exception) { "" }
-                        val addedDate = try {
-                            logDateTimeFormatter.format(java.time.LocalDateTime.now())
-                        } catch (e: Exception) { "" }
-                        val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
-                        val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
-                        val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
-
-                        val partialHash = photo.getPartialHash(context)
-                        // Prepare tags for JSON storage (comma separated)
-                        val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
-                        val metadataJson = if (partialHash.isNotEmpty()) {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"hash":"$partialHash","tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
-                        } else {
-                            """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
-                        }
-
-                        val captionText = """
-                            📷 **Photo Metadata**
-                            📁 File: ${photo.name}
-                            📏 Size: $formattedSize
-                            📐 Dimensions: $dimensions
-                            📅 Taken: $formattedDate
-                            📅 Added: $addedDate
-
-                            📸 **Camera Info**
-                            🏭 Make: $make
-                            📱 Model: $model
-                            🔍 Lens: $lens
-
-                            ⚙️ **Technical**
-                            🕳️ Aperture: $aperture
-                            ⚡ Shutter: $shutter
-                            🎛️ ISO: $iso
-                            🔭 Focal: $focal
-                            💡 Flash: $flashStr
-
-                            🏷️ **Tags**
-                            $tagsLine
+                            val inputFile = TdApi.InputFileLocal(tempFile.absolutePath)
                             
-                            ---
-                            #tgpix_metadata $metadataJson
-                        """.trimIndent()
+                            // Extract EXIF metadata using androidx.exifinterface
+                            var width = 0
+                            var height = 0
+                            var make = "Unknown"
+                            var model = "Unknown"
+                            var lens = "Unknown"
+                            var aperture = "Unknown"
+                            var shutter = "Unknown"
+                            var iso = "Unknown"
+                            var focal = "Unknown"
+                            var flashStr = "Unknown"
+                            var flashFired = false
+                            
+                            // Track whether EXIF capture date was found (absent for screenshots/WhatsApp/Snapchat)
+                            var hasExifDate = false
+                            var exifDateTakenMs = 0L
 
-                        val inputMessageContent = if (isHd) {
-                            val thumbResult = createThumbnail(context, tempFile)
-                            TdApi.InputMessageDocument().apply {
-                                this.document = inputFile
-                                if (thumbResult != null) {
-                                    thumbFile = thumbResult.file
-                                    this.thumbnail = TdApi.InputThumbnail(
-                                        TdApi.InputFileLocal(thumbResult.file.absolutePath),
-                                        thumbResult.width,
-                                        thumbResult.height
-                                    )
+                            try {
+                                val exif = androidx.exifinterface.media.ExifInterface(tempFile.absolutePath)
+                                width = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH, 0)
+                                height = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH, 0)
+
+                                make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE)?.trim() ?: "Unknown"
+                                model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL)?.trim() ?: "Unknown"
+                                lens = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_LENS_MODEL)?.trim() ?: "Unknown"
+
+                                val apertureVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER, 0.0)
+                                aperture = if (apertureVal > 0.0) "f/$apertureVal" else "Unknown"
+
+                                val shutterVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME, 0.0)
+                                shutter = if (shutterVal > 0.0) {
+                                    if (shutterVal < 1.0) {
+                                        val inverse = Math.round(1.0 / shutterVal)
+                                        "1/$inverse sec ($shutterVal)"
+                                    } else {
+                                        "$shutterVal sec"
+                                    }
+                                } else {
+                                    "Unknown"
                                 }
-                                caption = TdApi.FormattedText(captionText, emptyArray())
+
+                                val isoVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY, 0)
+                                iso = if (isoVal > 0) "$isoVal" else "Unknown"
+
+                                val focalVal = exif.getAttributeDouble(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH, 0.0)
+                                focal = if (focalVal > 0.0) "${focalVal}mm" else "Unknown"
+
+                                val flashVal = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_FLASH, -1)
+                                if (flashVal >= 0) {
+                                    flashFired = (flashVal and 1) == 1
+                                    flashStr = if (flashFired) "Flash fired ($flashVal)" else "Flash did not fire ($flashVal)"
+                                }
+
+                                // Read the EXIF capture timestamp (TAG_DATETIME_ORIGINAL is the shutter-press time)
+                                // This is the most accurate capture date for camera photos.
+                                // Screenshots, WhatsApp, Snapchat and downloads do NOT set this tag.
+                                val exifDateStr = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL)
+                                    ?: exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME)
+                                if (!exifDateStr.isNullOrBlank()) {
+                                    try {
+                                        val localDateTime = java.time.LocalDateTime.parse(exifDateStr, exifFormatter)
+                                        val parsedTime = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                                        if (parsedTime > 0L) {
+                                            exifDateTakenMs = parsedTime
+                                            hasExifDate = true
+                                        }
+                                    } catch (_: Exception) {}
+                                }
+                            } catch (exifEx: Exception) {
+                                ErrorMonitor.log(exifEx)
                             }
-                        } else {
-                            TdApi.InputMessagePhoto().apply {
-                                this.photo = inputFile
-                                caption = TdApi.FormattedText(captionText, emptyArray())
+
+                            // Best available date for this photo:
+                            //   EXIF TAG_DATETIME_ORIGINAL  — most accurate for camera photos
+                            //   photo.dateTaken             — MediaStore DATE_TAKEN → DATE_ADDED → DATE_MODIFIED
+                            //                                 (see MediaStoreScanner for fallback chain)
+                            val resolvedDateTaken = if (hasExifDate) exifDateTakenMs else photo.dateTaken
+
+                            // Dynamically generate search hashtags
+                            val tags = mutableListOf<String>()
+
+                            // Inject our on-device AI classification tags!
+                            tags.addAll(aiTags)
+
+                            if (make != "Unknown" && make.isNotEmpty()) {
+                                val makeTag = "#" + make.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
+                                tags.add(makeTag)
                             }
-                        }
+                            if (model != "Unknown" && model.isNotEmpty()) {
+                                val modelTag = "#" + model.lowercase().replace("\\s+".toRegex(), "_").replace("[^a-z0-9_]".toRegex(), "")
+                                tags.add(modelTag)
+                            }
+                            val ext = photo.name.substringAfterLast('.', "").lowercase()
+                            if (ext.isNotEmpty()) {
+                                tags.add("#$ext")
+                            }
+                            // Tag non-EXIF media (screenshots, WhatsApp, Snapchat, downloads) so they are searchable
+                            if (!hasExifDate) {
+                                tags.add("#no_exif")
+                            }
+                            try {
+                                val takenCal = java.util.Calendar.getInstance()
+                                takenCal.timeInMillis = resolvedDateTaken
+                                val yr = takenCal.get(java.util.Calendar.YEAR)
+                                val mth = takenCal.get(java.util.Calendar.MONTH) + 1
+                                tags.add("#year_$yr")
+                                tags.add("#month_${yr}_$mth")
+                            } catch (e: Exception) {}
+                            if (flashFired) {
+                                tags.add("#flash_used")
+                            }
+                            val tagsLine = tags.distinct().joinToString(" ")
 
-                        val request = TdApi.SendMessage().apply {
-                            this.chatId = chatId
-                            this.inputMessageContent = inputMessageContent
-                        }
+                            val formattedDate = try {
+                                logDateTimeFormatter.format(java.time.Instant.ofEpochMilli(resolvedDateTaken).atZone(java.time.ZoneId.systemDefault()))
+                            } catch (e: Exception) { "" }
+                            val addedDate = try {
+                                logDateTimeFormatter.format(java.time.LocalDateTime.now())
+                            } catch (e: Exception) { "" }
+                            val formattedSize = String.format(java.util.Locale.US, "%.1f MB", photo.size / (1024.0 * 1024.0))
+                            val dimensions = if (width > 0 && height > 0) "$width x $height" else "Unknown"
+                            val escapedName = photo.name.replace("\\", "\\\\").replace("\"", "\\\"")
 
-                        TdlibManager.getClient().send(request) { result ->
-                            if (result is TdApi.Message) {
-                                val fileId = when (val c = result.content) {
-                                    is TdApi.MessageDocument -> c.document.document.id
-                                    is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
-                                    else -> null
-                                }
-                                if (fileId != null) {
-                                    TdlibManager.registerPendingTempFile(fileId, tempFile.absolutePath)
-                                }
-                                // Register continuation to resume when UpdateMessageSendSucceeded fires
-                                TdlibManager.registerPendingUpload(result.id) { res ->
-                                    continuation.resume(res)
-                                }
-                                val modeStr = if (isHd) "HD Lossless" else "Compressed"
-                                TdlibManager.addLog("Upload queued for '${fileName}' ($modeStr) (Msg ID: ${result.id}). Sending to Telegram...")
-                            } else if (result is TdApi.Error) {
-                                continuation.resume(result)
+                            val partialHash = photo.getPartialHash(context)
+                            // Prepare tags for JSON storage (comma separated)
+                            val tagsJsonArray = tags.distinct().joinToString(",") { "\"$it\"" }
+                            val metadataJson = if (partialHash.isNotEmpty()) {
+                                """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"hash":"$partialHash","tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
                             } else {
-                                continuation.resume(TdApi.Error(500, "Unexpected response from TDLib: ${result::class.java.simpleName}"))
+                                """{"id":${photo.id},"name":"$escapedName","size":${photo.size},"dateTaken":${resolvedDateTaken},"tags":[$tagsJsonArray],"isHd":$isHd,"origSize":${photo.size}}"""
                             }
+
+                            val captionText = """
+                                📷 **Photo Metadata**
+                                📁 File: ${photo.name}
+                                📏 Size: $formattedSize
+                                📐 Dimensions: $dimensions
+                                📅 Taken: $formattedDate
+                                📅 Added: $addedDate
+
+                                📸 **Camera Info**
+                                🏭 Make: $make
+                                📱 Model: $model
+                                🔍 Lens: $lens
+
+                                ⚙️ **Technical**
+                                🕳️ Aperture: $aperture
+                                ⚡ Shutter: $shutter
+                                🎛️ ISO: $iso
+                                🔭 Focal: $focal
+                                💡 Flash: $flashStr
+
+                                🏷️ **Tags**
+                                $tagsLine
+                                
+                                ---
+                                #tgpix_metadata $metadataJson
+                            """.trimIndent()
+
+                            val inputMessageContent = if (isHd) {
+                                TdApi.InputMessageDocument().apply {
+                                    this.document = inputFile
+                                    if (thumbResult != null) {
+                                        this.thumbnail = TdApi.InputThumbnail(
+                                            TdApi.InputFileLocal(thumbResult.file.absolutePath),
+                                            thumbResult.width,
+                                            thumbResult.height
+                                        )
+                                    }
+                                    caption = TdApi.FormattedText(captionText, emptyArray())
+                                }
+                            } else {
+                                TdApi.InputMessagePhoto().apply {
+                                    this.photo = inputFile
+                                    caption = TdApi.FormattedText(captionText, emptyArray())
+                                }
+                            }
+
+                            val request = TdApi.SendMessage().apply {
+                                this.chatId = chatId
+                                this.inputMessageContent = inputMessageContent
+                            }
+
+                            TdlibManager.getClient().send(request) { result ->
+                                if (result is TdApi.Message) {
+                                    val fileId = when (val c = result.content) {
+                                        is TdApi.MessageDocument -> c.document.document.id
+                                        is TdApi.MessagePhoto -> c.photo.sizes.lastOrNull()?.photo?.id
+                                        else -> null
+                                    }
+                                    if (fileId != null) {
+                                        TdlibManager.registerPendingTempFile(fileId, tempFile.absolutePath)
+                                    }
+                                    // Register continuation to resume when UpdateMessageSendSucceeded fires
+                                    TdlibManager.registerPendingUpload(result.id) { res ->
+                                        continuation.resume(res)
+                                    }
+                                    val modeStr = if (isHd) "HD Lossless" else "Compressed"
+                                    TdlibManager.addLog("Upload queued for '${fileName}' ($modeStr) (Msg ID: ${result.id}). Sending to Telegram...")
+                                } else if (result is TdApi.Error) {
+                                    continuation.resume(result)
+                                } else {
+                                    continuation.resume(TdApi.Error(500, "Unexpected response from TDLib: ${result::class.java.simpleName}"))
+                                }
+                            }
+                        } catch (e: Exception) {
+                            ErrorMonitor.log(e)
+                            continuation.resume(TdApi.Error(500, e.message ?: "Unknown upload initialization error"))
                         }
-                    } catch (e: Exception) {
-                        ErrorMonitor.log(e)
-                        continuation.resume(TdApi.Error(500, e.message ?: "Unknown upload initialization error"))
                     }
+                } ?: TdApi.Error(408, "Upload timed out after 2 minutes")
+
+                finalResult = result
+
+                if (result is TdApi.Error) {
+                    val floodWaitSeconds = getFloodWaitSeconds(result)
+                    if (floodWaitSeconds != null) {
+                        TdlibManager.addLog("Rate limit triggered (Error code: ${result.code}, Msg: ${result.message}). Waiting $floodWaitSeconds seconds before retrying (Attempt $attempts/$maxAttempts) for photo '${photo.name}'...")
+                        delay(floodWaitSeconds * 1000L)
+                        continue
+                    } else if (isTransportOrNetworkError(result)) {
+                        val backoffSeconds = Math.pow(2.0, attempts.toDouble()).toLong().coerceAtMost(60)
+                        TdlibManager.addLog("Transport/Network error (Error code: ${result.code}, Msg: ${result.message}). Waiting $backoffSeconds seconds before retrying (Attempt $attempts/$maxAttempts) for photo '${photo.name}'...")
+                        delay(backoffSeconds * 1000L)
+                        continue
+                    } else {
+                        break
+                    }
+                } else {
+                    break
                 }
             }
-            return result ?: TdApi.Error(408, "Upload timed out after 2 minutes")
+            return finalResult ?: TdApi.Error(500, "Upload failed after $maxAttempts attempts")
         } finally {
             // Clean up the temp file from the cache directory immediately when the suspension finishes
             try {
@@ -356,6 +386,31 @@ open class UploadManager {
         } finally {
             inFlightUploads.remove(photo.uri)
         }
+    }
+
+    internal fun getFloodWaitSeconds(error: TdApi.Error): Long? {
+        if (error.code == 420 || error.message?.contains("FLOOD_WAIT", ignoreCase = true) == true) {
+            val regex = """FLOOD_WAIT_(\d+)""".toRegex(RegexOption.IGNORE_CASE)
+            val match = regex.find(error.message ?: "")
+            if (match != null) {
+                return match.groupValues[1].toLongOrNull() ?: 10L
+            }
+            return 10L // default fallback wait duration
+        }
+        return null
+    }
+
+    internal fun isTransportOrNetworkError(error: TdApi.Error): Boolean {
+        if (error.code == 3 || error.code == 500) {
+            return true
+        }
+        val msg = error.message?.lowercase() ?: ""
+        return msg.contains("connection closed") ||
+                msg.contains("failed to connect") ||
+                msg.contains("network error") ||
+                msg.contains("socket") ||
+                msg.contains("timeout") ||
+                msg.contains("transport")
     }
 
     private suspend fun classifyImage(context: Context, cacheFilePath: String): List<String> = suspendCancellableCoroutine { continuation ->

@@ -337,23 +337,50 @@ open class TdlibManager {
         }
     }
 
-    open suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
-        try {
-            val cl = client
-            if (cl == null) {
-                continuation.resume(TdApi.Error(500, "TDLib Client not initialized!"))
-                return@suspendCancellableCoroutine
-            }
-            cl.send(request) { result ->
-                if (continuation.isActive) {
-                    continuation.resume(result)
+    open suspend fun sendRequest(request: TdApi.Function<out TdApi.Object>): TdApi.Object {
+        var attempts = 0
+        val maxAttempts = 5
+        var finalResult: TdApi.Object? = null
+        
+        while (attempts < maxAttempts) {
+            attempts++
+            val result = kotlinx.coroutines.suspendCancellableCoroutine<TdApi.Object> { continuation ->
+                try {
+                    val cl = client
+                    if (cl == null) {
+                        continuation.resume(TdApi.Error(500, "TDLib Client not initialized!"))
+                        return@suspendCancellableCoroutine
+                    }
+                    cl.send(request) { res ->
+                        if (continuation.isActive) {
+                            continuation.resume(res)
+                        }
+                    }
+                } catch (e: Exception) {
+                    if (continuation.isActive) {
+                        continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
+                    }
                 }
             }
-        } catch (e: Exception) {
-            if (continuation.isActive) {
-                continuation.resume(TdApi.Error(500, e.message ?: "Exception in sendRequest"))
+            
+            finalResult = result
+            
+            if (result is TdApi.Error) {
+                val floodWaitSeconds = UploadManager.getFloodWaitSeconds(result)
+                if (floodWaitSeconds != null) {
+                    addLog("sendRequest Rate limit triggered (Error ${result.code}: ${result.message}). Waiting $floodWaitSeconds seconds before retry (Attempt $attempts/$maxAttempts)...")
+                    delay(floodWaitSeconds * 1000L)
+                    continue
+                } else if (UploadManager.isTransportOrNetworkError(result)) {
+                    val backoffSeconds = Math.pow(2.0, attempts.toDouble()).toLong().coerceAtMost(30)
+                    addLog("sendRequest Transport/Network error (Error ${result.code}: ${result.message}). Waiting $backoffSeconds seconds before retry (Attempt $attempts/$maxAttempts)...")
+                    delay(backoffSeconds * 1000L)
+                    continue
+                }
             }
+            break
         }
+        return finalResult ?: TdApi.Error(500, "Request failed after $maxAttempts attempts")
     }
 
 
