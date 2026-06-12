@@ -116,4 +116,9 @@ class AlbumViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun getAlbumPhotosDirect(albumId: Long): List<AlbumPhotoEntity> = withContext(Dispatchers.IO) {
         UploadDatabase.getDatabase(getApplication()).albumDao().getAlbumPhotosDirect(albumId)
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allAlbumPhotosFlow: Flow<List<AlbumPhotoEntity>> = TdlibManager.dbVersion.flatMapLatest {
+        UploadDatabase.getDatabase(getApplication()).albumDao().getAllAlbumPhotosFlow()
+    }
 }

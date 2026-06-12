@@ -149,7 +149,7 @@ class GalleryViewModel @JvmOverloads constructor(
     }.flowOn(Dispatchers.Default)
      .stateIn(
          scope = viewModelScope,
-         started = SharingStarted.Lazily,
+         started = SharingStarted.Eagerly,
          initialValue = MergeResult(emptyList(), emptySet())
      )
 
@@ -160,7 +160,7 @@ class GalleryViewModel @JvmOverloads constructor(
     }.flowOn(Dispatchers.Default)
      .stateIn(
          scope = viewModelScope,
-         started = SharingStarted.Lazily,
+         started = SharingStarted.Eagerly,
          initialValue = emptyList()
      )
 
@@ -168,7 +168,7 @@ class GalleryViewModel @JvmOverloads constructor(
         .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
 
@@ -176,7 +176,7 @@ class GalleryViewModel @JvmOverloads constructor(
         .flowOn(Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = emptySet()
         )
 

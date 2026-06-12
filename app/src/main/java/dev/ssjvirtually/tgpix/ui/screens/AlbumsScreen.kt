@@ -74,16 +74,20 @@ fun AlbumsScreen(
 
     // 1. Load albums from DB flow via ViewModel
     val albums by albumViewModel.albumsFlow.collectAsState(initial = emptyList())
+    val allAlbumPhotos by albumViewModel.allAlbumPhotosFlow.collectAsState(initial = emptyList())
     var albumUiModels by remember { mutableStateOf<List<AlbumUiModel>>(emptyList()) }
 
-    // Re-query database when albums or photos list change to get correct item count and cover photo
-    LaunchedEffect(albums, mergedPhotosList) {
+    // Re-query database when albums, photos list or album photo mappings change to get correct item count and cover photo
+    LaunchedEffect(albums, mergedPhotosList, allAlbumPhotos) {
         withContext(Dispatchers.IO) {
             val uiModels = albums.map { album ->
                 val photos = albumViewModel.getAlbumPhotosDirect(album.id)
+                android.util.Log.d("TGPixAlbums", "AlbumsScreen: Album '${album.name}' (id=${album.id}) has ${photos.size} entries in DB. Cover key = ${photos.lastOrNull()?.photoUri}")
                 val coverFileName = photos.lastOrNull()?.photoUri
                 val coverPhoto = coverFileName?.let { key ->
-                    mergedPhotosList.firstOrNull { it.name == key || it.uri == key }?.uri
+                    val found = mergedPhotosList.firstOrNull { it.name == key || it.uri == key }
+                    android.util.Log.d("TGPixAlbums", "AlbumsScreen: cover match for key '$key': found = ${found?.uri}")
+                    found?.uri
                 }
                 AlbumUiModel(
                     id = album.id,
@@ -524,11 +528,15 @@ fun AlbumDetailsView(
     }
     val albumPhotoUris by albumPhotoUrisFlow.collectAsState(initial = emptyList())
     
+    android.util.Log.d("TGPixAlbums", "AlbumDetailsView: mergedPhotosList size = ${mergedPhotosList.size}, albumPhotoUris = $albumPhotoUris")
+
     // Filter overall timeline photos down to exactly the ones inside this album
     val albumPhotos = remember(albumPhotoUris, mergedPhotosList) {
-        mergedPhotosList.filter { photo ->
+        val filtered = mergedPhotosList.filter { photo ->
             albumPhotoUris.any { it == photo.name || it == photo.uri }
         }
+        android.util.Log.d("TGPixAlbums", "AlbumDetailsView: filtered albumPhotos size = ${filtered.size}")
+        filtered
     }
 
     BackHandler {
