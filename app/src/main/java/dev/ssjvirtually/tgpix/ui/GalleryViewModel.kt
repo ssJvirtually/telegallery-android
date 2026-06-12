@@ -1,6 +1,7 @@
 package dev.ssjvirtually.tgpix.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.ssjvirtually.tgpix.storage.BackupManager
@@ -58,6 +59,14 @@ class GalleryViewModel @JvmOverloads constructor(
     private val _localPhotos = MutableStateFlow<List<LocalPhoto>>(emptyList())
     val localPhotos: StateFlow<List<LocalPhoto>> = _localPhotos.asStateFlow()
 
+    private val _backupFolderIds = MutableStateFlow(preferencesManager.getBackupFolderIds(application))
+
+    private val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "backup_folder_ids") {
+            _backupFolderIds.value = preferencesManager.getBackupFolderIds(application)
+        }
+    }
+
     private val _isScanningLocal = MutableStateFlow(false)
     val isScanningLocal: StateFlow<Boolean> = _isScanningLocal.asStateFlow()
 
@@ -81,6 +90,9 @@ class GalleryViewModel @JvmOverloads constructor(
     }
 
     init {
+        application.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .registerOnSharedPreferenceChangeListener(prefListener)
+
         val workManager = WorkManager.getInstance(application)
         viewModelScope.launch {
             workManager.getWorkInfosForUniqueWorkFlow("tgpix_restore_sync").collect { workInfos ->
@@ -141,13 +153,16 @@ class GalleryViewModel @JvmOverloads constructor(
          initialValue = MergeResult(emptyList(), emptySet())
      )
 
-    val mergedPhotosList: StateFlow<List<LocalPhoto>> = mergeResult.map { it.mergedPhotos }
-        .flowOn(Dispatchers.Default)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Lazily,
-            initialValue = emptyList()
-        )
+    val mergedPhotosList: StateFlow<List<LocalPhoto>> = combine(mergeResult, _backupFolderIds) { result, _ ->
+        result.mergedPhotos.filter { photo ->
+            photo.uri.startsWith("cloud://") || preferencesManager.shouldBackupPhoto(application, photo.bucketId, photo.bucketName)
+        }
+    }.flowOn(Dispatchers.Default)
+     .stateIn(
+         scope = viewModelScope,
+         started = SharingStarted.Lazily,
+         initialValue = emptyList()
+     )
 
     val uploadedUrisSet: StateFlow<Set<String>> = mergeResult.map { it.uploadedUris }
         .flowOn(Dispatchers.Default)
@@ -241,6 +256,16 @@ class GalleryViewModel @JvmOverloads constructor(
                 e.printStackTrace()
                 _isSyncingCloud.value = false
             }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            getApplication<Application>().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .unregisterOnSharedPreferenceChangeListener(prefListener)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
