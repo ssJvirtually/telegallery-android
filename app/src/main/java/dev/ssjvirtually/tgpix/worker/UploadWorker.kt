@@ -75,6 +75,12 @@ class UploadWorker(
     override suspend fun doWork(): Result {
         val applicationContext = applicationContext
         
+        // Guard against active restore/sync to prevent uploading duplicates
+        if (PreferencesManager.isRestoreActive(applicationContext)) {
+            TdlibManager.addLog("UploadWorker: Aborting photo backup run because a restore/sync is currently active.")
+            return Result.success()
+        }
+        
         // 1. Verify if backups are currently enabled by the user in Settings
         val isBackupActive = PreferencesManager.isBackupActive(applicationContext)
         if (!isBackupActive) {

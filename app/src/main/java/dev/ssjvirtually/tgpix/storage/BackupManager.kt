@@ -318,21 +318,26 @@ open class BackupManager {
                     return@withContext false
                 }
 
-                // 5. Safely lock the database and perform a copy while in a Room transaction
+                // 5. Close database safely to ensure all WAL files are checkpointed and closed cleanly
                 val transactionResult = try {
-                    db.withTransaction {
-                        val innerCount = db.cloudDao().getRecordCountDirect()
-                        val lastCount = PreferencesManager.getLastBackupRecordCount(context)
+                    val innerCount = currentCount
+                    val lastCount = PreferencesManager.getLastBackupRecordCount(context)
 
-                        // If database is empty but we previously had backups, abort to protect remote
-                        if (innerCount == 0 && lastCount > 0) {
-                            TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
-                            null
-                        } else {
-                            val tempFile = File(context.filesDir, "tgpix_backup.db")
-                            dbFile.copyTo(tempFile, overwrite = true)
-                            Pair(tempFile, innerCount)
+                    // If database is empty but we previously had backups, abort to protect remote
+                    if (innerCount == 0 && lastCount > 0) {
+                        TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
+                        null
+                    } else {
+                        try {
+                            db.close()
+                            TdlibManager.addLog("BackupManager: Database closed successfully for backup copy.")
+                        } catch (e: Exception) {
+                            TdlibManager.addLog("BackupManager: Warning closing database: ${e.message}")
                         }
+                        
+                        val tempFile = File(context.filesDir, "tgpix_backup.db")
+                        dbFile.copyTo(tempFile, overwrite = true)
+                        Pair(tempFile, innerCount)
                     }
                 } catch (e: Exception) {
                     ErrorMonitor.log(e)

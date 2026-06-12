@@ -12,7 +12,9 @@ object BackupScheduler {
         val isBackupActive = PreferencesManager.isBackupActive(appContext)
         val chatId = PreferencesManager.getChatId(appContext)
         
-        if (!isBackupActive || chatId == 0L) {
+        val isRestoreActive = PreferencesManager.isRestoreActive(appContext)
+        
+        if (!isBackupActive || chatId == 0L || isRestoreActive) {
             // Cancel background backups instantly
             WorkManager.getInstance(appContext).cancelUniqueWork("upload_worker")
             WorkManager.getInstance(appContext).cancelUniqueWork("upload_worker_one_time")

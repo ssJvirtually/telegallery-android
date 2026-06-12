@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt": {
-    "mtime": 1781286958.5741608,
-    "ast_hash": "dd6eb781b4b2542bb7eada1a5e3697b4",
+    "mtime": 1781289470.110967,
+    "ast_hash": "50ea4b4fd0d855f24e22960dabbed485",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/FolderScanner.kt": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/PreferencesManager.kt": {
-    "mtime": 1781256157.585697,
-    "ast_hash": "c986f7040cb3d7dde519a7d0b0dc603c",
+    "mtime": 1781289430.2982676,
+    "ast_hash": "68d51df404d87b772d1699f90221bc40",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/DatabaseBackupWorker.kt": {
-    "mtime": 1781261540.955825,
-    "ast_hash": "1e58aefa6531ec91fa905d79840411d5",
+    "mtime": 1781289494.2197123,
+    "ast_hash": "5ff09dc2db812a22642f2a4553b41462",
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/ShareWorker.kt": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt": {
-    "mtime": 1781271179.592545,
-    "ast_hash": "1806656dcafa87ad1158c571f58495bf",
+    "mtime": 1781289439.5194042,
+    "ast_hash": "340dc1a3f8fde0efa3aaeb764cd6d431",
     "semantic_hash": ""
   },
   "watch_and_install.ps1": {

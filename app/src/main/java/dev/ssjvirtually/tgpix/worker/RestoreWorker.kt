@@ -76,6 +76,13 @@ class RestoreWorker(
         }
 
         PreferencesManager.setRestoreActive(applicationContext, true)
+        // Instantly cancel any active photo backup workers since restore is now active
+        try {
+            BackupScheduler.schedulePhotoBackup(applicationContext)
+        } catch (e: Exception) {
+            TdlibManager.addLog("RestoreWorker: Failed to cancel backup workers on startup: ${e.message}")
+        }
+
         try {
             try {
                 setForeground(getForegroundInfo())
@@ -181,6 +188,12 @@ class RestoreWorker(
             return Result.retry()
         } finally {
             PreferencesManager.setRestoreActive(applicationContext, false)
+            // Reschedule photo backups now that the sync is complete
+            try {
+                BackupScheduler.schedulePhotoBackup(applicationContext)
+            } catch (e: Exception) {
+                TdlibManager.addLog("RestoreWorker: Failed to reschedule backups: ${e.message}")
+            }
         }
     }
 }
