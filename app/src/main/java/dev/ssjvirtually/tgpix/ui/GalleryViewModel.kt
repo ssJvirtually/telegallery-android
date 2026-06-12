@@ -164,6 +164,14 @@ class GalleryViewModel @JvmOverloads constructor(
          initialValue = emptyList()
      )
 
+    val allMergedPhotosList: StateFlow<List<LocalPhoto>> = mergeResult.map { it.mergedPhotos }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = emptyList()
+        )
+
     val uploadedUrisSet: StateFlow<Set<String>> = mergeResult.map { it.uploadedUris }
         .flowOn(Dispatchers.Default)
         .stateIn(

@@ -68,7 +68,7 @@ fun AlbumsScreen(
     viewModel: dev.ssjvirtually.tgpix.ui.GalleryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     albumViewModel: dev.ssjvirtually.tgpix.ui.AlbumViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    val mergedPhotosList by viewModel.mergedPhotosList.collectAsState()
+    val mergedPhotosList by viewModel.allMergedPhotosList.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
