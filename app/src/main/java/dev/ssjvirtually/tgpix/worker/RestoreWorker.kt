@@ -75,14 +75,30 @@ class RestoreWorker(
             return Result.failure()
         }
 
+        // Initialize TDLib safely
+        TdlibManager.initialize(applicationContext)
+
+        // Wait for authorization state to become Ready (timeout 5 seconds)
+        val isReady = withTimeoutOrNull(5000) {
+            TdlibManager.authState.first { it is TdApi.AuthorizationStateReady }
+        }
+
+        if (isReady == null) {
+            TdlibManager.addLog("RestoreWorker: Telegram client not authenticated or timed out. Aborting restore.")
+            PreferencesManager.setRestoreActive(applicationContext, false)
+            return Result.failure()
+        }
+
         PreferencesManager.setRestoreActive(applicationContext, true)
-        // Instantly cancel any active photo backup workers since restore is now active
+        // Instantly cancel any active photo backup and database backup workers since restore is now active
         try {
             BackupScheduler.schedulePhotoBackup(applicationContext)
+            androidx.work.WorkManager.getInstance(applicationContext).cancelUniqueWork("db_backup")
         } catch (e: Exception) {
             TdlibManager.addLog("RestoreWorker: Failed to cancel backup workers on startup: ${e.message}")
         }
 
+        var restoreCompleted = false
         try {
             try {
                 setForeground(getForegroundInfo())
@@ -97,22 +113,10 @@ class RestoreWorker(
                 }
             }
 
-            // Initialize TDLib safely
-            TdlibManager.initialize(applicationContext)
-
-            // Wait for authorization state to become Ready
-            val isReady = withTimeoutOrNull(20000) {
-                TdlibManager.authState.first { it is TdApi.AuthorizationStateReady }
-            }
-
-            if (isReady == null) {
-                TdlibManager.addLog("RestoreWorker: Telegram client not authenticated or timed out. Retrying later.")
-                return Result.retry()
-            }
-
             // 1. Attempt database file restore first if the local database is empty
             val db = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(applicationContext)
             val currentCount = db.cloudDao().getRecordCountDirect()
+            val wasFreshCrawl = currentCount == 0
             var restoredFromSnapshot = false
             if (currentCount == 0) {
                 TdlibManager.addLog("RestoreWorker: Live database is empty. Attempting to restore from remote snapshot...")
@@ -140,19 +144,31 @@ class RestoreWorker(
                 }
             }
 
-            // 3. Sync media uploads from Vault Channel
-            // If we successfully restored from a snapshot, we override forceFullCrawl to false to avoid redundant crawls.
+            // 3. Sync media uploads from Vault Channel.
+            // After a snapshot restore, perform a delta crawl (forceFullCrawl = false) to pick up
+            // any photos uploaded after the snapshot. Also skip duplicate cleanup because the
+            // snapshot + delta crawl naturally produces overlapping records via INSERT OR REPLACE.
+            // On a truly fresh device with no snapshot, always do a full crawl from the beginning
+            // (startMsgId = 0) regardless of any stale lastScannedMessageId from old sessions.
             val forceFullCrawl = if (restoredFromSnapshot) false else inputData.getBoolean("forceFullCrawl", true)
-            val startMsgId = PreferencesManager.getLastScannedMessageId(applicationContext)
-            
+            // If no snapshot was restored, this is a full crawl from scratch — ignore any leftover
+            // lastScannedMessageId that may have been saved by a previous interrupted session on
+            // another device, as it would cause the crawl to start mid-history and miss older photos.
+            val startMsgId = if (restoredFromSnapshot) PreferencesManager.getLastScannedMessageId(applicationContext) else 0L
+
+            // Skip destructive duplicate cleanup unless this was a genuine fresh full crawl
+            // from an empty database. Delta crawls and redundant runs must never delete photos.
+            val skipDuplicateCleanup = restoredFromSnapshot || !wasFreshCrawl
+
             HistorySyncManager.syncCloudHistory(
                 context = applicationContext,
                 chatId = chatId,
                 forceFullCrawl = forceFullCrawl,
                 startMessageId = startMsgId,
+                skipDuplicateCleanup = skipDuplicateCleanup,
                 onProgress = { count, lastId ->
                     PreferencesManager.setLastScannedMessageId(applicationContext, lastId)
-                    
+
                     // Update WorkManager progress for UI observers
                     setProgress(
                         workDataOf(
@@ -160,7 +176,7 @@ class RestoreWorker(
                             "progressText" to "Restoring: $count photos recovered"
                         )
                     )
-                    
+
                     // Update persistent notification status
                     try {
                         setForeground(createForegroundInfo(count))
@@ -178,21 +194,67 @@ class RestoreWorker(
             } catch (e: Exception) {
                 TdlibManager.addLog("RestoreWorker: Failed to reconstruct albums: ${e.message}")
             }
-            
+
+            restoreCompleted = true
+            TdlibManager.addLog("RestoreWorker: Restore completed successfully.")
+
+            // Publish a first-time database snapshot now that we have a full crawl.
+            // This ensures the next fresh-device login finds a snapshot immediately
+            // instead of having to repeat the full history crawl.
+            // Only do this for genuine fresh crawls — not redundant delta runs on
+            // a database that already had records when the worker started.
+            if (!restoredFromSnapshot && wasFreshCrawl) {
+                // Clear restore active first so scheduleBackup is allowed to schedule the work!
+                PreferencesManager.setRestoreActive(applicationContext, false)
+                
+                TdlibManager.addLog("RestoreWorker: Scheduling initial database snapshot after first full crawl.")
+                try {
+                    dev.ssjvirtually.tgpix.storage.BackupManager.scheduleBackup(applicationContext)
+                } catch (e: Exception) {
+                    TdlibManager.addLog("RestoreWorker: Failed to schedule initial snapshot: ${e.message}")
+                }
+            }
+
+            // Sync lastBackupRecordCount with the final database state so that the
+            // debounce backup trigger in GalleryViewModel doesn't immediately schedule
+            // a redundant DatabaseBackupWorker on the data we just restored.
+            try {
+                val finalDb = dev.ssjvirtually.tgpix.storage.UploadDatabase.getDatabase(applicationContext)
+                val finalCount = finalDb.cloudDao().getRecordCountDirect()
+                PreferencesManager.setLastBackupRecordCount(applicationContext, finalCount)
+                TdlibManager.addLog("RestoreWorker: Synced lastBackupRecordCount to $finalCount after restore.")
+            } catch (e: Exception) {
+                TdlibManager.addLog("RestoreWorker: Failed to sync backup record count: ${e.message}")
+            }
+
             TdlibManager.addLog("RestoreWorker: Completed restore sequence successfully.")
             return Result.success()
 
         } catch (e: Exception) {
-            TdlibManager.addLog("RestoreWorker: Exception during restore: ${e.message}")
+            TdlibManager.addLog("RestoreWorker: Unexpected exception during restore: ${e.message}")
             ErrorMonitor.log(e)
+            // Max 5 attempts (runAttemptCount starts at 0), then give up and release the restore guard
+            if (runAttemptCount >= 4) {
+                TdlibManager.addLog("RestoreWorker: Max retries ($runAttemptCount) reached. Giving up.")
+                restoreCompleted = true
+                return Result.failure()
+            }
             return Result.retry()
         } finally {
-            PreferencesManager.setRestoreActive(applicationContext, false)
-            // Reschedule photo backups now that the sync is complete
-            try {
-                BackupScheduler.schedulePhotoBackup(applicationContext)
-            } catch (e: Exception) {
-                TdlibManager.addLog("RestoreWorker: Failed to reschedule backups: ${e.message}")
+            // Only release the restore guard and reschedule uploads if the
+            // restore actually completed. Otherwise `isRestoreActive` stays
+            // true so the debounce backup observer cannot schedule a
+            // DatabaseBackupWorker that would snapshot a partial database
+            // and overwrite the good remote snapshot with incomplete data.
+            if (restoreCompleted) {
+                PreferencesManager.setRestoreActive(applicationContext, false)
+                try {
+                    BackupScheduler.schedulePhotoBackup(applicationContext)
+                } catch (e: Exception) {
+                    TdlibManager.addLog("RestoreWorker: Failed to reschedule backups: ${e.message}")
+                }
+            } else {
+                TdlibManager.addLog("RestoreWorker: Restore did not complete — keeping isRestoreActive=true to prevent partial backups.")
             }
         }
     }

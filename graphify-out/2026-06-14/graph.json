@@ -180,7 +180,7 @@
       "label": "MainActivity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L32",
+      "source_location": "L27",
       "id": "tgpix_mainactivity_mainactivity",
       "community": 10,
       "norm_label": "mainactivity"
@@ -198,7 +198,7 @@
       "label": "ManagedActivityResultLauncher",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L34",
+      "source_location": "L29",
       "id": "managedactivityresultlauncher",
       "community": 10,
       "norm_label": "managedactivityresultlauncher"
@@ -207,7 +207,7 @@
       "label": "IntentSenderRequest",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L34",
+      "source_location": "L29",
       "id": "intentsenderrequest",
       "community": 10,
       "norm_label": "intentsenderrequest"
@@ -216,7 +216,7 @@
       "label": "androidx",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L34",
+      "source_location": "L29",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_androidx",
       "community": 10,
       "norm_label": "androidx"
@@ -225,7 +225,7 @@
       "label": "android",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L37",
+      "source_location": "L32",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_android",
       "community": 10,
       "norm_label": "android"
@@ -234,7 +234,7 @@
       "label": ".onResume()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L39",
+      "source_location": "L34",
       "id": "tgpix_mainactivity_mainactivity_onresume",
       "community": 10,
       "norm_label": ".onresume()"
@@ -243,7 +243,7 @@
       "label": ".onStart()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L44",
+      "source_location": "L39",
       "id": "tgpix_mainactivity_mainactivity_onstart",
       "community": 10,
       "norm_label": ".onstart()"
@@ -252,7 +252,7 @@
       "label": ".onStop()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L63",
+      "source_location": "L58",
       "id": "tgpix_mainactivity_mainactivity_onstop",
       "community": 10,
       "norm_label": ".onstop()"
@@ -261,25 +261,25 @@
       "label": ".onCreate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L76",
+      "source_location": "L71",
       "id": "tgpix_mainactivity_mainactivity_oncreate",
-      "community": 10,
+      "community": 80,
       "norm_label": ".oncreate()"
     },
     {
       "label": "Bundle",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L76",
+      "source_location": "L71",
       "id": "bundle",
-      "community": 10,
+      "community": 80,
       "norm_label": "bundle"
     },
     {
       "label": ".triggerDelete()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L129",
+      "source_location": "L124",
       "id": "tgpix_mainactivity_mainactivity_triggerdelete",
       "community": 10,
       "norm_label": ".triggerdelete()"
@@ -288,7 +288,7 @@
       "label": "LocalPhoto",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L129",
+      "source_location": "L124",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_localphoto",
       "community": 10,
       "norm_label": "localphoto"
@@ -297,7 +297,7 @@
       "label": ".triggerBatchDelete()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L147",
+      "source_location": "L142",
       "id": "tgpix_mainactivity_mainactivity_triggerbatchdelete",
       "community": 10,
       "norm_label": ".triggerbatchdelete()"
@@ -306,7 +306,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/MainActivity.kt",
-      "source_location": "L147",
+      "source_location": "L142",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_mainactivity_kt_list",
       "community": 10,
       "norm_label": "list"
@@ -328,6 +328,15 @@
       "id": "tgpix_tgpixapplication_tgpixapplication",
       "community": 55,
       "norm_label": "tgpixapplication"
+    },
+    {
+      "label": "Application",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "id": "application",
+      "community": 55,
+      "norm_label": "application"
     },
     {
       "label": "ImageLoaderFactory",
@@ -402,10 +411,19 @@
       "norm_label": "backupmanager"
     },
     {
+      "label": "BackupResult",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
+      "source_location": "L33",
+      "id": "storage_backupmanager_backupresult",
+      "community": 7,
+      "norm_label": "backupresult"
+    },
+    {
       "label": ".computeSha256()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L35",
+      "source_location": "L42",
       "id": "storage_backupmanager_backupmanager_computesha256",
       "community": 7,
       "norm_label": ".computesha256()"
@@ -414,7 +432,7 @@
       "label": "File",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L35",
+      "source_location": "L42",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_file",
       "community": 7,
       "norm_label": "file"
@@ -423,7 +441,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L35",
+      "source_location": "L42",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_string",
       "community": 7,
       "norm_label": "string"
@@ -432,7 +450,7 @@
       "label": ".getSchemaVersionFromFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L47",
+      "source_location": "L54",
       "id": "storage_backupmanager_backupmanager_getschemaversionfromfile",
       "community": 7,
       "norm_label": ".getschemaversionfromfile()"
@@ -441,7 +459,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L47",
+      "source_location": "L54",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_int",
       "community": 7,
       "norm_label": "int"
@@ -450,7 +468,7 @@
       "label": ".getBackupChatId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L56",
+      "source_location": "L63",
       "id": "storage_backupmanager_backupmanager_getbackupchatid",
       "community": 7,
       "norm_label": ".getbackupchatid()"
@@ -459,7 +477,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L56",
+      "source_location": "L63",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_context",
       "community": 7,
       "norm_label": "context"
@@ -468,7 +486,7 @@
       "label": "Long",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L56",
+      "source_location": "L63",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_long",
       "community": 7,
       "norm_label": "long"
@@ -477,7 +495,7 @@
       "label": ".resolveBackupChatId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L66",
+      "source_location": "L73",
       "id": "storage_backupmanager_backupmanager_resolvebackupchatid",
       "community": 7,
       "norm_label": ".resolvebackupchatid()"
@@ -486,7 +504,7 @@
       "label": ".ensureChatLoaded()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L91",
+      "source_location": "L98",
       "id": "storage_backupmanager_backupmanager_ensurechatloaded",
       "community": 7,
       "norm_label": ".ensurechatloaded()"
@@ -495,7 +513,7 @@
       "label": ".resolveMyUserId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L117",
+      "source_location": "L124",
       "id": "storage_backupmanager_backupmanager_resolvemyuserid",
       "community": 7,
       "norm_label": ".resolvemyuserid()"
@@ -504,7 +522,7 @@
       "label": ".scheduleBackup()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L137",
+      "source_location": "L144",
       "id": "storage_backupmanager_backupmanager_schedulebackup",
       "community": 7,
       "norm_label": ".schedulebackup()"
@@ -513,7 +531,7 @@
       "label": "SnapshotInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L159",
+      "source_location": "L172",
       "id": "storage_backupmanager_snapshotinfo",
       "community": 7,
       "norm_label": "snapshotinfo"
@@ -522,7 +540,7 @@
       "label": ".getLatestSnapshotInfo()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L167",
+      "source_location": "L180",
       "id": "storage_backupmanager_backupmanager_getlatestsnapshotinfo",
       "community": 7,
       "norm_label": ".getlatestsnapshotinfo()"
@@ -531,7 +549,7 @@
       "label": ".countMessagesSince()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L204",
+      "source_location": "L225",
       "id": "storage_backupmanager_backupmanager_countmessagessince",
       "community": 7,
       "norm_label": ".countmessagessince()"
@@ -540,7 +558,7 @@
       "label": ".backupDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L235",
+      "source_location": "L256",
       "id": "storage_backupmanager_backupmanager_backupdatabase",
       "community": 7,
       "norm_label": ".backupdatabase()"
@@ -549,7 +567,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L235",
+      "source_location": "L256",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_boolean",
       "community": 7,
       "norm_label": "boolean"
@@ -558,7 +576,7 @@
       "label": ".getLatestSnapshotVersion()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L456",
+      "source_location": "L488",
       "id": "storage_backupmanager_backupmanager_getlatestsnapshotversion",
       "community": 7,
       "norm_label": ".getlatestsnapshotversion()"
@@ -567,7 +585,7 @@
       "label": ".pruneOldSnapshots()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L469",
+      "source_location": "L501",
       "id": "storage_backupmanager_backupmanager_pruneoldsnapshots",
       "community": 7,
       "norm_label": ".pruneoldsnapshots()"
@@ -576,7 +594,7 @@
       "label": ".restartApp()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L506",
+      "source_location": "L548",
       "id": "storage_backupmanager_backupmanager_restartapp",
       "community": 7,
       "norm_label": ".restartapp()"
@@ -585,7 +603,7 @@
       "label": ".tryRestoreSnapshot()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L516",
+      "source_location": "L558",
       "id": "storage_backupmanager_backupmanager_tryrestoresnapshot",
       "community": 7,
       "norm_label": ".tryrestoresnapshot()"
@@ -594,7 +612,7 @@
       "label": ".restoreDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L659",
+      "source_location": "L702",
       "id": "storage_backupmanager_backupmanager_restoredatabase",
       "community": 7,
       "norm_label": ".restoredatabase()"
@@ -603,7 +621,7 @@
       "label": ".restoreDatabaseForce()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L676",
+      "source_location": "L719",
       "id": "storage_backupmanager_backupmanager_restoredatabaseforce",
       "community": 7,
       "norm_label": ".restoredatabaseforce()"
@@ -612,7 +630,7 @@
       "label": ".reconstructAlbumsFromBackupChannel()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L695",
+      "source_location": "L738",
       "id": "storage_backupmanager_backupmanager_reconstructalbumsfrombackupchannel",
       "community": 7,
       "norm_label": ".reconstructalbumsfrombackupchannel()"
@@ -621,7 +639,7 @@
       "label": ".downloadFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L746",
+      "source_location": "L799",
       "id": "storage_backupmanager_backupmanager_downloadfile",
       "community": 7,
       "norm_label": ".downloadfile()"
@@ -630,7 +648,7 @@
       "label": ".serializeManifest()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L774",
+      "source_location": "L827",
       "id": "storage_backupmanager_backupmanager_serializemanifest",
       "community": 7,
       "norm_label": ".serializemanifest()"
@@ -639,7 +657,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L774",
+      "source_location": "L827",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_list",
       "community": 7,
       "norm_label": "list"
@@ -648,7 +666,7 @@
       "label": ".onAlbumUpdated()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L801",
+      "source_location": "L854",
       "id": "storage_backupmanager_backupmanager_onalbumupdated",
       "community": 7,
       "norm_label": ".onalbumupdated()"
@@ -657,7 +675,7 @@
       "label": ".onAlbumDeleted()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L877",
+      "source_location": "L930",
       "id": "storage_backupmanager_backupmanager_onalbumdeleted",
       "community": 7,
       "norm_label": ".onalbumdeleted()"
@@ -666,7 +684,7 @@
       "label": ".reconstructAlbum()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L893",
+      "source_location": "L946",
       "id": "storage_backupmanager_backupmanager_reconstructalbum",
       "community": 7,
       "norm_label": ".reconstructalbum()"
@@ -675,7 +693,7 @@
       "label": "TdApi",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L893",
+      "source_location": "L946",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_backupmanager_kt_tdapi",
       "community": 7,
       "norm_label": "tdapi"
@@ -684,7 +702,7 @@
       "label": ".registerDevice()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L967",
+      "source_location": "L1020",
       "id": "storage_backupmanager_backupmanager_registerdevice",
       "community": 7,
       "norm_label": ".registerdevice()"
@@ -693,7 +711,7 @@
       "label": ".sendMetadataEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1005",
+      "source_location": "L1058",
       "id": "storage_backupmanager_backupmanager_sendmetadataevent",
       "community": 7,
       "norm_label": ".sendmetadataevent()"
@@ -702,7 +720,7 @@
       "label": ".deleteCloudPhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1028",
+      "source_location": "L1081",
       "id": "storage_backupmanager_backupmanager_deletecloudphoto",
       "community": 7,
       "norm_label": ".deletecloudphoto()"
@@ -711,7 +729,7 @@
       "label": ".restoreCloudPhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1048",
+      "source_location": "L1101",
       "id": "storage_backupmanager_backupmanager_restorecloudphoto",
       "community": 7,
       "norm_label": ".restorecloudphoto()"
@@ -720,7 +738,7 @@
       "label": ".deleteCloudPhotoPermanently()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1068",
+      "source_location": "L1121",
       "id": "storage_backupmanager_backupmanager_deletecloudphotopermanently",
       "community": 7,
       "norm_label": ".deletecloudphotopermanently()"
@@ -729,7 +747,7 @@
       "label": ".pruneExpiredTrash()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1096",
+      "source_location": "L1149",
       "id": "storage_backupmanager_backupmanager_pruneexpiredtrash",
       "community": 7,
       "norm_label": ".pruneexpiredtrash()"
@@ -738,7 +756,7 @@
       "label": ".requestLeaderRole()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1130",
+      "source_location": "L1183",
       "id": "storage_backupmanager_backupmanager_requestleaderrole",
       "community": 7,
       "norm_label": ".requestleaderrole()"
@@ -747,7 +765,7 @@
       "label": ".logAlbumCreate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1147",
+      "source_location": "L1200",
       "id": "storage_backupmanager_backupmanager_logalbumcreate",
       "community": 7,
       "norm_label": ".logalbumcreate()"
@@ -756,7 +774,7 @@
       "label": ".logAlbumDelete()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1161",
+      "source_location": "L1214",
       "id": "storage_backupmanager_backupmanager_logalbumdelete",
       "community": 7,
       "norm_label": ".logalbumdelete()"
@@ -765,7 +783,7 @@
       "label": ".logAlbumAdd()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1174",
+      "source_location": "L1227",
       "id": "storage_backupmanager_backupmanager_logalbumadd",
       "community": 7,
       "norm_label": ".logalbumadd()"
@@ -774,7 +792,7 @@
       "label": ".logAlbumRemove()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1188",
+      "source_location": "L1241",
       "id": "storage_backupmanager_backupmanager_logalbumremove",
       "community": 7,
       "norm_label": ".logalbumremove()"
@@ -783,7 +801,7 @@
       "label": ".applyMetadataEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1202",
+      "source_location": "L1255",
       "id": "storage_backupmanager_backupmanager_applymetadataevent",
       "community": 7,
       "norm_label": ".applymetadataevent()"
@@ -792,7 +810,7 @@
       "label": ".uploadFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
-      "source_location": "L1312",
+      "source_location": "L1365",
       "id": "storage_backupmanager_backupmanager_uploadfile",
       "community": 7,
       "norm_label": ".uploadfile()"
@@ -1694,7 +1712,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L56",
       "id": "storage_uploaddatabase_uploaddao_delete",
-      "community": 69,
+      "community": 65,
       "norm_label": ".delete()"
     },
     {
@@ -1707,10 +1725,28 @@
       "norm_label": ".clearall()"
     },
     {
+      "label": ".getRecordCountDirect()",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L62",
+      "id": "storage_uploaddatabase_uploaddao_getrecordcountdirect",
+      "community": 0,
+      "norm_label": ".getrecordcountdirect()"
+    },
+    {
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L62",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int",
+      "community": 0,
+      "norm_label": "int"
+    },
+    {
       "label": "CloudPhotoEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L63",
+      "source_location": "L66",
       "id": "storage_uploaddatabase_cloudphotoentity",
       "community": 0,
       "norm_label": "cloudphotoentity"
@@ -1719,7 +1755,7 @@
       "label": "CloudPhotoFtsEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L98",
+      "source_location": "L101",
       "id": "storage_uploaddatabase_cloudphotoftsentity",
       "community": 66,
       "norm_label": "cloudphotoftsentity"
@@ -1728,7 +1764,7 @@
       "label": "ThumbnailPathUpdate",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L105",
+      "source_location": "L108",
       "id": "storage_uploaddatabase_thumbnailpathupdate",
       "community": 0,
       "norm_label": "thumbnailpathupdate"
@@ -1737,7 +1773,7 @@
       "label": "CloudPhotoDao",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L113",
+      "source_location": "L116",
       "id": "storage_uploaddatabase_cloudphotodao",
       "community": 0,
       "norm_label": "cloudphotodao"
@@ -1746,7 +1782,7 @@
       "label": ".getAllFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L115",
+      "source_location": "L118",
       "id": "storage_uploaddatabase_cloudphotodao_getallflow",
       "community": 67,
       "norm_label": ".getallflow()"
@@ -1755,7 +1791,7 @@
       "label": ".getAll()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L119",
+      "source_location": "L122",
       "id": "storage_uploaddatabase_cloudphotodao_getall",
       "community": 0,
       "norm_label": ".getall()"
@@ -1764,7 +1800,7 @@
       "label": ".exists()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L122",
+      "source_location": "L125",
       "id": "storage_uploaddatabase_cloudphotodao_exists",
       "community": 0,
       "norm_label": ".exists()"
@@ -1773,7 +1809,7 @@
       "label": "Long",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L122",
+      "source_location": "L125",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_long",
       "community": 65,
       "norm_label": "long"
@@ -1782,7 +1818,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L122",
+      "source_location": "L125",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_boolean",
       "community": 0,
       "norm_label": "boolean"
@@ -1791,7 +1827,7 @@
       "label": ".insertBatch()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L125",
+      "source_location": "L128",
       "id": "storage_uploaddatabase_cloudphotodao_insertbatch",
       "community": 0,
       "norm_label": ".insertbatch()"
@@ -1800,7 +1836,7 @@
       "label": ".insert()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L128",
+      "source_location": "L131",
       "id": "storage_uploaddatabase_cloudphotodao_insert",
       "community": 0,
       "norm_label": ".insert()"
@@ -1809,25 +1845,16 @@
       "label": ".updateThumbnailPath()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L131",
+      "source_location": "L134",
       "id": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
       "community": 0,
       "norm_label": ".updatethumbnailpath()"
     },
     {
-      "label": "Int",
-      "file_type": "code",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L131",
-      "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int",
-      "community": 0,
-      "norm_label": "int"
-    },
-    {
       "label": ".updateLargePath()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L134",
+      "source_location": "L137",
       "id": "storage_uploaddatabase_cloudphotodao_updatelargepath",
       "community": 0,
       "norm_label": ".updatelargepath()"
@@ -1836,7 +1863,7 @@
       "label": ".batchUpdateThumbnailPaths()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L137",
+      "source_location": "L140",
       "id": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
       "community": 0,
       "norm_label": ".batchupdatethumbnailpaths()"
@@ -1845,7 +1872,7 @@
       "label": ".batchUpdateLargePaths()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L144",
+      "source_location": "L147",
       "id": "storage_uploaddatabase_cloudphotodao_batchupdatelargepaths",
       "community": 0,
       "norm_label": ".batchupdatelargepaths()"
@@ -1854,7 +1881,7 @@
       "label": ".findByFileName()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L151",
+      "source_location": "L154",
       "id": "storage_uploaddatabase_cloudphotodao_findbyfilename",
       "community": 0,
       "norm_label": ".findbyfilename()"
@@ -1863,16 +1890,16 @@
       "label": ".findByFingerprint()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L154",
+      "source_location": "L157",
       "id": "storage_uploaddatabase_cloudphotodao_findbyfingerprint",
-      "community": 0,
+      "community": 65,
       "norm_label": ".findbyfingerprint()"
     },
     {
       "label": ".clearAll()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L157",
+      "source_location": "L160",
       "id": "storage_uploaddatabase_cloudphotodao_clearall",
       "community": 0,
       "norm_label": ".clearall()"
@@ -1881,7 +1908,7 @@
       "label": ".deleteByMessageId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L160",
+      "source_location": "L163",
       "id": "storage_uploaddatabase_cloudphotodao_deletebymessageid",
       "community": 65,
       "norm_label": ".deletebymessageid()"
@@ -1890,7 +1917,7 @@
       "label": ".getRecordCountDirect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L163",
+      "source_location": "L166",
       "id": "storage_uploaddatabase_cloudphotodao_getrecordcountdirect",
       "community": 0,
       "norm_label": ".getrecordcountdirect()"
@@ -1899,7 +1926,7 @@
       "label": ".deleteBackupDbFiles()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L166",
+      "source_location": "L169",
       "id": "storage_uploaddatabase_cloudphotodao_deletebackupdbfiles",
       "community": 0,
       "norm_label": ".deletebackupdbfiles()"
@@ -1908,7 +1935,7 @@
       "label": ".clearAllCachedPaths()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L169",
+      "source_location": "L172",
       "id": "storage_uploaddatabase_cloudphotodao_clearallcachedpaths",
       "community": 0,
       "norm_label": ".clearallcachedpaths()"
@@ -1917,16 +1944,16 @@
       "label": ".findByMessageId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L172",
+      "source_location": "L175",
       "id": "storage_uploaddatabase_cloudphotodao_findbymessageid",
-      "community": 0,
+      "community": 65,
       "norm_label": ".findbymessageid()"
     },
     {
       "label": ".searchCloudPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L175",
+      "source_location": "L178",
       "id": "storage_uploaddatabase_cloudphotodao_searchcloudphotos",
       "community": 0,
       "norm_label": ".searchcloudphotos()"
@@ -1935,25 +1962,25 @@
       "label": ".getTrashedFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L182",
+      "source_location": "L185",
       "id": "storage_uploaddatabase_cloudphotodao_gettrashedflow",
-      "community": 0,
+      "community": 67,
       "norm_label": ".gettrashedflow()"
     },
     {
       "label": ".getDuplicateMessageIds()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L186",
+      "source_location": "L189",
       "id": "storage_uploaddatabase_cloudphotodao_getduplicatemessageids",
-      "community": 65,
+      "community": 0,
       "norm_label": ".getduplicatemessageids()"
     },
     {
       "label": ".deleteDuplicatesFromCloudPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L197",
+      "source_location": "L200",
       "id": "storage_uploaddatabase_cloudphotodao_deleteduplicatesfromcloudphotos",
       "community": 0,
       "norm_label": ".deleteduplicatesfromcloudphotos()"
@@ -1962,7 +1989,7 @@
       "label": "AlbumEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L209",
+      "source_location": "L212",
       "id": "storage_uploaddatabase_albumentity",
       "community": 65,
       "norm_label": "albumentity"
@@ -1971,7 +1998,7 @@
       "label": "AlbumPhotoEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L220",
+      "source_location": "L223",
       "id": "storage_uploaddatabase_albumphotoentity",
       "community": 67,
       "norm_label": "albumphotoentity"
@@ -1980,7 +2007,7 @@
       "label": "AlbumDao",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L232",
+      "source_location": "L235",
       "id": "storage_uploaddatabase_albumdao",
       "community": 65,
       "norm_label": "albumdao"
@@ -1989,7 +2016,7 @@
       "label": ".getAllAlbumsFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L234",
+      "source_location": "L237",
       "id": "storage_uploaddatabase_albumdao_getallalbumsflow",
       "community": 67,
       "norm_label": ".getallalbumsflow()"
@@ -1998,7 +2025,7 @@
       "label": ".insertAlbum()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L238",
+      "source_location": "L241",
       "id": "storage_uploaddatabase_albumdao_insertalbum",
       "community": 65,
       "norm_label": ".insertalbum()"
@@ -2007,7 +2034,7 @@
       "label": ".insertAlbumsBatch()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L241",
+      "source_location": "L244",
       "id": "storage_uploaddatabase_albumdao_insertalbumsbatch",
       "community": 65,
       "norm_label": ".insertalbumsbatch()"
@@ -2016,7 +2043,7 @@
       "label": ".deleteAlbum()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L244",
+      "source_location": "L247",
       "id": "storage_uploaddatabase_albumdao_deletealbum",
       "community": 65,
       "norm_label": ".deletealbum()"
@@ -2025,7 +2052,7 @@
       "label": ".insertAlbumPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L247",
+      "source_location": "L250",
       "id": "storage_uploaddatabase_albumdao_insertalbumphotos",
       "community": 67,
       "norm_label": ".insertalbumphotos()"
@@ -2034,7 +2061,7 @@
       "label": ".removePhotoFromAlbum()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L250",
+      "source_location": "L253",
       "id": "storage_uploaddatabase_albumdao_removephotofromalbum",
       "community": 65,
       "norm_label": ".removephotofromalbum()"
@@ -2043,7 +2070,7 @@
       "label": ".removePhotoFromAllAlbums()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L253",
+      "source_location": "L256",
       "id": "storage_uploaddatabase_albumdao_removephotofromallalbums",
       "community": 65,
       "norm_label": ".removephotofromallalbums()"
@@ -2052,7 +2079,7 @@
       "label": ".getPhotoUrisForAlbumFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L256",
+      "source_location": "L259",
       "id": "storage_uploaddatabase_albumdao_getphotourisforalbumflow",
       "community": 67,
       "norm_label": ".getphotourisforalbumflow()"
@@ -2061,7 +2088,7 @@
       "label": ".getAlbumPhotosDirect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L260",
+      "source_location": "L263",
       "id": "storage_uploaddatabase_albumdao_getalbumphotosdirect",
       "community": 67,
       "norm_label": ".getalbumphotosdirect()"
@@ -2070,7 +2097,7 @@
       "label": ".getAllAlbumPhotoUris()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L263",
+      "source_location": "L266",
       "id": "storage_uploaddatabase_albumdao_getallalbumphotouris",
       "community": 65,
       "norm_label": ".getallalbumphotouris()"
@@ -2079,7 +2106,7 @@
       "label": ".getAllAlbumPhotosFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L266",
+      "source_location": "L269",
       "id": "storage_uploaddatabase_albumdao_getallalbumphotosflow",
       "community": 67,
       "norm_label": ".getallalbumphotosflow()"
@@ -2088,7 +2115,7 @@
       "label": ".getTelegramMessageId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L270",
+      "source_location": "L273",
       "id": "storage_uploaddatabase_albumdao_gettelegrammessageid",
       "community": 65,
       "norm_label": ".gettelegrammessageid()"
@@ -2097,7 +2124,7 @@
       "label": ".updateTelegramMessageId()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L273",
+      "source_location": "L276",
       "id": "storage_uploaddatabase_albumdao_updatetelegrammessageid",
       "community": 65,
       "norm_label": ".updatetelegrammessageid()"
@@ -2106,7 +2133,7 @@
       "label": ".findByUuid()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L276",
+      "source_location": "L279",
       "id": "storage_uploaddatabase_albumdao_findbyuuid",
       "community": 65,
       "norm_label": ".findbyuuid()"
@@ -2115,7 +2142,7 @@
       "label": ".getAlbumById()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L279",
+      "source_location": "L282",
       "id": "storage_uploaddatabase_albumdao_getalbumbyid",
       "community": 65,
       "norm_label": ".getalbumbyid()"
@@ -2124,7 +2151,7 @@
       "label": ".deleteAlbumPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L282",
+      "source_location": "L285",
       "id": "storage_uploaddatabase_albumdao_deletealbumphotos",
       "community": 65,
       "norm_label": ".deletealbumphotos()"
@@ -2133,7 +2160,7 @@
       "label": ".clearAllAlbums()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L285",
+      "source_location": "L288",
       "id": "storage_uploaddatabase_albumdao_clearallalbums",
       "community": 65,
       "norm_label": ".clearallalbums()"
@@ -2142,7 +2169,7 @@
       "label": ".clearAllAlbumPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L288",
+      "source_location": "L291",
       "id": "storage_uploaddatabase_albumdao_clearallalbumphotos",
       "community": 65,
       "norm_label": ".clearallalbumphotos()"
@@ -2151,7 +2178,7 @@
       "label": ".getRecordCountDirect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L291",
+      "source_location": "L294",
       "id": "storage_uploaddatabase_albumdao_getrecordcountdirect",
       "community": 0,
       "norm_label": ".getrecordcountdirect()"
@@ -2160,7 +2187,7 @@
       "label": "BackupEventEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L295",
+      "source_location": "L298",
       "id": "storage_uploaddatabase_backupevententity",
       "community": 66,
       "norm_label": "backupevententity"
@@ -2169,7 +2196,7 @@
       "label": "BackupEventDao",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L303",
+      "source_location": "L306",
       "id": "storage_uploaddatabase_backupeventdao",
       "community": 66,
       "norm_label": "backupeventdao"
@@ -2178,7 +2205,7 @@
       "label": ".insert()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L305",
+      "source_location": "L308",
       "id": "storage_uploaddatabase_backupeventdao_insert",
       "community": 66,
       "norm_label": ".insert()"
@@ -2187,7 +2214,7 @@
       "label": ".getAllFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L308",
+      "source_location": "L311",
       "id": "storage_uploaddatabase_backupeventdao_getallflow",
       "community": 67,
       "norm_label": ".getallflow()"
@@ -2196,7 +2223,7 @@
       "label": ".getAll()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L312",
+      "source_location": "L315",
       "id": "storage_uploaddatabase_backupeventdao_getall",
       "community": 66,
       "norm_label": ".getall()"
@@ -2205,7 +2232,7 @@
       "label": ".clearAll()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L315",
+      "source_location": "L318",
       "id": "storage_uploaddatabase_backupeventdao_clearall",
       "community": 66,
       "norm_label": ".clearall()"
@@ -2214,7 +2241,7 @@
       "label": "RegisteredDeviceEntity",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L319",
+      "source_location": "L322",
       "id": "storage_uploaddatabase_registereddeviceentity",
       "community": 7,
       "norm_label": "registereddeviceentity"
@@ -2223,7 +2250,7 @@
       "label": "RegisteredDeviceDao",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L327",
+      "source_location": "L330",
       "id": "storage_uploaddatabase_registereddevicedao",
       "community": 68,
       "norm_label": "registereddevicedao"
@@ -2232,7 +2259,7 @@
       "label": ".insert()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L329",
+      "source_location": "L332",
       "id": "storage_uploaddatabase_registereddevicedao_insert",
       "community": 68,
       "norm_label": ".insert()"
@@ -2241,7 +2268,7 @@
       "label": ".getAllDevices()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L332",
+      "source_location": "L335",
       "id": "storage_uploaddatabase_registereddevicedao_getalldevices",
       "community": 68,
       "norm_label": ".getalldevices()"
@@ -2250,7 +2277,7 @@
       "label": ".getAllDevicesFlow()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L335",
+      "source_location": "L338",
       "id": "storage_uploaddatabase_registereddevicedao_getalldevicesflow",
       "community": 67,
       "norm_label": ".getalldevicesflow()"
@@ -2259,7 +2286,7 @@
       "label": ".delete()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L339",
+      "source_location": "L342",
       "id": "storage_uploaddatabase_registereddevicedao_delete",
       "community": 68,
       "norm_label": ".delete()"
@@ -2268,7 +2295,7 @@
       "label": ".clearAll()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L342",
+      "source_location": "L345",
       "id": "storage_uploaddatabase_registereddevicedao_clearall",
       "community": 68,
       "norm_label": ".clearall()"
@@ -2277,7 +2304,7 @@
       "label": "UploadDatabase",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L346",
+      "source_location": "L349",
       "id": "storage_uploaddatabase_uploaddatabase",
       "community": 68,
       "norm_label": "uploaddatabase"
@@ -2295,16 +2322,16 @@
       "label": ".dao()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L352",
+      "source_location": "L355",
       "id": "storage_uploaddatabase_uploaddatabase_dao",
-      "community": 69,
+      "community": 68,
       "norm_label": ".dao()"
     },
     {
       "label": ".cloudDao()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L353",
+      "source_location": "L356",
       "id": "storage_uploaddatabase_uploaddatabase_clouddao",
       "community": 68,
       "norm_label": ".clouddao()"
@@ -2313,7 +2340,7 @@
       "label": ".albumDao()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L354",
+      "source_location": "L357",
       "id": "storage_uploaddatabase_uploaddatabase_albumdao",
       "community": 68,
       "norm_label": ".albumdao()"
@@ -2322,7 +2349,7 @@
       "label": ".eventDao()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L355",
+      "source_location": "L358",
       "id": "storage_uploaddatabase_uploaddatabase_eventdao",
       "community": 66,
       "norm_label": ".eventdao()"
@@ -2331,7 +2358,7 @@
       "label": ".deviceDao()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L356",
+      "source_location": "L359",
       "id": "storage_uploaddatabase_uploaddatabase_devicedao",
       "community": 68,
       "norm_label": ".devicedao()"
@@ -2340,7 +2367,7 @@
       "label": "migrate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L365",
+      "source_location": "L368",
       "id": "storage_uploaddatabase_migrate",
       "community": 66,
       "norm_label": "migrate()"
@@ -2349,7 +2376,7 @@
       "label": "SupportSQLiteDatabase",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L365",
+      "source_location": "L368",
       "id": "supportsqlitedatabase",
       "community": 66,
       "norm_label": "supportsqlitedatabase"
@@ -2358,7 +2385,7 @@
       "label": "getDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L604",
+      "source_location": "L607",
       "id": "storage_uploaddatabase_getdatabase",
       "community": 66,
       "norm_label": "getdatabase()"
@@ -2367,7 +2394,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L604",
+      "source_location": "L607",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_context",
       "community": 66,
       "norm_label": "context"
@@ -2376,7 +2403,7 @@
       "label": "closeDatabase()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L645",
+      "source_location": "L649",
       "id": "storage_uploaddatabase_closedatabase",
       "community": 66,
       "norm_label": "closedatabase()"
@@ -2385,7 +2412,7 @@
       "label": "restoreDataFromFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L665",
+      "source_location": "L669",
       "id": "storage_uploaddatabase_restoredatafromfile",
       "community": 66,
       "norm_label": "restoredatafromfile()"
@@ -2394,7 +2421,7 @@
       "label": "java",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L665",
+      "source_location": "L669",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_java",
       "community": 66,
       "norm_label": "java"
@@ -2403,7 +2430,7 @@
       "label": "recordEvent()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L861",
+      "source_location": "L868",
       "id": "storage_uploaddatabase_recordevent",
       "community": 66,
       "norm_label": "recordevent()"
@@ -2414,7 +2441,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L1",
       "id": "telegram_authmanager",
-      "community": 72,
+      "community": 76,
       "norm_label": "authmanager.kt"
     },
     {
@@ -2423,7 +2450,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L5",
       "id": "telegram_authmanager_authmanager",
-      "community": 72,
+      "community": 76,
       "norm_label": "authmanager"
     },
     {
@@ -2432,7 +2459,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "telegram_authmanager_authmanager_sendphone",
-      "community": 72,
+      "community": 76,
       "norm_label": ".sendphone()"
     },
     {
@@ -2441,7 +2468,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L6",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_authmanager_kt_string",
-      "community": 72,
+      "community": 76,
       "norm_label": "string"
     },
     {
@@ -2450,7 +2477,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L13",
       "id": "telegram_authmanager_authmanager_verifyotp",
-      "community": 72,
+      "community": 76,
       "norm_label": ".verifyotp()"
     },
     {
@@ -2459,7 +2486,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/AuthManager.kt",
       "source_location": "L20",
       "id": "telegram_authmanager_authmanager_logout",
-      "community": 72,
+      "community": 76,
       "norm_label": ".logout()"
     },
     {
@@ -2548,7 +2575,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L59",
-      "id": "recoveredcount",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_recoveredcount",
       "community": 31,
       "norm_label": "recoveredcount"
     },
@@ -2566,7 +2593,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L59",
-      "id": "lastmessageid",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_lastmessageid",
       "community": 31,
       "norm_label": "lastmessageid"
     },
@@ -2575,7 +2602,7 @@
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L59",
-      "id": "unit",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_unit",
       "community": 31,
       "norm_label": "unit"
     },
@@ -2583,7 +2610,7 @@
       "label": ".parseAndIndexUploadedMessage()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
-      "source_location": "L273",
+      "source_location": "L296",
       "id": "telegram_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
       "community": 31,
       "norm_label": ".parseandindexuploadedmessage()"
@@ -2592,7 +2619,7 @@
       "label": "TdApi",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
-      "source_location": "L273",
+      "source_location": "L296",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_tdapi",
       "community": 31,
       "norm_label": "tdapi"
@@ -2601,7 +2628,7 @@
       "label": ".syncMetadataHistory()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
-      "source_location": "L393",
+      "source_location": "L416",
       "id": "telegram_historysyncmanager_historysyncmanager_syncmetadatahistory",
       "community": 31,
       "norm_label": ".syncmetadatahistory()"
@@ -2682,7 +2709,7 @@
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L48",
+      "source_location": "L50",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_list",
       "community": 4,
       "norm_label": "list"
@@ -2691,7 +2718,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L51",
+      "source_location": "L53",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_string",
       "community": 4,
       "norm_label": "string"
@@ -2700,7 +2727,7 @@
       "label": "Int",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L59",
+      "source_location": "L61",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_int",
       "community": 4,
       "norm_label": "int"
@@ -2709,7 +2736,7 @@
       "label": ".notifyDatabaseReplaced()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L61",
+      "source_location": "L63",
       "id": "telegram_tdlibmanager_tdlibmanager_notifydatabasereplaced",
       "community": 4,
       "norm_label": ".notifydatabasereplaced()"
@@ -2718,7 +2745,7 @@
       "label": ".registerPendingTempFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L74",
+      "source_location": "L76",
       "id": "telegram_tdlibmanager_tdlibmanager_registerpendingtempfile",
       "community": 4,
       "norm_label": ".registerpendingtempfile()"
@@ -2727,7 +2754,7 @@
       "label": ".registerPendingUpload()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L78",
+      "source_location": "L80",
       "id": "telegram_tdlibmanager_tdlibmanager_registerpendingupload",
       "community": 4,
       "norm_label": ".registerpendingupload()"
@@ -2736,7 +2763,7 @@
       "label": ".addLog()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L89",
+      "source_location": "L91",
       "id": "telegram_tdlibmanager_tdlibmanager_addlog",
       "community": 4,
       "norm_label": ".addlog()"
@@ -2745,7 +2772,7 @@
       "label": ".getClient()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L102",
+      "source_location": "L104",
       "id": "telegram_tdlibmanager_tdlibmanager_getclient",
       "community": 4,
       "norm_label": ".getclient()"
@@ -2754,7 +2781,7 @@
       "label": ".initialize()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L106",
+      "source_location": "L108",
       "id": "telegram_tdlibmanager_tdlibmanager_initialize",
       "community": 4,
       "norm_label": ".initialize()"
@@ -2763,7 +2790,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L106",
+      "source_location": "L108",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_context",
       "community": 4,
       "norm_label": "context"
@@ -2772,7 +2799,7 @@
       "label": ".handleUpdate()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L143",
+      "source_location": "L151",
       "id": "telegram_tdlibmanager_tdlibmanager_handleupdate",
       "community": 4,
       "norm_label": ".handleupdate()"
@@ -2781,7 +2808,7 @@
       "label": ".handleConnectionState()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L284",
+      "source_location": "L322",
       "id": "telegram_tdlibmanager_tdlibmanager_handleconnectionstate",
       "community": 4,
       "norm_label": ".handleconnectionstate()"
@@ -2790,7 +2817,7 @@
       "label": ".setParameters()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L294",
+      "source_location": "L332",
       "id": "telegram_tdlibmanager_tdlibmanager_setparameters",
       "community": 4,
       "norm_label": ".setparameters()"
@@ -2799,7 +2826,7 @@
       "label": ".loadChats()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L311",
+      "source_location": "L349",
       "id": "telegram_tdlibmanager_tdlibmanager_loadchats",
       "community": 4,
       "norm_label": ".loadchats()"
@@ -2808,7 +2835,7 @@
       "label": ".cleanupSentMessageFile()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L318",
+      "source_location": "L356",
       "id": "telegram_tdlibmanager_tdlibmanager_cleanupsentmessagefile",
       "community": 4,
       "norm_label": ".cleanupsentmessagefile()"
@@ -2817,7 +2844,7 @@
       "label": ".sendRequest()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L340",
+      "source_location": "L378",
       "id": "telegram_tdlibmanager_tdlibmanager_sendrequest",
       "community": 4,
       "norm_label": ".sendrequest()"
@@ -2826,7 +2853,7 @@
       "label": ".optimizeStorage()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L388",
+      "source_location": "L426",
       "id": "telegram_tdlibmanager_tdlibmanager_optimizestorage",
       "community": 4,
       "norm_label": ".optimizestorage()"
@@ -2835,7 +2862,7 @@
       "label": ".showSessionExpiredNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L411",
+      "source_location": "L449",
       "id": "telegram_tdlibmanager_tdlibmanager_showsessionexpirednotification",
       "community": 4,
       "norm_label": ".showsessionexpirednotification()"
@@ -2844,7 +2871,7 @@
       "label": ".performLogoutCleanup()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L452",
+      "source_location": "L490",
       "id": "telegram_tdlibmanager_tdlibmanager_performlogoutcleanup",
       "community": 4,
       "norm_label": ".performlogoutcleanup()"
@@ -2853,7 +2880,7 @@
       "label": ".checkAndHandleChatError()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L508",
+      "source_location": "L547",
       "id": "telegram_tdlibmanager_tdlibmanager_checkandhandlechaterror",
       "community": 4,
       "norm_label": ".checkandhandlechaterror()"
@@ -2862,7 +2889,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L508",
+      "source_location": "L547",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_tdlibmanager_kt_boolean",
       "community": 4,
       "norm_label": "boolean"
@@ -2871,7 +2898,7 @@
       "label": ".showChatUnavailableNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L550",
+      "source_location": "L589",
       "id": "telegram_tdlibmanager_tdlibmanager_showchatunavailablenotification",
       "community": 4,
       "norm_label": ".showchatunavailablenotification()"
@@ -2880,7 +2907,7 @@
       "label": ".forceReconnect()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L591",
+      "source_location": "L630",
       "id": "telegram_tdlibmanager_tdlibmanager_forcereconnect",
       "community": 4,
       "norm_label": ".forcereconnect()"
@@ -2889,7 +2916,7 @@
       "label": ".setNetworkOffline()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L615",
+      "source_location": "L654",
       "id": "telegram_tdlibmanager_tdlibmanager_setnetworkoffline",
       "community": 4,
       "norm_label": ".setnetworkoffline()"
@@ -2898,7 +2925,7 @@
       "label": ".fetchAndMonitorProfilePhoto()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L626",
+      "source_location": "L665",
       "id": "telegram_tdlibmanager_tdlibmanager_fetchandmonitorprofilephoto",
       "community": 4,
       "norm_label": ".fetchandmonitorprofilephoto()"
@@ -3170,7 +3197,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L1",
       "id": "ui_albumviewmodel",
-      "community": 57,
+      "community": 73,
       "norm_label": "albumviewmodel.kt"
     },
     {
@@ -3179,7 +3206,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L20",
       "id": "ui_albumviewmodel_albumviewmodel",
-      "community": 57,
+      "community": 73,
       "norm_label": "albumviewmodel"
     },
     {
@@ -3197,7 +3224,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L22",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_flow",
-      "community": 57,
+      "community": 73,
       "norm_label": "flow"
     },
     {
@@ -3206,7 +3233,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L22",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_list",
-      "community": 57,
+      "community": 73,
       "norm_label": "list"
     },
     {
@@ -3215,7 +3242,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L22",
       "id": "albumentity",
-      "community": 57,
+      "community": 73,
       "norm_label": "albumentity"
     },
     {
@@ -3224,7 +3251,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L27",
       "id": "ui_albumviewmodel_albumviewmodel_resolvemessageidforphoto",
-      "community": 57,
+      "community": 73,
       "norm_label": ".resolvemessageidforphoto()"
     },
     {
@@ -3233,7 +3260,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_context",
-      "community": 57,
+      "community": 73,
       "norm_label": "context"
     },
     {
@@ -3242,7 +3269,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_localphoto",
-      "community": 57,
+      "community": 73,
       "norm_label": "localphoto"
     },
     {
@@ -3251,7 +3278,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L27",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_long",
-      "community": 57,
+      "community": 73,
       "norm_label": "long"
     },
     {
@@ -3260,7 +3287,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L41",
       "id": "ui_albumviewmodel_albumviewmodel_createalbum",
-      "community": 57,
+      "community": 73,
       "norm_label": ".createalbum()"
     },
     {
@@ -3269,7 +3296,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L41",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_albumviewmodel_kt_string",
-      "community": 57,
+      "community": 73,
       "norm_label": "string"
     },
     {
@@ -3278,7 +3305,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L54",
       "id": "ui_albumviewmodel_albumviewmodel_addphotostoalbum",
-      "community": 57,
+      "community": 73,
       "norm_label": ".addphotostoalbum()"
     },
     {
@@ -3287,7 +3314,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L73",
       "id": "ui_albumviewmodel_albumviewmodel_deletealbum",
-      "community": 57,
+      "community": 73,
       "norm_label": ".deletealbum()"
     },
     {
@@ -3296,7 +3323,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L90",
       "id": "ui_albumviewmodel_albumviewmodel_removephotosfromalbum",
-      "community": 57,
+      "community": 73,
       "norm_label": ".removephotosfromalbum()"
     },
     {
@@ -3305,7 +3332,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L108",
       "id": "ui_albumviewmodel_albumviewmodel_getphotourisforalbumflow",
-      "community": 57,
+      "community": 73,
       "norm_label": ".getphotourisforalbumflow()"
     },
     {
@@ -3314,7 +3341,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L116",
       "id": "ui_albumviewmodel_albumviewmodel_getalbumphotosdirect",
-      "community": 57,
+      "community": 73,
       "norm_label": ".getalbumphotosdirect()"
     },
     {
@@ -3323,7 +3350,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AlbumViewModel.kt",
       "source_location": "L116",
       "id": "albumphotoentity",
-      "community": 57,
+      "community": 73,
       "norm_label": "albumphotoentity"
     },
     {
@@ -3332,7 +3359,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L1",
       "id": "ui_appnavigation",
-      "community": 72,
+      "community": 80,
       "norm_label": "appnavigation.kt"
     },
     {
@@ -3341,7 +3368,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L59",
       "id": "ui_appnavigation_appnavigation",
-      "community": 72,
+      "community": 80,
       "norm_label": "appnavigation()"
     },
     {
@@ -3350,7 +3377,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L220",
       "id": "ui_appnavigation_mainapplayout",
-      "community": 72,
+      "community": 80,
       "norm_label": "mainapplayout()"
     },
     {
@@ -3359,7 +3386,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/AppNavigation.kt",
       "source_location": "L220",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_appnavigation_kt_string",
-      "community": 72,
+      "community": 80,
       "norm_label": "string"
     },
     {
@@ -3447,8 +3474,8 @@
       "label": "MergeResult",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L148",
-      "id": "mergeresult",
+      "source_location": "L153",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_mergeresult",
       "community": 55,
       "norm_label": "mergeresult"
     },
@@ -3456,7 +3483,7 @@
       "label": "Set",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L176",
+      "source_location": "L181",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_set",
       "community": 55,
       "norm_label": "set"
@@ -3465,7 +3492,7 @@
       "label": "SearchItem",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L186",
+      "source_location": "L191",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_searchitem",
       "community": 55,
       "norm_label": "searchitem"
@@ -3474,8 +3501,8 @@
       "label": "Job",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L201",
-      "id": "job",
+      "source_location": "L206",
+      "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_job",
       "community": 55,
       "norm_label": "job"
     },
@@ -3483,7 +3510,7 @@
       "label": ".loadLocalPhotos()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L203",
+      "source_location": "L208",
       "id": "ui_galleryviewmodel_galleryviewmodel_loadlocalphotos",
       "community": 55,
       "norm_label": ".loadlocalphotos()"
@@ -3492,7 +3519,7 @@
       "label": ".triggerScan()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L216",
+      "source_location": "L221",
       "id": "ui_galleryviewmodel_galleryviewmodel_triggerscan",
       "community": 55,
       "norm_label": ".triggerscan()"
@@ -3501,7 +3528,7 @@
       "label": ".enqueueRestoreWorker()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L230",
+      "source_location": "L235",
       "id": "ui_galleryviewmodel_galleryviewmodel_enqueuerestoreworker",
       "community": 55,
       "norm_label": ".enqueuerestoreworker()"
@@ -3510,7 +3537,7 @@
       "label": "Application",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L230",
+      "source_location": "L235",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_application",
       "community": 55,
       "norm_label": "application"
@@ -3519,7 +3546,7 @@
       "label": ".startCloudSync()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L246",
+      "source_location": "L256",
       "id": "ui_galleryviewmodel_galleryviewmodel_startcloudsync",
       "community": 55,
       "norm_label": ".startcloudsync()"
@@ -3528,7 +3555,7 @@
       "label": ".onCleared()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
-      "source_location": "L271",
+      "source_location": "L294",
       "id": "ui_galleryviewmodel_galleryviewmodel_oncleared",
       "community": 55,
       "norm_label": ".oncleared()"
@@ -3863,7 +3890,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L1",
       "id": "screens_otpverifyscreen",
-      "community": 72,
+      "community": 77,
       "norm_label": "otpverifyscreen.kt"
     },
     {
@@ -3872,7 +3899,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/OtpVerifyScreen.kt",
       "source_location": "L24",
       "id": "screens_otpverifyscreen_otpverifyscreen",
-      "community": 72,
+      "community": 77,
       "norm_label": "otpverifyscreen()"
     },
     {
@@ -3881,7 +3908,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L1",
       "id": "screens_phoneloginscreen",
-      "community": 72,
+      "community": 76,
       "norm_label": "phoneloginscreen.kt"
     },
     {
@@ -3890,7 +3917,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhoneLoginScreen.kt",
       "source_location": "L26",
       "id": "screens_phoneloginscreen_phoneloginscreen",
-      "community": 72,
+      "community": 76,
       "norm_label": "phoneloginscreen()"
     },
     {
@@ -4239,7 +4266,7 @@
       "label": "FolderInfo",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L55",
+      "source_location": "L57",
       "id": "screens_settingsscreen_folderinfo",
       "community": 72,
       "norm_label": "folderinfo"
@@ -4248,7 +4275,7 @@
       "label": "Boolean",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L59",
+      "source_location": "L61",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_boolean",
       "community": 72,
       "norm_label": "boolean"
@@ -4257,7 +4284,7 @@
       "label": "SettingsScreen()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L63",
+      "source_location": "L65",
       "id": "screens_settingsscreen_settingsscreen",
       "community": 72,
       "norm_label": "settingsscreen()"
@@ -4266,7 +4293,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L63",
+      "source_location": "L65",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_string",
       "community": 72,
       "norm_label": "string"
@@ -4275,7 +4302,7 @@
       "label": "compileAndShareLogs()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L915",
+      "source_location": "L942",
       "id": "screens_settingsscreen_compileandsharelogs",
       "community": 72,
       "norm_label": "compileandsharelogs()"
@@ -4284,7 +4311,7 @@
       "label": "android",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L915",
+      "source_location": "L942",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_android",
       "community": 72,
       "norm_label": "android"
@@ -4293,16 +4320,16 @@
       "label": "UploadDatabase",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L915",
+      "source_location": "L942",
       "id": "uploaddatabase",
-      "community": 5,
+      "community": 72,
       "norm_label": "uploaddatabase"
     },
     {
       "label": "List",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/SettingsScreen.kt",
-      "source_location": "L915",
+      "source_location": "L942",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_settingsscreen_kt_list",
       "community": 72,
       "norm_label": "list"
@@ -4313,7 +4340,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt",
       "source_location": "L1",
       "id": "screens_trashscreen",
-      "community": 72,
+      "community": 81,
       "norm_label": "trashscreen.kt"
     },
     {
@@ -4322,7 +4349,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt",
       "source_location": "L40",
       "id": "screens_trashscreen_tolocalphoto",
-      "community": 72,
+      "community": 81,
       "norm_label": "tolocalphoto()"
     },
     {
@@ -4331,7 +4358,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt",
       "source_location": "L40",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_screens_trashscreen_kt_localphoto",
-      "community": 72,
+      "community": 81,
       "norm_label": "localphoto"
     },
     {
@@ -4340,7 +4367,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt",
       "source_location": "L53",
       "id": "screens_trashscreen_trashscreen",
-      "community": 72,
+      "community": 81,
       "norm_label": "trashscreen()"
     },
     {
@@ -4349,7 +4376,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/TrashScreen.kt",
       "source_location": "L53",
       "id": "galleryviewmodel",
-      "community": 72,
+      "community": 81,
       "norm_label": "galleryviewmodel"
     },
     {
@@ -4448,7 +4475,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
       "source_location": "L27",
       "id": "triple",
-      "community": 72,
+      "community": 80,
       "norm_label": "triple"
     },
     {
@@ -4592,7 +4619,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L1",
       "id": "update_updatedialog",
-      "community": 72,
+      "community": 74,
       "norm_label": "updatedialog.kt"
     },
     {
@@ -4601,7 +4628,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "update_updatedialog_updatedialog",
-      "community": 72,
+      "community": 74,
       "norm_label": "updatedialog()"
     },
     {
@@ -4610,7 +4637,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updateinfo",
-      "community": 72,
+      "community": 74,
       "norm_label": "updateinfo"
     },
     {
@@ -4619,7 +4646,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "updatestate",
-      "community": 72,
+      "community": 74,
       "norm_label": "updatestate"
     },
     {
@@ -4628,7 +4655,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_float",
-      "community": 72,
+      "community": 74,
       "norm_label": "float"
     },
     {
@@ -4637,7 +4664,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_file",
-      "community": 72,
+      "community": 74,
       "norm_label": "file"
     },
     {
@@ -4646,7 +4673,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L30",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_update_updatedialog_kt_string",
-      "community": 72,
+      "community": 74,
       "norm_label": "string"
     },
     {
@@ -4655,7 +4682,7 @@
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/update/UpdateDialog.kt",
       "source_location": "L319",
       "id": "update_updatedialog_updatestate",
-      "community": 72,
+      "community": 74,
       "norm_label": "updatestate"
     },
     {
@@ -4860,7 +4887,7 @@
       "label": ".showBackupWarningNotification()",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/DatabaseBackupWorker.kt",
-      "source_location": "L94",
+      "source_location": "L106",
       "id": "worker_databasebackupworker_databasebackupworker_showbackupwarningnotification",
       "community": 3,
       "norm_label": ".showbackupwarningnotification()"
@@ -4869,7 +4896,7 @@
       "label": "Context",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/DatabaseBackupWorker.kt",
-      "source_location": "L94",
+      "source_location": "L106",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_databasebackupworker_kt_context",
       "community": 3,
       "norm_label": "context"
@@ -4878,7 +4905,7 @@
       "label": "String",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/DatabaseBackupWorker.kt",
-      "source_location": "L94",
+      "source_location": "L106",
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_worker_databasebackupworker_kt_string",
       "community": 3,
       "norm_label": "string"
@@ -5251,6 +5278,393 @@
       "id": "build",
       "community": 22,
       "norm_label": "build.gradle"
+    },
+    {
+      "label": "GalleryViewModel.kt",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L1",
+      "id": "files_galleryviewmodel",
+      "community": 57,
+      "norm_label": "galleryviewmodel.kt"
+    },
+    {
+      "label": "GalleryViewModel",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L51",
+      "id": "files_galleryviewmodel_galleryviewmodel",
+      "community": 57,
+      "norm_label": "galleryviewmodel"
+    },
+    {
+      "label": "StateFlow",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L61",
+      "id": "files_galleryviewmodel_kt_stateflow",
+      "community": 57,
+      "norm_label": "stateflow"
+    },
+    {
+      "label": "List",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L61",
+      "id": "files_galleryviewmodel_kt_list",
+      "community": 57,
+      "norm_label": "list"
+    },
+    {
+      "label": "LocalPhoto",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L61",
+      "id": "files_galleryviewmodel_kt_localphoto",
+      "community": 57,
+      "norm_label": "localphoto"
+    },
+    {
+      "label": "Boolean",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L72",
+      "id": "files_galleryviewmodel_kt_boolean",
+      "community": 57,
+      "norm_label": "boolean"
+    },
+    {
+      "label": "String",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L78",
+      "id": "files_galleryviewmodel_kt_string",
+      "community": 57,
+      "norm_label": "string"
+    },
+    {
+      "label": "Flow",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L81",
+      "id": "files_galleryviewmodel_kt_flow",
+      "community": 57,
+      "norm_label": "flow"
+    },
+    {
+      "label": "CloudPhotoEntity",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L81",
+      "id": "files_galleryviewmodel_kt_cloudphotoentity",
+      "community": 57,
+      "norm_label": "cloudphotoentity"
+    },
+    {
+      "label": "MergeResult",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L153",
+      "id": "files_galleryviewmodel_kt_mergeresult",
+      "community": 57,
+      "norm_label": "mergeresult"
+    },
+    {
+      "label": "Set",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L181",
+      "id": "files_galleryviewmodel_kt_set",
+      "community": 57,
+      "norm_label": "set"
+    },
+    {
+      "label": "SearchItem",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L191",
+      "id": "files_galleryviewmodel_kt_searchitem",
+      "community": 57,
+      "norm_label": "searchitem"
+    },
+    {
+      "label": "Job",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L206",
+      "id": "files_galleryviewmodel_kt_job",
+      "community": 57,
+      "norm_label": "job"
+    },
+    {
+      "label": ".loadLocalPhotos()",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L208",
+      "id": "files_galleryviewmodel_galleryviewmodel_loadlocalphotos",
+      "community": 57,
+      "norm_label": ".loadlocalphotos()"
+    },
+    {
+      "label": ".triggerScan()",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L221",
+      "id": "files_galleryviewmodel_galleryviewmodel_triggerscan",
+      "community": 57,
+      "norm_label": ".triggerscan()"
+    },
+    {
+      "label": ".enqueueRestoreWorker()",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L235",
+      "id": "files_galleryviewmodel_galleryviewmodel_enqueuerestoreworker",
+      "community": 57,
+      "norm_label": ".enqueuerestoreworker()"
+    },
+    {
+      "label": "Application",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L235",
+      "id": "files_galleryviewmodel_kt_application",
+      "community": 57,
+      "norm_label": "application"
+    },
+    {
+      "label": ".startCloudSync()",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L251",
+      "id": "files_galleryviewmodel_galleryviewmodel_startcloudsync",
+      "community": 57,
+      "norm_label": ".startcloudsync()"
+    },
+    {
+      "label": ".onCleared()",
+      "file_type": "code",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L280",
+      "id": "files_galleryviewmodel_galleryviewmodel_oncleared",
+      "community": 57,
+      "norm_label": ".oncleared()"
+    },
+    {
+      "label": "HistorySyncManager.kt",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L1",
+      "id": "files_historysyncmanager",
+      "community": 75,
+      "norm_label": "historysyncmanager.kt"
+    },
+    {
+      "label": "HistorySyncManager",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L15",
+      "id": "files_historysyncmanager_historysyncmanager",
+      "community": 75,
+      "norm_label": "historysyncmanager"
+    },
+    {
+      "label": "ParsedMetadata",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L18",
+      "id": "files_historysyncmanager_parsedmetadata",
+      "community": 75,
+      "norm_label": "parsedmetadata"
+    },
+    {
+      "label": ".parseMetadataFromCaption()",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L29",
+      "id": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "community": 75,
+      "norm_label": ".parsemetadatafromcaption()"
+    },
+    {
+      "label": "String",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L29",
+      "id": "files_historysyncmanager_kt_string",
+      "community": 75,
+      "norm_label": "string"
+    },
+    {
+      "label": ".syncCloudHistory()",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "community": 75,
+      "norm_label": ".synccloudhistory()"
+    },
+    {
+      "label": "Context",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_context",
+      "community": 75,
+      "norm_label": "context"
+    },
+    {
+      "label": "Long",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_long",
+      "community": 75,
+      "norm_label": "long"
+    },
+    {
+      "label": "Boolean",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_boolean",
+      "community": 75,
+      "norm_label": "boolean"
+    },
+    {
+      "label": "recoveredCount",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_recoveredcount",
+      "community": 75,
+      "norm_label": "recoveredcount"
+    },
+    {
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_int",
+      "community": 75,
+      "norm_label": "int"
+    },
+    {
+      "label": "lastMessageId",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_lastmessageid",
+      "community": 75,
+      "norm_label": "lastmessageid"
+    },
+    {
+      "label": "Unit",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "id": "files_historysyncmanager_kt_unit",
+      "community": 75,
+      "norm_label": "unit"
+    },
+    {
+      "label": ".parseAndIndexUploadedMessage()",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L286",
+      "id": "files_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "community": 75,
+      "norm_label": ".parseandindexuploadedmessage()"
+    },
+    {
+      "label": "TdApi",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L286",
+      "id": "files_historysyncmanager_kt_tdapi",
+      "community": 75,
+      "norm_label": "tdapi"
+    },
+    {
+      "label": ".syncMetadataHistory()",
+      "file_type": "code",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L406",
+      "id": "files_historysyncmanager_historysyncmanager_syncmetadatahistory",
+      "community": 75,
+      "norm_label": ".syncmetadatahistory()"
+    },
+    {
+      "label": "RestoreWorker.kt",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L1",
+      "id": "files_restoreworker",
+      "community": 3,
+      "norm_label": "restoreworker.kt"
+    },
+    {
+      "label": "RestoreWorker",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L22",
+      "id": "files_restoreworker_restoreworker",
+      "community": 3,
+      "norm_label": "restoreworker"
+    },
+    {
+      "label": ".getForegroundInfo()",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L30",
+      "id": "files_restoreworker_restoreworker_getforegroundinfo",
+      "community": 3,
+      "norm_label": ".getforegroundinfo()"
+    },
+    {
+      "label": "ForegroundInfo",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L30",
+      "id": "files_restoreworker_kt_foregroundinfo",
+      "community": 3,
+      "norm_label": "foregroundinfo"
+    },
+    {
+      "label": ".createForegroundInfo()",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L34",
+      "id": "files_restoreworker_restoreworker_createforegroundinfo",
+      "community": 3,
+      "norm_label": ".createforegroundinfo()"
+    },
+    {
+      "label": "Int",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L34",
+      "id": "files_restoreworker_kt_int",
+      "community": 3,
+      "norm_label": "int"
+    },
+    {
+      "label": ".doWork()",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L69",
+      "id": "files_restoreworker_restoreworker_dowork",
+      "community": 3,
+      "norm_label": ".dowork()"
+    },
+    {
+      "label": "Result",
+      "file_type": "code",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L69",
+      "id": "files_restoreworker_kt_result",
+      "community": 3,
+      "norm_label": "result"
     },
     {
       "label": "settings.gradle",
@@ -7557,6 +7971,51 @@
       "norm_label": "b. size constraints"
     },
     {
+      "label": "recoveredCount",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "community": 31,
+      "norm_label": "recoveredcount",
+      "id": "recoveredcount"
+    },
+    {
+      "label": "lastMessageId",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "community": 31,
+      "norm_label": "lastmessageid",
+      "id": "lastmessageid"
+    },
+    {
+      "label": "Unit",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "community": 31,
+      "norm_label": "unit",
+      "id": "unit"
+    },
+    {
+      "label": "MergeResult",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
+      "source_location": "L153",
+      "community": 55,
+      "norm_label": "mergeresult",
+      "id": "mergeresult"
+    },
+    {
+      "label": "Job",
+      "file_type": "code",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
+      "source_location": "L206",
+      "community": 55,
+      "norm_label": "job",
+      "id": "job"
+    },
+    {
       "label": "ThumbnailWriteBuffer",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/utils/GalleryUtils.kt",
@@ -9582,15 +10041,6 @@
       "id": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_uploadentity"
     },
     {
-      "label": "Application",
-      "file_type": "code",
-      "source_file": "",
-      "source_location": "",
-      "community": 55,
-      "norm_label": "application",
-      "id": "application"
-    },
-    {
       "label": "java",
       "file_type": "code",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/screens/PhotoViewerScreen.kt",
@@ -10416,7 +10866,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "tgpix readme",
       "id": "readme_readme"
     },
@@ -10520,7 +10970,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "telegallery phone number login screen screenshot",
       "id": "screenshots_login_screen"
     },
@@ -10533,7 +10983,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "telegallery shutter logo with paper plane",
       "id": "screenshots_login_screen_brand_logo"
     },
@@ -10546,7 +10996,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "otp sms verification form",
       "id": "screenshots_login_screen_otp_login_form"
     },
@@ -10559,7 +11009,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "alternative telegallery logo design asset",
       "id": "screenshots_logo"
     },
@@ -10572,7 +11022,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 72,
+      "community": 77,
       "norm_label": "alternative three-petal purple logo design",
       "id": "screenshots_logo_purple_leaves_logo"
     },
@@ -11066,6 +11516,16 @@
       "confidence_score": 1.0,
       "source": "storage_backupmanager",
       "target": "storage_backupmanager_backupmanager"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
+      "source_location": "L33",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "storage_backupmanager",
+      "target": "storage_backupmanager_backupresult"
     },
     {
       "relation": "contains",
@@ -11746,6 +12206,17 @@
       "confidence_score": 1.0,
       "source": "storage_backupmanager_backupmanager",
       "target": "storage_backupmanager_backupmanager_uploadfile"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/BackupManager.kt",
+      "source_location": "L242",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "storage_backupmanager_backupmanager_backupdatabase",
+      "target": "storage_backupmanager_backupresult"
     },
     {
       "relation": "calls",
@@ -16388,6 +16859,16 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L62",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_uploaddao",
+      "target": "storage_uploaddatabase_uploaddao_getrecordcountdirect"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L50",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -16957,6 +17438,72 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L62",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_uploaddao_getrecordcountdirect",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L196",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_albumdao_getrecordcountdirect",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L104",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_cloudphotodao_getrecordcountdirect",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L134",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_cloudphotodao_updatelargepath",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L131",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
+      "source_location": "L462",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "storage_uploaddatabase_restoredatafromfile",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
       "source_location": "L95",
       "weight": 1.0,
       "context": "return_type",
@@ -17514,61 +18061,6 @@
       "confidence_score": 1.0,
       "source": "storage_uploaddatabase_cloudphotodao_batchupdatethumbnailpaths",
       "target": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L131",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "storage_uploaddatabase_cloudphotodao_updatethumbnailpath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L196",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "storage_uploaddatabase_albumdao_getrecordcountdirect",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L104",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "storage_uploaddatabase_cloudphotodao_getrecordcountdirect",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L134",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "storage_uploaddatabase_cloudphotodao_updatelargepath",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/storage/UploadDatabase.kt",
-      "source_location": "L462",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "storage_uploaddatabase_restoredatafromfile",
-      "target": "app_src_main_java_dev_ssjvirtually_tgpix_storage_uploaddatabase_kt_int"
     },
     {
       "relation": "calls",
@@ -18663,12 +19155,45 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_lastmessageid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
       "source_location": "L56",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
       "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_long"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_recoveredcount"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_unit"
     },
     {
       "relation": "references",
@@ -18735,39 +19260,6 @@
       "confidence_score": 1.0,
       "source": "telegram_historysyncmanager_historysyncmanager_syncmetadatahistory",
       "target": "app_src_main_java_dev_ssjvirtually_tgpix_telegram_historysyncmanager_kt_long"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "recoveredcount"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "lastmessageid"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
-      "source_location": "L288",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
-      "target": "unit"
     },
     {
       "relation": "references",
@@ -21139,6 +21631,16 @@
     {
       "relation": "inherits",
       "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L51",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "androidviewmodel"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
       "source_location": "L37",
       "weight": 1.0,
@@ -21618,6 +22120,17 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
+      "source_location": "L206",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "ui_galleryviewmodel_galleryviewmodel",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_job"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
       "source_location": "L83",
       "weight": 1.0,
       "context": "generic_arg",
@@ -21635,6 +22148,17 @@
       "confidence_score": 1.0,
       "source": "ui_galleryviewmodel_galleryviewmodel",
       "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_localphoto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/ui/GalleryViewModel.kt",
+      "source_location": "L153",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "ui_galleryviewmodel_galleryviewmodel",
+      "target": "app_src_main_java_dev_ssjvirtually_tgpix_ui_galleryviewmodel_kt_mergeresult"
     },
     {
       "relation": "references",
@@ -24646,6 +25170,16 @@
     {
       "relation": "inherits",
       "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker",
+      "target": "coroutineworker"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
       "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/worker/RestoreWorker.kt",
       "source_location": "L19",
       "weight": 1.0,
@@ -25297,6 +25831,573 @@
       "confidence_score": 1.0,
       "source": "telegram_uploadmanagertest_uploadmanagertest",
       "target": "telegram_uploadmanagertest_uploadmanagertest_testistransportornetworkerror_nontransporterror"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L51",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L235",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel_enqueuerestoreworker"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L208",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel_loadlocalphotos"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L280",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel_oncleared"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L251",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel_startcloudsync"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L221",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_galleryviewmodel_triggerscan"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_boolean"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L85",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_cloudphotoentity"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L89",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_flow"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L206",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_job"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L191",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_list"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L173",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_localphoto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L153",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_mergeresult"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L191",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_searchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_set"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L191",
+      "weight": 1.0,
+      "context": "field",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_stateflow"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L181",
+      "weight": 1.0,
+      "context": "generic_arg",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel",
+      "target": "files_galleryviewmodel_kt_string"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L235",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel_enqueuerestoreworker",
+      "target": "files_galleryviewmodel_kt_boolean"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L208",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel_loadlocalphotos",
+      "target": "files_galleryviewmodel_kt_boolean"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L235",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel_enqueuerestoreworker",
+      "target": "files_galleryviewmodel_kt_application"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/GalleryViewModel.kt",
+      "source_location": "L268",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_galleryviewmodel_galleryviewmodel_startcloudsync",
+      "target": "files_galleryviewmodel_galleryviewmodel_enqueuerestoreworker"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager",
+      "target": "files_historysyncmanager_historysyncmanager"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager",
+      "target": "files_historysyncmanager_parsedmetadata"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L286",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager",
+      "target": "files_historysyncmanager_historysyncmanager_parseandindexuploadedmessage"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager",
+      "target": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager",
+      "target": "files_historysyncmanager_historysyncmanager_synccloudhistory"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L406",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager",
+      "target": "files_historysyncmanager_historysyncmanager_syncmetadatahistory"
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "target": "files_historysyncmanager_parsedmetadata"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L316",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L29",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption",
+      "target": "files_historysyncmanager_kt_string"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L142",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_historysyncmanager_parsemetadatafromcaption"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_boolean"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_int"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_lastmessageid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_long"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_recoveredcount"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L59",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_synccloudhistory",
+      "target": "files_historysyncmanager_kt_unit"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L286",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "files_historysyncmanager_kt_context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L406",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_syncmetadatahistory",
+      "target": "files_historysyncmanager_kt_context"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L406",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_syncmetadatahistory",
+      "target": "files_historysyncmanager_kt_long"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/HistorySyncManager.kt",
+      "source_location": "L286",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_historysyncmanager_historysyncmanager_parseandindexuploadedmessage",
+      "target": "files_historysyncmanager_kt_tdapi"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker",
+      "target": "files_restoreworker_restoreworker"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker",
+      "target": "files_restoreworker_restoreworker_createforegroundinfo"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L69",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker",
+      "target": "files_restoreworker_restoreworker_dowork"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker",
+      "target": "files_restoreworker_restoreworker_getforegroundinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L104",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_dowork",
+      "target": "files_restoreworker_restoreworker_getforegroundinfo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L30",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_getforegroundinfo",
+      "target": "files_restoreworker_kt_foregroundinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L31",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_getforegroundinfo",
+      "target": "files_restoreworker_restoreworker_createforegroundinfo"
+    },
+    {
+      "relation": "references",
+      "context": "return_type",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_createforegroundinfo",
+      "target": "files_restoreworker_kt_foregroundinfo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L34",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_createforegroundinfo",
+      "target": "files_restoreworker_kt_int"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L177",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_dowork",
+      "target": "files_restoreworker_restoreworker_createforegroundinfo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "files/RestoreWorker.kt",
+      "source_location": "L69",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "files_restoreworker_restoreworker_dowork",
+      "target": "files_restoreworker_kt_result"
     },
     {
       "relation": "contains",
@@ -27707,6 +28808,39 @@
       "confidence_score": 1.0,
       "source": "thumbnail_loading_strategy_8_cache_eviction_constraints",
       "target": "thumbnail_loading_strategy_b_size_constraints"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "recoveredcount"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "lastmessageid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/src/main/java/dev/ssjvirtually/tgpix/telegram/TdlibManager.kt",
+      "source_location": "L288",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "telegram_tdlibmanager_tdlibmanager_synccloudhistory",
+      "target": "unit"
     },
     {
       "relation": "method",
@@ -30288,5 +31422,5 @@
       "source_file": "screenshots/settings_screen.png"
     }
   ],
-  "built_at_commit": "5fb50cc62bae464ccc5e3e0d4a0a46e24e3a8a8f"
+  "built_at_commit": "f7187cafe6531203aaf974a0c889d117a7dee864"
 }

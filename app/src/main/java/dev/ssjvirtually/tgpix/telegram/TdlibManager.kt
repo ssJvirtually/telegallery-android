@@ -41,6 +41,8 @@ open class TdlibManager {
     private val _authState = MutableStateFlow<TdApi.AuthorizationState?>(null)
     val authState: StateFlow<TdApi.AuthorizationState?> = _authState
 
+    private var hasBeenReadyInCurrentSession = false
+
     private val _connectionStatus = MutableStateFlow(ConnectionStatus.CONNECTED)
     val connectionStatus: StateFlow<ConnectionStatus> = _connectionStatus
 
@@ -106,6 +108,12 @@ open class TdlibManager {
     @Synchronized
     open fun initialize(context: Context) {
         if (client != null) return
+        
+        // Silence noisy native TDLib console output (1 = Errors only)
+        try {
+            Client.execute(TdApi.SetLogVerbosityLevel(1))
+        } catch (e: Exception) {}
+
         addLog("Initializing TDLib library...")
         
         // Evict any stale upload temp files from previous runs (dedicated subfolder only)
@@ -150,6 +158,7 @@ open class TdlibManager {
                 if (state is TdApi.AuthorizationStateWaitTdlibParameters) {
                     setParameters(context)
                 } else if (state is TdApi.AuthorizationStateReady) {
+                    hasBeenReadyInCurrentSession = true
                     getClient().send(TdApi.GetMe()) { result ->
                         if (result is TdApi.User) {
                             myUserId = result.id
@@ -161,6 +170,7 @@ open class TdlibManager {
                     }
                 } else if (state is TdApi.AuthorizationStateClosed) {
                     addLog("Session closed. Restarting TDLib client...")
+                    hasBeenReadyInCurrentSession = false
                     client = null
                     managerScope.launch {
                         delay(500)
@@ -169,9 +179,9 @@ open class TdlibManager {
                 } else if (state is TdApi.AuthorizationStateWaitPhoneNumber) {
                     val wasLoggedIn = PreferencesManager.getChatId(context) != 0L
                     val isManual = PreferencesManager.isManualLogout(context)
-                    addLog("Auth State: WaitPhoneNumber (wasLoggedIn: $wasLoggedIn, isManual: $isManual)")
+                    addLog("Auth State: WaitPhoneNumber (wasLoggedIn: $wasLoggedIn, isManual: $isManual, hasBeenReady: $hasBeenReadyInCurrentSession)")
                     
-                    if (wasLoggedIn) {
+                    if (wasLoggedIn && (hasBeenReadyInCurrentSession || isManual)) {
                         if (!isManual) {
                             addLog("External logout detected. Triggering system notification.")
                             showSessionExpiredNotification(context)
@@ -179,6 +189,8 @@ open class TdlibManager {
                             addLog("Manual logout detected in state listener.")
                         }
                         performLogoutCleanup(context)
+                    } else if (wasLoggedIn && !hasBeenReadyInCurrentSession && !isManual) {
+                        addLog("Auth State: WaitPhoneNumber received but JNI client has not been successfully authenticated in this session yet. Skipping destructive database and settings wipe.")
                     }
                 }
             }
@@ -208,15 +220,36 @@ open class TdlibManager {
                 }
             }
             is TdApi.UpdateNewChat -> {
-                val current = _chats.value.toMutableList()
-                if (current.none { it.id == obj.chat.id }) {
-                    current.add(ChatInfo(obj.chat.id, obj.chat.title))
-                    _chats.value = current
+                val title = obj.chat.title
+                val vaultChatId = PreferencesManager.getChatId(context)
+                val dbChatId = PreferencesManager.getDbChatId(context)
+                
+                // Only track chats that are relevant to TGPix to keep UI/Logs clean
+                val isRelevant = title.contains("tgpix", ignoreCase = true) || 
+                                 obj.chat.id == vaultChatId || 
+                                 obj.chat.id == dbChatId
+                
+                if (isRelevant) {
+                    val current = _chats.value.toMutableList()
+                    if (current.none { it.id == obj.chat.id }) {
+                        current.add(ChatInfo(obj.chat.id, obj.chat.title))
+                        _chats.value = current
+                    }
                 }
             }
             is TdApi.UpdateChatTitle -> {
-                _chats.value = _chats.value.map { 
-                    if (it.id == obj.chatId) it.copy(title = obj.title) else it 
+                val vaultChatId = PreferencesManager.getChatId(context)
+                val dbChatId = PreferencesManager.getDbChatId(context)
+                
+                // Only update if it's one of our relevant channels
+                val isRelevant = obj.title.contains("tgpix", ignoreCase = true) || 
+                                 obj.chatId == vaultChatId || 
+                                 obj.chatId == dbChatId
+                                 
+                if (isRelevant) {
+                    _chats.value = _chats.value.map { 
+                        if (it.id == obj.chatId) it.copy(title = obj.title) else it 
+                    }
                 }
             }
             is TdApi.UpdateConnectionState -> {
@@ -266,13 +299,18 @@ open class TdlibManager {
                 val vaultChatId = PreferencesManager.getChatId(context)
                 if (vaultChatId != 0L && obj.chatId == vaultChatId) {
                     val messageIds = obj.messageIds
+                    addLog("UpdateDeleteMessages: Deleting ${messageIds.size} cloud_photos from local DB (messageIds=${messageIds.toList()})")
                     managerScope.launch(Dispatchers.IO) {
                         try {
                             val db = UploadDatabase.getDatabase(context)
+                            val beforeCount = db.cloudDao().getRecordCountDirect()
                             messageIds.forEach { msgId ->
                                 db.cloudDao().deleteByMessageId(msgId)
                             }
+                            val afterCount = db.cloudDao().getRecordCountDirect()
+                            addLog("UpdateDeleteMessages: cloud_photos count before=$beforeCount after=$afterCount")
                         } catch (e: Exception) {
+                            addLog("UpdateDeleteMessages: Error deleting from local DB: ${e.message}")
                             ErrorMonitor.log(e)
                         }
                     }
@@ -451,6 +489,7 @@ open class TdlibManager {
 
     open fun performLogoutCleanup(context: Context) {
         addLog("Performing logout cleanup...")
+        hasBeenReadyInCurrentSession = false
         _profilePhotoPath.value = null
         
         // 1. Cancel background workers

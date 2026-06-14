@@ -1,11 +1,10 @@
 package dev.ssjvirtually.tgpix
 
 import android.app.RecoverableSecurityException
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.provider.MediaStore
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -19,15 +18,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.core.content.ContextCompat
-import androidx.work.*
 import dev.ssjvirtually.tgpix.storage.LocalPhoto
 import dev.ssjvirtually.tgpix.storage.PreferencesManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.AppNavigation
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
-import dev.ssjvirtually.tgpix.worker.UploadWorker
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 

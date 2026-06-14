@@ -116,27 +116,11 @@ class UploadWorker(
             return Result.success()
         }
 
-        // 3. Promote worker to foreground service to prevent OS termination & bypass 10-minute timeout
-        try {
-            setForeground(getForegroundInfo())
-            TdlibManager.addLog("Worker: Promoted backup worker to Foreground Service.")
-        } catch (e: Exception) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
-                TdlibManager.addLog("Worker: Foreground service start not allowed (Android 14+ constraints). Falling back to standard background execution: ${e.message}")
-            } else if (e is IllegalStateException) {
-                TdlibManager.addLog("Worker: Progress update failed, worker likely stopped: ${e.message}")
-            } else {
-                TdlibManager.addLog("Worker: Failed to start as foreground service: ${e.message}")
-            }
-        }
-
-        // 4. Acquire WakeLock and WifiLock to keep CPU & Network alive when phone is locked
+        // 3. Declare system locks
         val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
-        val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TGPix::BackupWakeLock")
-        // No timeout on acquire() — the finally block unconditionally releases both locks,
-        // so there is no risk of permanent battery drain. A hard 1-hour limit would silently
-        // cut off large photo libraries (500 photos × 5 s delay = 41 min, plus upload time).
-        wakeLock.setReferenceCounted(false)
+        val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TGPix::BackupWakeLock").apply {
+            setReferenceCounted(false)
+        }
 
         val wifiManager = applicationContext.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val wifiLock = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -148,23 +132,37 @@ class UploadWorker(
         }
 
         try {
-            // Acquire with no timeout — released unconditionally in the finally block
-            wakeLock.acquire()
-            wifiLock.acquire()
-            TdlibManager.addLog("Worker: Acquired CPU WakeLock and Wi-Fi High-Performance Lock.")
-
-            // 5. Initialize TDLib safely
+            // Initialize TDLib safely
             TdlibManager.initialize(applicationContext)
 
-            // 6. Wait for authorization state to become Ready (loaded from local session files)
-            val isReady = withTimeoutOrNull(15000) {
+            // Wait for authorization state to become Ready (timeout 5 seconds)
+            val isReady = withTimeoutOrNull(5000) {
                 TdlibManager.authState.first { it is TdApi.AuthorizationStateReady }
             }
 
             if (isReady == null) {
-                TdlibManager.addLog("Worker: Telegram client not authenticated or timed out. Retrying later.")
-                return Result.retry()
+                TdlibManager.addLog("Worker: Telegram client not authenticated or timed out. Aborting upload worker.")
+                return Result.failure()
             }
+
+            // Promote worker to foreground service to prevent OS termination & bypass 10-minute timeout
+            try {
+                setForeground(getForegroundInfo())
+                TdlibManager.addLog("Worker: Promoted backup worker to Foreground Service.")
+            } catch (e: Exception) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is android.app.ForegroundServiceStartNotAllowedException) {
+                    TdlibManager.addLog("Worker: Foreground service start not allowed (Android 14+ constraints). Falling back to standard background execution: ${e.message}")
+                } else if (e is IllegalStateException) {
+                    TdlibManager.addLog("Worker: Progress update failed, worker likely stopped: ${e.message}")
+                } else {
+                    TdlibManager.addLog("Worker: Failed to start as foreground service: ${e.message}")
+                }
+            }
+
+            // Acquire locks
+            wakeLock.acquire()
+            wifiLock.acquire()
+            TdlibManager.addLog("Worker: Acquired CPU WakeLock and Wi-Fi High-Performance Lock.")
 
             // 7. Scan all photos on the device and filter by backup-enabled directories
             val allPhotos = MediaStoreScanner.scan(applicationContext)

@@ -61,15 +61,21 @@ open class HistorySyncManager {
         chatId: Long,
         forceFullCrawl: Boolean = false,
         startMessageId: Long = 0L,
+        skipDuplicateCleanup: Boolean = false,
         onProgress: (suspend (recoveredCount: Int, lastMessageId: Long) -> Unit)? = null
     ) {
         val database = UploadDatabase.getDatabase(context)
         val cloudDao = database.cloudDao()
         
-        // Staging: Clear any stale Room DB cache items referencing DB backups
-        try {
-            cloudDao.deleteBackupDbFiles()
-        } catch (e: Exception) {}
+        // Purge stale Room DB entries that reference raw backup .db files.
+        // Only do this on a full crawl — during a delta crawl after a snapshot restore the
+        // live database already holds valid restored rows, and running this purge could
+        // delete them before the UI has a chance to render them.
+        if (forceFullCrawl) {
+            try {
+                cloudDao.deleteBackupDbFiles()
+            } catch (e: Exception) {}
+        }
         
         var lastMessageId = startMessageId
         var crawling = true
@@ -207,11 +213,17 @@ open class HistorySyncManager {
                         val extension = fileName.substringAfterLast('.', "").lowercase()
                         val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
 
+                        // Preserve isTrashed state from existing records to prevent
+                        // delta crawls from un-trashing photos that were soft-deleted
+                        // via metadata events after the snapshot was created.
+                        val existingTrashed = existing?.isTrashed ?: false
+                        val existingTrashedAt = existing?.trashedAt ?: 0L
+
                          entities.add(
                             CloudPhotoEntity(
                                 messageId = msg.id,
                                 telegramFileId = fileId,
-                                uniqueRemoteId = remoteId,
+                                uniqueRemoteId = if (remoteId.isEmpty()) "pending_remote_${msg.id}" else remoteId,
                                 fileName = fileName,
                                 uploadedAt = uploadedAt,
                                 fileSize = fileSize,
@@ -228,8 +240,8 @@ open class HistorySyncManager {
                                 mimeType = mime,
                                 width = width,
                                 height = height,
-                                isTrashed = false,
-                                trashedAt = 0L
+                                isTrashed = existingTrashed,
+                                trashedAt = existingTrashedAt
                             )
                         )
                     }
@@ -250,16 +262,27 @@ open class HistorySyncManager {
         TdlibManager.addLog("Vault server synchronization crawl completed.")
 
         // Clean up duplicate photo uploads from both Telegram and local database
-        try {
-            val duplicates = cloudDao.getDuplicateMessageIds()
-            if (duplicates.isNotEmpty()) {
-                TdlibManager.addLog("Found ${duplicates.size} duplicate messages in server vault. Deleting duplicates from Telegram...")
-                TdlibManager.sendRequest(TdApi.DeleteMessages(chatId, duplicates.toLongArray(), true))
-                cloudDao.deleteDuplicatesFromCloudPhotos()
-                TdlibManager.addLog("Local database duplicate cloud photos cleaned up.")
+        // Skip after a snapshot restore: the snapshot + crawl naturally produce
+        // overlapping records via INSERT OR REPLACE, and the duplicate query may
+        // incorrectly match restored records with empty/legacy fingerprints.
+        // Also skip when the crawl indexed zero new records — a no-op delta crawl
+        // that terminated immediately on the first existing message must never
+        // trigger destructive deduplication, which permanently deletes photos
+        // from both the local DB and the Telegram vault channel.
+        if (!skipDuplicateCleanup && totalRecovered > 0) {
+            try {
+                val duplicates = cloudDao.getDuplicateMessageIds()
+                if (duplicates.isNotEmpty()) {
+                    TdlibManager.addLog("Found ${duplicates.size} duplicate messages in server vault. Deleting duplicates from Telegram...")
+                    TdlibManager.sendRequest(TdApi.DeleteMessages(chatId, duplicates.toLongArray(), true))
+                    cloudDao.deleteDuplicatesFromCloudPhotos()
+                    TdlibManager.addLog("Local database duplicate cloud photos cleaned up.")
+                }
+            } catch (e: Exception) {
+                TdlibManager.addLog("Failed to clean up duplicate vault messages: ${e.message}")
             }
-        } catch (e: Exception) {
-            TdlibManager.addLog("Failed to clean up duplicate vault messages: ${e.message}")
+        } else {
+            TdlibManager.addLog("Skipping duplicate cleanup (skipDuplicateCleanup=$skipDuplicateCleanup, totalRecovered=$totalRecovered).")
         }
         
         // Trigger storage cache cleanup to stay within 500 MB limit
@@ -366,7 +389,7 @@ open class HistorySyncManager {
             val entity = CloudPhotoEntity(
                 messageId = msg.id,
                 telegramFileId = fileId,
-                uniqueRemoteId = remoteId,
+                uniqueRemoteId = if (remoteId.isEmpty()) "pending_remote_${msg.id}" else remoteId,
                 fileName = fileName,
                 uploadedAt = uploadedAt,
                 fileSize = fileSize,

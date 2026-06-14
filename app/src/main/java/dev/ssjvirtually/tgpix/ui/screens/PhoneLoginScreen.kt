@@ -22,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.telegram.AuthManager
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import android.util.Log
+import org.drinkless.tdlib.TdApi
 
 @Composable
 fun PhoneLoginScreen() {
@@ -40,6 +44,8 @@ fun PhoneLoginScreen() {
     )
     var selectedCode by remember { mutableStateOf("+91") }
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier.fillMaxSize().background(TelePhotosTheme.Background),
@@ -180,8 +186,19 @@ fun PhoneLoginScreen() {
                     onClick = {
                         isLoading = true
                         val fullPhoneNumber = if (phone.trim().startsWith("+")) phone.trim() else selectedCode + phone.trim()
-                        AuthManager.sendPhone(fullPhoneNumber) {
+                        Log.i("TGPix", "Submitting phone number: $fullPhoneNumber")
+                        AuthManager.sendPhone(fullPhoneNumber) { result ->
                             isLoading = false
+                            if (result is TdApi.Error) {
+                                Log.e("TGPix", "Failed to send phone number: [${result.code}] ${result.message}")
+                                // We are already on the Main/UI thread inside the callback context of TDLib client 
+                                // but we wrap in a launch or runOnUiThread if necessary, standard handler post works too.
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                                }
+                            } else {
+                                Log.i("TGPix", "Phone number submitted successfully, result: ${result::class.java.simpleName}")
+                            }
                         }
                     },
                     enabled = phone.isNotBlank() && !isLoading,

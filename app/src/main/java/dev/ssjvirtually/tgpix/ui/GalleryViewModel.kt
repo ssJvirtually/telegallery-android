@@ -131,6 +131,11 @@ class GalleryViewModel @JvmOverloads constructor(
             }.debounce(5000L)
              .collect { totalRecords ->
                  if (totalRecords > 0) {
+                     // Never schedule a backup while a restore/sync is in progress —
+                     // doing so would checkpoint the WAL mid-restore, causing Room
+                     // Flows to re-emit stale data and the grid to flicker/empty.
+                     if (preferencesManager.isRestoreActive(application) || _isSyncingCloud.value) return@collect
+
                      val lastBackupCount = preferencesManager.getLastBackupRecordCount(application)
                      if (totalRecords != lastBackupCount) {
                          try {
@@ -243,20 +248,38 @@ class GalleryViewModel @JvmOverloads constructor(
         )
     }
 
+    // Tracks whether a cloud sync has already completed in this ViewModel lifecycle.
+    // Prevents redundant RestoreWorker enqueues when LaunchedEffect keys change
+    // (e.g., selectedChatTitle resolving after TDLib loads the channel name).
+    private var hasCompletedInitialSync = false
+
     fun startCloudSync() {
         if (_isSyncingCloud.value) return
         viewModelScope.launch(Dispatchers.IO) {
-            _isSyncingCloud.value = true
             val context = getApplication<Application>()
             try {
                 val chatId = preferencesManager.getChatId(context)
                 if (chatId != 0L) {
                     val db = UploadDatabase.getDatabase(context)
                     val currentCount = db.cloudDao().getRecordCountDirect()
-                    val startMsgId = preferencesManager.getLastScannedMessageId(context)
 
-                    val forceFullCrawl = currentCount == 0 || startMsgId != 0L
+                    // If we already completed a sync and the DB has records,
+                    // don't enqueue another RestoreWorker. The previous run
+                    // already indexed all photos, and a redundant no-op crawl
+                    // can trigger destructive duplicate cleanup.
+                    if (hasCompletedInitialSync && currentCount > 0) {
+                        return@launch
+                    }
+
+                    _isSyncingCloud.value = true
+                    // Force a full crawl when the local DB is empty (fresh device or cleared data).
+                    // A non-zero lastScannedMessageId with an empty DB means stale state from a
+                    // previous session on another device — don't use it to skip the full history.
+                    // When the DB has records, forceFullCrawl=false lets RestoreWorker do a fast
+                    // delta crawl that stops as soon as it encounters an already-indexed message.
+                    val forceFullCrawl = currentCount == 0
                     enqueueRestoreWorker(getApplication(), forceFullCrawl)
+                    hasCompletedInitialSync = true
                 } else {
                     _isSyncingCloud.value = false
                 }

@@ -17,6 +17,10 @@ class DatabaseBackupWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        if (PreferencesManager.isRestoreActive(applicationContext)) {
+            TdlibManager.addLog("DatabaseBackupWorker: Aborting backup run immediately because a restore/sync is currently active.")
+            return Result.success()
+        }
         return try {
             // 1. Initialize TDLib (no-op if already running)
             TdlibManager.initialize(applicationContext)
@@ -49,7 +53,8 @@ class DatabaseBackupWorker(
             }
 
             // 4. Run the backup now that TDLib is fully ready
-            val result = BackupManager.backupDatabase(applicationContext)
+            val force = inputData.getBoolean("force", false)
+            val result = BackupManager.backupDatabase(applicationContext, force)
             when (result) {
                 BackupManager.BackupResult.SUCCESS -> {
                     PreferencesManager.setConsecutiveBackupFailures(applicationContext, 0)

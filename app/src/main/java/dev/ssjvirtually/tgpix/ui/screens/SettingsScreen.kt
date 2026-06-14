@@ -39,6 +39,8 @@ import dev.ssjvirtually.tgpix.telegram.AuthManager
 import dev.ssjvirtually.tgpix.telegram.TdlibManager
 import dev.ssjvirtually.tgpix.ui.theme.TelePhotosTheme
 import dev.ssjvirtually.tgpix.worker.UploadWorker
+import dev.ssjvirtually.tgpix.worker.DatabaseBackupWorker
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.QrCode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
@@ -448,6 +450,31 @@ fun SettingsScreen(
                     Icon(Icons.Default.Cloud, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Force Synchronize Local Photos Now", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            item {
+                Button(
+                    onClick = {
+                        val isBackupActive = PreferencesManager.isBackupActive(context)
+                        if (!isBackupActive) {
+                            Toast.makeText(context, "Please enable 'Active Backup Sync' first!", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        val oneTimeWorkRequest = OneTimeWorkRequestBuilder<DatabaseBackupWorker>()
+                            .setInputData(androidx.work.workDataOf("force" to true))
+                            .build()
+                        WorkManager.getInstance(context).enqueue(oneTimeWorkRequest)
+                        Toast.makeText(context, "Force database backup started in background!", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TelePhotosTheme.AccentBlue),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Icon(Icons.Default.Backup, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Force Database Backup Now", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 

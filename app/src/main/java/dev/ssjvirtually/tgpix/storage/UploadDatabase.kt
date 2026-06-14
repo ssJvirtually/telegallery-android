@@ -58,6 +58,9 @@ interface UploadDao {
 
     @Query("DELETE FROM uploads")
     suspend fun clearAll()
+
+    @Query("SELECT COUNT(*) FROM uploads WHERE telegramMessageId != 0")
+    suspend fun getRecordCountDirect(): Int
 }
 
 @Entity(
@@ -628,6 +631,7 @@ abstract class UploadDatabase : RoomDatabase() {
                     MIGRATION_17_18,
                     MIGRATION_18_19
                 )
+                .fallbackToDestructiveMigrationOnDowngrade()
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
                         android.util.Log.e(
@@ -847,6 +851,9 @@ abstract class UploadDatabase : RoomDatabase() {
                             }
                         } catch (_: Exception) {}
                     }
+
+                    // Signal UI flows to re-query the database after seamless raw SQLite restore
+                    dev.ssjvirtually.tgpix.telegram.TdlibManager.notifyDatabaseReplaced()
 
                     cloudPhotos.size
                 } catch (e: Exception) {
