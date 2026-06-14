@@ -281,7 +281,7 @@ fun MainAppLayout(
     
     // Observe stateful flows from ViewModel
 
-    LaunchedEffect(hasPermission) {
+    LaunchedEffect(hasPermission, selectedChatTitle) {
         if (hasPermission) {
             galleryViewModel.loadLocalPhotos(hasPermission)
             galleryViewModel.startCloudSync()

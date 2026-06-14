@@ -49,26 +49,33 @@ class DatabaseBackupWorker(
             }
 
             // 4. Run the backup now that TDLib is fully ready
-            val success = BackupManager.backupDatabase(applicationContext)
-            if (success) {
-                PreferencesManager.setConsecutiveBackupFailures(applicationContext, 0)
-                Result.success()
-            } else {
-                if (PreferencesManager.getChatId(applicationContext) != 0L) {
-                    val currentFailures = PreferencesManager.getConsecutiveBackupFailures(applicationContext) + 1
-                    PreferencesManager.setConsecutiveBackupFailures(applicationContext, currentFailures)
-                    if (currentFailures >= 3) {
-                        val lastBackupTime = PreferencesManager.getLastDailyBackupTime(applicationContext)
-                        val daysSinceLastBackup = if (lastBackupTime > 0L) {
-                            (System.currentTimeMillis() - lastBackupTime) / (24 * 60 * 60 * 1000L)
-                        } else {
-                            0L
-                        }
-                        val daysText = if (daysSinceLastBackup > 0L) "for $daysSinceLastBackup days" else "recently"
-                        showBackupWarningNotification(applicationContext, daysText)
-                    }
+            val result = BackupManager.backupDatabase(applicationContext)
+            when (result) {
+                BackupManager.BackupResult.SUCCESS -> {
+                    PreferencesManager.setConsecutiveBackupFailures(applicationContext, 0)
+                    Result.success()
                 }
-                Result.retry()
+                BackupManager.BackupResult.SKIPPED_CONDITIONS_NOT_MET,
+                BackupManager.BackupResult.SKIPPED_RESTORE_ACTIVE -> {
+                    Result.success()
+                }
+                BackupManager.BackupResult.FAILED -> {
+                    if (PreferencesManager.getChatId(applicationContext) != 0L) {
+                        val currentFailures = PreferencesManager.getConsecutiveBackupFailures(applicationContext) + 1
+                        PreferencesManager.setConsecutiveBackupFailures(applicationContext, currentFailures)
+                        if (currentFailures >= 3) {
+                            val lastBackupTime = PreferencesManager.getLastDailyBackupTime(applicationContext)
+                            val daysSinceLastBackup = if (lastBackupTime > 0L) {
+                                (System.currentTimeMillis() - lastBackupTime) / (24 * 60 * 60 * 1000L)
+                            } else {
+                                0L
+                            }
+                            val daysText = if (daysSinceLastBackup > 0L) "for $daysSinceLastBackup days" else "recently"
+                            showBackupWarningNotification(applicationContext, daysText)
+                        }
+                    }
+                    Result.retry()
+                }
             }
         } catch (e: Exception) {
             TdlibManager.addLog("DatabaseBackupWorker: Exception during backup: ${e.message}")

@@ -30,6 +30,13 @@ import dev.ssjvirtually.tgpix.storage.AlbumPhotoEntity
 open class BackupManager {
     companion object : BackupManager()
 
+    enum class BackupResult {
+        SUCCESS,
+        SKIPPED_CONDITIONS_NOT_MET,
+        SKIPPED_RESTORE_ACTIVE,
+        FAILED
+    }
+
     private var isBackupRunning = false
 
     private fun computeSha256(file: File): String {
@@ -232,23 +239,23 @@ open class BackupManager {
         return count
     }
 
-    open suspend fun backupDatabase(context: Context): Boolean {
+    open suspend fun backupDatabase(context: Context): BackupResult {
         if (PreferencesManager.isRestoreActive(context)) {
             TdlibManager.addLog("BackupManager: Database backup aborted because a restore is active.")
-            return false
+            return BackupResult.SKIPPED_RESTORE_ACTIVE
         }
-        if (isBackupRunning) return false
+        if (isBackupRunning) return BackupResult.FAILED
         isBackupRunning = true
-        var success = false
+        var resultStatus = BackupResult.FAILED
         
         try {
             val targetChatId = resolveBackupChatId(context)
             if (targetChatId == 0L) {
                 isBackupRunning = false
-                return false
+                return BackupResult.FAILED
             }
             
-            success = withContext(Dispatchers.IO) {
+            resultStatus = withContext(Dispatchers.IO) {
                 val db = UploadDatabase.getDatabase(context)
                 val myDeviceId = PreferencesManager.getDeviceId(context)
 
@@ -282,12 +289,12 @@ open class BackupManager {
 
                 if (!shouldSnapshot) {
                     TdlibManager.addLog("Database backup condition not met (age < 3 days and < 50 total changes). Skipping snapshot creation.")
-                    return@withContext false
+                    return@withContext BackupResult.SKIPPED_CONDITIONS_NOT_MET
                 }
                 
                 val dbFile = context.getDatabasePath("upload_database")
                 if (!dbFile.exists()) {
-                    return@withContext false
+                    return@withContext BackupResult.FAILED
                 }
 
                 // 4. Flush Room's WAL logs and truncate the WAL file size OUTSIDE the transaction
@@ -315,38 +322,46 @@ open class BackupManager {
                 }
 
                 if (!checkpointSuccess) {
-                    return@withContext false
+                    return@withContext BackupResult.FAILED
                 }
 
-                // 5. Safely lock the database and perform a copy while in a Room transaction
-                val transactionResult = try {
-                    db.withTransaction {
-                        val innerCount = db.cloudDao().getRecordCountDirect()
-                        val lastCount = PreferencesManager.getLastBackupRecordCount(context)
+                // 5. Safely create a copy of the database
+                val tempBackupFile = File(context.filesDir, "tgpix_backup.db")
+                if (tempBackupFile.exists()) {
+                    tempBackupFile.delete()
+                }
 
-                        // If database is empty but we previously had backups, abort to protect remote
-                        if (innerCount == 0 && lastCount > 0) {
-                            TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
-                            null
-                        } else {
-                            val tempFile = File(context.filesDir, "tgpix_backup.db")
-                            dbFile.copyTo(tempFile, overwrite = true)
-                            Pair(tempFile, innerCount)
-                        }
-                    }
+                val finalCount = db.cloudDao().getRecordCountDirect()
+                val lastCount = PreferencesManager.getLastBackupRecordCount(context)
+
+                // If database is empty but we previously had backups, abort to protect remote
+                if (finalCount == 0 && lastCount > 0) {
+                    TdlibManager.addLog("Backup safety check failed: Local DB is empty, aborting upload to protect remote backup.")
+                    return@withContext BackupResult.FAILED
+                }
+
+                var copySuccess = false
+                try {
+                    db.openHelper.writableDatabase.execSQL("VACUUM INTO '${tempBackupFile.absolutePath}'")
+                    copySuccess = true
+                    TdlibManager.addLog("Database copy generated via VACUUM INTO.")
                 } catch (e: Exception) {
-                    ErrorMonitor.log(e)
-                    null
+                    TdlibManager.addLog("VACUUM INTO failed: ${e.message}. Falling back to transactional copy.")
+                    try {
+                        db.withTransaction {
+                            dbFile.copyTo(tempBackupFile, overwrite = true)
+                        }
+                        copySuccess = true
+                        TdlibManager.addLog("Database copy generated via transactional copy fallback.")
+                    } catch (ex: Exception) {
+                        TdlibManager.addLog("Transactional copy fallback failed: ${ex.message}")
+                        ErrorMonitor.log(ex)
+                    }
                 }
 
-                if (transactionResult == null) {
-                    return@withContext false
-                }
-
-                val (tempBackupFile, finalCount) = transactionResult
-
-                if (!tempBackupFile.exists() || tempBackupFile.length() == 0L) {
-                    return@withContext false
+                if (!copySuccess || !tempBackupFile.exists() || tempBackupFile.length() == 0L) {
+                    TdlibManager.addLog("Failed to create database snapshot file.")
+                    return@withContext BackupResult.FAILED
                 }
                 
                 // 6. Compress DB backup file using GZIP
@@ -365,7 +380,7 @@ open class BackupManager {
                     ErrorMonitor.log(e)
                     if (tempBackupFile.exists()) tempBackupFile.delete()
                     if (compressedFile.exists()) compressedFile.delete()
-                    return@withContext false
+                    return@withContext BackupResult.FAILED
                 } finally {
                     if (tempBackupFile.exists()) {
                         tempBackupFile.delete()
@@ -389,7 +404,7 @@ open class BackupManager {
                         if (compressedFile.exists()) {
                             compressedFile.delete()
                         }
-                        return@withContext false
+                        return@withContext BackupResult.FAILED
                     }
                 }
 
@@ -438,7 +453,7 @@ open class BackupManager {
                 if (compressedFile.exists()) {
                     compressedFile.delete()
                 }
-                uploadSuccess
+                if (uploadSuccess) BackupResult.SUCCESS else BackupResult.FAILED
             }
         } catch (e: Exception) {
             ErrorMonitor.log(e)
@@ -450,7 +465,7 @@ open class BackupManager {
         } finally {
             isBackupRunning = false
         }
-        return success
+        return resultStatus
     }
 
     open suspend fun getLatestSnapshotVersion(chatId: Long): Int {
